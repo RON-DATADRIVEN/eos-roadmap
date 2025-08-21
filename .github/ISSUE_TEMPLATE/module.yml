@@ -1,0 +1,280 @@
+# Guía operativa para `eos-roadmap`: Etiquetas, Template “Módulo” y Branching
+# ==================================================================================
+# Este paquete incluye:
+# 1) Taxonomía de etiquetas con comandos `gh` para crearlas.
+# 2) Issue Template `module.yml` para estandarizar MÓDULOS.
+# 3) Workflows: lint de títulos (Conventional Commits), validación de `modules.json`
+#    contra un esquema y verificador de nombres de rama.
+# 4) Política de ramas y protecciones recomendadas.
+
+
+# ----------------------------------------------------------------------------------
+# 1) Etiquetas (labels) — Taxonomía y seed con GitHub CLI
+# ----------------------------------------------------------------------------------
+# Requiere: GitHub CLI autenticado (gh auth login)
+# Ejecuta estos comandos en el repo `eos-roadmap` para crear/actualizar etiquetas.
+
+# — Tipos —
+gh label create "module"                   --color 0E8A16 --description "Issue representa un MÓDULO visible en la página"
+gh label create "type:feature"             --color 1D76DB --description "Feature general"
+gh label create "type:bug"                 --color D73A4A --description "Defecto"
+gh label create "type:change-request"      --color FBCA04 --description "Solicitud de cambio (CCB)"
+
+# — Estado —
+gh label create "status:planificado"       --color C5DEF5 --description "Aún no iniciado"
+gh label create "status:en-curso"          --color 006B75 --description "En ejecución"
+gh label create "status:hecho"             --color 5319E7 --description "Terminado (o Issue cerrado)"
+
+# — Prioridad —
+gh label create "priority:P0"              --color B60205 --description "Crítica"
+gh label create "priority:P1"              --color D93F0B --description "Alta"
+gh label create "priority:P2"              --color FBCA04 --description "Media"
+
+# — Área (ajusta a tus dominios) —
+gh label create "area:IAM"                 --color 0E8A16 --description "Identidad y Acceso"
+gh label create "area:Programas"           --color 1D76DB --description "Programas y Proyectos"
+gh label create "area:Expertos"            --color A2EEEF --description "Red de Expertos"
+gh label create "area:Servicios"           --color 7057FF --description "Servicios Profesionales"
+gh label create "area:Dashboards"          --color F9D0C4 --description "Dashboards por rol"
+
+# — Otros útiles —
+gh label create "needs-approval"           --color E4E669 --description "Requiere aprobación CCB"
+gh label create "status:triage"            --color 5319E7 --description "Pendiente de clasificación"
+
+
+# ----------------------------------------------------------------------------------
+# 2) Issue Template para MÓDULOS — .github/ISSUE_TEMPLATE/module.yml
+# ----------------------------------------------------------------------------------
+# Crea el archivo en la ruta exacta indicada.
+
+---
+name: "📦 Módulo (visible en roadmap)"
+description: "Estandariza la definición de un MÓDULO que aparecerá en la página pública"
+title: "feat(module): <nombre-corto>"
+labels: ["module", "status:planificado", "status:triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Este template crea un **MÓDULO** que se reflejará en la página pública vía `modules.json` (sincronizado por Action).
+        Asegúrate de asignar **Milestone** (para ETA) y **Assignee(s)** (propietario).
+
+  - type: input
+    id: nombre
+    attributes:
+      label: Nombre del módulo
+      placeholder: "Catálogo de Servicios Profesionales"
+    validations:
+      required: true
+
+  - type: textarea
+    id: descripcion
+    attributes:
+      label: Descripción (primer párrafo se muestra)
+      description: "Qué hace el módulo y para quién. El primer párrafo se usa en cards."
+      placeholder: |
+        Permite publicar y gestionar servicios profesionales con categoría (lista), costo, moneda, método de pago, tiempo de entrega (SLA), imagen y enlace de ejemplo.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Criterios de aceptación (Gherkin)
+      placeholder: |
+        Dado que soy Coordinador...
+        Cuando creo un servicio con categoría, costo y tiempo de entrega...
+        Entonces aparece en el catálogo y puedo ver su ETA y método de pago...
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      options:
+        - area:IAM
+        - area:Programas
+        - area:Expertos
+        - area:Servicios
+        - area:Dashboards
+    validations:
+      required: true
+
+  - type: dropdown
+    id: prioridad
+    attributes:
+      label: Prioridad
+      options:
+        - priority:P0
+        - priority:P1
+        - priority:P2
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: dor
+    attributes:
+      label: Definition of Ready (DoR)
+      options:
+        - label: Usuario objetivo definido
+        - label: Criterios de aceptación claros
+        - label: Riesgos/Dependencias identificados
+        - label: Estimación inicial acordada
+
+  - type: textarea
+    id: tasks
+    attributes:
+      label: Checklist (progreso automático)
+      description: "Usa - [ ] / - [x]. El sync calculará % con base en esta lista."
+      placeholder: |
+        - [ ] Diseñar modelo de datos
+        - [ ] Endpoint GET /servicios (paginado)
+        - [ ] UI catálogo público
+
+  - type: markdown
+    attributes:
+      value: |
+        **Tip:** Si necesitas forzar un porcentaje manual, añade una línea `Progress: NN%` al cuerpo del Issue.
+
+
+# ----------------------------------------------------------------------------------
+# 3) Workflows adicionales (lint de PRs, validación JSON, nombres de rama)
+# ----------------------------------------------------------------------------------
+
+# 3.1) Lint de títulos de PR con Conventional Commits
+# Archivo: .github/workflows/lint-pr-title.yml
+---
+name: Lint PR title (Conventional Commits)
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  semantic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: >
+            chore,docs,feat,fix,refactor,style,test,ci,ops
+          scopes: >
+            module,roadmap,docs,automation,labels,pages
+
+# 3.2) Validación de `docs/modules.json` contra un esquema (previene errores de formato)
+# Archivo: .github/workflows/validate-modules.yml
+---
+name: Validate modules.json
+
+on:
+  push:
+    paths:
+      - 'docs/modules.json'
+  pull_request:
+    paths:
+      - 'docs/modules.json'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Install ajv-cli
+        run: npm i -g ajv-cli
+      - name: Validate JSON
+        run: ajv validate -s docs/modules.schema.json -d docs/modules.json --strict=false
+
+# 3.3) Verificador de nombre de rama (evita nombres arbitrarios)
+# Archivo: .github/workflows/branch-name-check.yml
+---
+name: Check branch name
+
+on:
+  pull_request:
+    types: [opened, synchronize, edited, reopened]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce branch naming
+        run: |
+          ref="${GITHUB_HEAD_REF}"
+          echo "Branch: $ref"
+          if [[ ! $ref =~ ^(feat|fix|docs|chore|ops|ci|refactor)/[a-z0-9._-]+$ ]]; then
+            echo "Nombre de rama inválido. Usa: feat/..., fix/..., docs/..., chore/..., ops/..., ci/..., refactor/..."
+            exit 1
+          fi
+
+
+# ----------------------------------------------------------------------------------
+# 4) Esquema para `docs/modules.json` — docs/modules.schema.json
+# ----------------------------------------------------------------------------------
+# Útil para validar cambios y evitar romper la página pública.
+
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "id":          { "type": "string" },
+      "nombre":      { "type": "string" },
+      "descripcion": { "type": "string" },
+      "estado":      { "type": "string", "enum": ["Planificado", "En curso", "Hecho"] },
+      "porcentaje":  { "type": "integer", "minimum": 0, "maximum": 100 },
+      "propietario": { "type": "string" },
+      "inicio":      { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+      "eta":         { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+      "enlaces": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "label": { "type": "string" },
+            "url":   { "type": "string", "format": "uri" }
+          },
+          "required": ["label", "url"]
+        }
+      }
+    },
+    "required": ["id", "nombre", "estado", "porcentaje"]
+  }
+}
+
+
+# ----------------------------------------------------------------------------------
+# 5) Política de ramas y protecciones (Branching)
+# ----------------------------------------------------------------------------------
+# Estrategia: trunk-based con ramas cortas. `main` es la verdad y publica Pages.
+# Prefijos permitidos: feat/, fix/, docs/, chore/, ops/, ci/, refactor/
+# Ejemplos: feat/roadmap-dash, docs/readme-roadmap, ops/sync-action-tune
+
+# Reglas de protección (Settings → Branches → Add rule sobre `main`):
+# - Require a pull request before merging (1 reviewer mínimo)
+# - Require status checks to pass before merging:
+#   - Lint PR title (Conventional Commits)
+#   - Validate modules.json
+#   - (Opcional) Sync modules.json from Issues — sólo en main/cron
+# - Require branches to be up to date before merging (opcional)
+# - Include administrators (para disciplina)
+# - Require signed commits (opcional)
+# - Lock branch: deshabilitado (no aplicar a main)
+
+# Convenciones de merge:
+# - Preferir "Squash and merge" para mantener historial limpio.
+# - Títulos de PR con Conventional Commits (enforced por workflow).
+# - Cerrar Issue con "Closes #NNN" para trazabilidad.
+
+# GitHub Pages:
+# - Source: Deploy from a branch → main → /docs
+# - Evitar pushes directos a main: usar PRs. El Action de sync ya commitea con [skip ci].
+
+# Nota: Si el Action de sync actualiza `docs/modules.json`, no debe romper la regla
+# de checks requeridos; por eso el commit usa [skip ci]. Mantén Validate modules.json
+# como check requerido en PRs, pero no bloquees commits del bot en main.
