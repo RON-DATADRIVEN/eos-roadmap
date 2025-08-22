@@ -1,0 +1,28 @@
+name: "📝 Change Request (CCB)"
+description: "Solicitar un cambio de alcance/alcance técnico"
+title: "chore: change-request <resumen>"
+labels: ["type:change-request", "needs-approval"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe el cambio propuesto y el impacto (tiempo, costo, riesgo). Será evaluado por el CCB.
+  - type: textarea
+    id: description
+    attributes:
+      label: Descripción del cambio
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impacto (alcance/tiempo/costo/riesgo)
+    validations:
+      required: true
+  - type: input
+    id: requester
+    attributes:
+      label: Solicitante
+      placeholder: "@stakeholder"
+    validations:
+      required: true
