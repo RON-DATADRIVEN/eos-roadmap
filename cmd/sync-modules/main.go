@@ -1,5 +1,5 @@
 package main
-
+#SINCRONIZADOR
 import (
 	"encoding/json"
 	"fmt"
