@@ -1,0 +1,18 @@
+name: Check branch name
+
+on:
+  pull_request:
+    types: [opened, synchronize, edited, reopened]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce branch naming
+        run: |
+          ref="${GITHUB_HEAD_REF}"
+          echo "Branch: $ref"
+          if [[ ! $ref =~ ^(feat|fix|docs|chore|ops|ci|refactor)/[a-z0-9._-]+$ ]]; then
+            echo "Nombre de rama inválido. Usa: feat/..., fix/..., docs/..., chore/..., ops/..., ci/..., refactor/..."
+            exit 1
+          fi
