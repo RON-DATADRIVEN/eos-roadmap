@@ -1,0 +1,40 @@
+name: "🐞 Bug"
+description: "Reportar un defecto"
+title: "fix: <resumen>"
+labels: ["type:bug", "status:triage"]
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: Resumen
+      placeholder: "Error 500 al crear programa"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Pasos para reproducir
+      placeholder: "1. Ir a /programas → 2. Click en crear → 3. ..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportamiento esperado
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Comportamiento actual
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: Entorno
+      placeholder: "Prod/Stg/Dev, navegador, versión"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs/evidencia
