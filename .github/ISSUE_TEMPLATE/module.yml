@@ -86,8 +86,14 @@ body:
         - [ ] UI catálogo público
 
   - type: markdown
-    attributes:
-      value: |
+  attributes:
+    value: |
+      **Tip:** si alguna vez quieres forzar el porcentaje manual, añade al cuerpo del issue una línea en inglés como:
+      
+          Progress: 40%
+      
+      Si esa línea no está presente, el % se calcula automáticamente con tu checklist (- [ ] / - [x]).
+
        
 
 
