@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EOS – Roadmap público</title>
+  <meta name="description" content="Evolución de módulos de la plataforma EOS (Go + Cassandra)" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="header">
+    <div class="container">
+      <h1>EOS – Roadmap público</h1>
+      <p>Seguimiento de módulos y estado. Actualiza <code>modules.json</code> para publicar cambios.</p>
+    </div>
+  </div>
+
+  <main class="container">
+    <section class="controls">
+      <select id="statusFilter" aria-label="Filtrar por estado">
+        <option value="">Todos los estados</option>
+        <option value="Planificado">Planificado</option>
+        <option value="En curso">En curso</option>
+        <option value="Hecho">Hecho</option>
+      </select>
+      <input id="search" type="search" placeholder="Buscar módulo..." />
+    </section>
+
+    <section id="grid" class="grid" aria-live="polite"></section>
+
+    <div class="footer" id="footer"></div>
+  </main>
+
+  <script>
+    const grid = document.getElementById('grid');
+    const statusFilter = document.getElementById('statusFilter');
+    const search = document.getElementById('search');
+    const footer = document.getElementById('footer');
+
+    let modules = [];
+
+    async function load() {
+      try {
+        const res = await fetch('modules.json', { cache: 'no-store' });
+        modules = await res.json();
+        render();
+      } catch (e) {
+        grid.innerHTML = '<p>No se pudo cargar <code>modules.json</code>. Verifica GitHub Pages.</p>';
+      }
+      footer.textContent = `Última actualización: ${new Date().toLocaleString()}`;
+    }
+
+    function badgeClass(estado) {
+      if (!estado) return 'badge';
+      const key = estado.toLowerCase().replace(/\s+/g,'');
+      return `badge ${key}`;
+    }
+
+    function render() {
+      const term = search.value.trim().toLowerCase();
+      const st = statusFilter.value;
+      const filtered = modules.filter(m => {
+        const matchStatus = !st || m.estado === st;
+        const matchText = !term || (m.nombre + ' ' + (m.descripcion||'')).toLowerCase().includes(term);
+        return matchStatus && matchText;
+      });
+
+      grid.innerHTML = filtered.map(m => `
+        <article class="card">
+          <h3>${m.nombre}</h3>
+          <span class="${badgeClass(m.estado)}">${m.estado||''}</span>
+          <p class="desc">${m.descripcion||''}</p>
+          <div class="progress" title="${m.porcentaje||0}%">
+            <div style="width:${Math.min(100, Math.max(0, m.porcentaje||0))}%"></div>
+          </div>
+          <div class="meta">
+            <span>Propietario: ${m.propietario||'—'}</span>
+            <span>Inicio: ${m.inicio||'—'}</span>
+            <span>ETA: ${m.eta||'—'}</span>
+            <span>Progreso: ${m.porcentaje||0}%</span>
+          </div>
+          ${Array.isArray(m.enlaces) && m.enlaces.length ? (`<div class="meta">` + m.enlaces.map(e => `<a class="link" href="${e.url}" target="_blank" rel="noopener">${e.label}</a>`).join(' · ') + `</div>`) : ''}
+        </article>
+      `).join('');
+
+      if (!filtered.length) {
+        grid.innerHTML = '<p>No hay módulos con ese filtro/búsqueda.</p>';
+      }
+    }
+
+    statusFilter.addEventListener('change', render);
+    search.addEventListener('input', render);
+
+    load();
+  </script>
+</body>
+</html>
