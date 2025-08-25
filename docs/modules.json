@@ -1,1 +1,26 @@
-null
+null[
+  {
+    "id": "issue-1",
+    "nombre": "Identidad y Acceso (IAM)",
+    "descripcion": "Invitaciones por correo, login, perfiles, roles y permisos (RBAC).",
+    "estado": "En curso",
+    "porcentaje": 35,
+    "propietario": "@ArturoPlascenciaRodriguez",
+    "inicio": "2025-08-15",
+    "eta": "2025-09-10",
+    "enlaces": [
+      { "label": "Issue", "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/1" }
+    ]
+  },
+  {
+    "id": "issue-2",
+    "nombre": "Programas y Proyectos",
+    "descripcion": "CRUD de programas, cohortes y proyectos; estados y filtros por rol.",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "@ArturoPlascenciaRodriguez",
+    "inicio": "2025-09-01",
+    "eta": "2025-09-30",
+    "enlaces": []
+  }
+]
