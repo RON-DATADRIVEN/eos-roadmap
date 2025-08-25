@@ -1,5 +1,5 @@
 package main
-#SINCRONIZADOR
+
 import (
 	"encoding/json"
 	"fmt"
@@ -11,38 +11,36 @@ import (
 	"time"
 )
 
-type Label struct { Name string `json:"name"` }
-
-type Milestone struct { DueOn *time.Time `json:"due_on"` }
-
-type User struct { Login string `json:"login"` }
+type Label struct{ Name string `json:"name"` }
+type Milestone struct{ DueOn *time.Time `json:"due_on"` }
+type User struct{ Login string `json:"login"` }
 
 type Issue struct {
-	Number      int         `json:"number"`
-	Title       string      `json:"title"`
-	Body        string      `json:"body"`
-	State       string      `json:"state"`
-	HTMLURL     string      `json:"html_url"`
-	CreatedAt   time.Time   `json:"created_at"`
+	Number      int       `json:"number"`
+	Title       string    `json:"title"`
+	Body        string    `json:"body"`
+	State       string    `json:"state"`
+	HTMLURL     string    `json:"html_url"`
+	CreatedAt   time.Time `json:"created_at"`
 	Milestone   *Milestone  `json:"milestone"`
 	Labels      []Label     `json:"labels"`
 	Assignees   []User      `json:"assignees"`
-	PullRequest *struct{}   `json:"pull_request,omitempty"` // para filtrar PRs
+	PullRequest *struct{}   `json:"pull_request,omitempty"`
 }
 
 type Module struct {
-	ID          string        `json:"id"`
-	Nombre      string        `json:"nombre"`
-	Descripcion string        `json:"descripcion"`
-	Estado      string        `json:"estado"`
-	Porcentaje  int           `json:"porcentaje"`
-	Propietario string        `json:"propietario"`
-	Inicio      string        `json:"inicio"`
-	ETA         string        `json:"eta"`
-	Enlaces     []Link        `json:"enlaces"`
+	ID          string `json:"id"`
+	Nombre      string `json:"nombre"`
+	Descripcion string `json:"descripcion"`
+	Estado      string `json:"estado"`
+	Porcentaje  int    `json:"porcentaje"`
+	Propietario string `json:"propietario"`
+	Inicio      string `json:"inicio"`
+	ETA         string `json:"eta"`
+	Enlaces     []Link `json:"enlaces"`
 }
 
-type Link struct { Label string `json:"label"`; URL string `json:"url"` }
+type Link struct{ Label string `json:"label"`; URL string `json:"url"` }
 
 func main() {
 	token := os.Getenv("GITHUB_TOKEN")
@@ -62,7 +60,7 @@ func main() {
 
 	var modules []Module
 	for _, is := range issues {
-		if is.PullRequest != nil { continue } // excluir PRs
+		if is.PullRequest != nil { continue }
 		if !hasLabel(is.Labels, moduleLabel) { continue }
 
 		estado := mapEstado(is)
@@ -134,10 +132,8 @@ func mapEstado(is Issue) string {
 }
 
 func calcProgress(is Issue) int {
-	// 1) Override: "Progress: NN%"
 	re := regexp.MustCompile(`(?i)progress:\s*(\d{1,3})%`)
 	if m := re.FindStringSubmatch(is.Body); len(m) == 2 { return atoiSafe(m[1]) }
-	// 2) Markdown tasks
 	reDone := regexp.MustCompile(`(?m)^\s*-\s*\[x\]\s+`)
 	done := len(reDone.FindAllStringIndex(is.Body, -1))
 	reTodo := regexp.MustCompile(`(?m)^\s*-\s*\[ \]\s+`)
@@ -184,11 +180,8 @@ func writeJSON(path string, v any) error {
 }
 
 func dir(p string) string { if i := strings.LastIndex(p, "/"); i >= 0 { return p[:i] }; return "." }
-
 func clamp(x, a, b int) int { if x < a { return a }; if x > b { return b }; return x }
-
 func atoiSafe(s string) int { n := 0; for _, ch := range s { if ch >= '0' && ch <= '9' { n = n*10 + int(ch-'0') } }; return n }
-
 func contains(arr []string, needle string) bool { for _, v := range arr { if v == needle { return true } }; return false }
-
 func fatal(msg string) { fmt.Fprintln(os.Stderr, "ERROR:", msg); os.Exit(1) }
+
