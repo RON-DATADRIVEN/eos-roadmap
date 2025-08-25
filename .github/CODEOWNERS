@@ -1,0 +1,8 @@
+# Dueños por defecto de TODO el repo (última coincidencia gana)
+* @RON-DATADRIVEN/owners @ArturoPlascenciaRodriguez
+
+# Todo lo público (página) lo revisa PO
+/docs/ @RON-DATADRIVEN/pm @ArturoPlascenciaRodriguez 
+
+# Config y workflows lo revisa DevOps
+/.github/ @RON-DATADRIVEN/devops @ArturoPlascenciaRodriguez
