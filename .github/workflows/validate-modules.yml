@@ -15,12 +15,14 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '20' }
 
-      # Ajv CLI moderno y formatos (para validar "format: uri")
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
       - name: Install ajv-cli + formats
         run: npm i -g ajv-cli@5 ajv-formats
 
@@ -29,15 +31,14 @@ jobs:
         if: ${{ hashFiles('docs/modules.json') == '' }}
         run: echo "No existe docs/modules.json; se omite validación."
 
-      # Validar usando el meta-schema local (sin red)
-      - name: Validate JSON (draft 2020-12, offline metaschema)
+      # Validación con draft 2020-12 (Ajv ya incluye el metaschema; no usar -r)
+      - name: Validate JSON (draft 2020-12, offline)
         if: ${{ hashFiles('docs/modules.json') != '' }}
         run: >
           ajv validate
           -s docs/modules.schema.json
           -d docs/modules.json
           --spec=draft2020
-          -r docs/meta/2020-12.schema.json
           -c ajv-formats
           --strict=false
 
