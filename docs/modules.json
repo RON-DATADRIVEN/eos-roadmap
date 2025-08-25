@@ -1,7 +1,7 @@
 [
   {
     "id": "issue-1",
-    "nombre": "Identidad y Acceso (IAM)",
+    "nombre": "Identidad y Acceso ( IAM)",
     "descripcion": "Invitaciones por correo, login, perfiles, roles y permisos (RBAC).",
     "estado": "En curso",
     "porcentaje": 35,
