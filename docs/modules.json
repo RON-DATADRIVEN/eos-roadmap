@@ -1,0 +1,59 @@
+[
+  {
+    "id": "iam",
+    "nombre": "Identidad y Acceso (IAM)",
+    "descripcion": "Invitaciones por correo, login, perfiles, roles y permisos (RBAC).",
+    "estado": "En curso",
+    "porcentaje": 35,
+    "propietario": "@ArturoPlascenciaRodriguez",
+    "inicio": "2025-08-15",
+    "eta": "2025-09-10",
+    "enlaces": [
+      {"label": "Issue", "url": "https://github.com/<org>/eos-roadmap/issues/1"}
+    ]
+  },
+  {
+    "id": "programas",
+    "nombre": "Programas y Proyectos",
+    "descripcion": "CRUD de programas, cohortes y proyectos; estados y filtros por rol.",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "@ArturoPlascenciaRodriguez",
+    "inicio": "2025-09-01",
+    "eta": "2025-09-30",
+    "enlaces": []
+  },
+  {
+    "id": "expertos",
+    "nombre": "Red de Expertos",
+    "descripcion": "Alta de expertos, skills, disponibilidad y matching básico por categoría/tema.",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "@ArturoPlascenciaRodriguez",
+    "inicio": "2025-09-15",
+    "eta": "2025-10-10",
+    "enlaces": []
+  },
+  {
+    "id": "servicios",
+    "nombre": "Servicios Profesionales",
+    "descripcion": "Catálogo con categoría (lista), costo, moneda, método de pago, tiempo de entrega, imagen y enlace de ejemplo.",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "@ArturoPlascenciaRodriguez",
+    "inicio": "2025-09-10",
+    "eta": "2025-10-05",
+    "enlaces": []
+  },
+  {
+    "id": "dashboards",
+    "nombre": "Dashboards por Rol",
+    "descripcion": "KPIs y alertas por rol (coordinador, PM, experto, emprendedor).",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "@ArturoPlascenciaRodriguez",
+    "inicio": "2025-10-01",
+    "eta": "2025-10-25",
+    "enlaces": []
+  }
+]
