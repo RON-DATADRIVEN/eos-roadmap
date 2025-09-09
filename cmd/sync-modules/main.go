@@ -35,10 +35,12 @@ type gqlRequest struct {
 	Query     string                 `json:"query"`
 	Variables map[string]interface{} `json:"variables"`
 }
+
 type gqlResponse struct {
 	Data   *gqlData       `json:"data"`
 	Errors []gqlRespError `json:"errors"`
 }
+
 type gqlRespError struct {
 	Message string `json:"message"`
 }
@@ -109,6 +111,7 @@ func main() {
 
 	out := getEnv("OUTPUT", "docs/modules.json")
 
+	// ORGANIZACIÓN y NÚMERO DE PROYECTO (Projects v2)
 	org := os.Getenv("PROJECT_ORG")
 	projectNumber := getenvInt("PROJECT_NUMBER", 3)
 	if org == "" {
@@ -132,11 +135,11 @@ func main() {
 
 	modules := make([]Module, 0, len(items))
 	for _, it := range items {
-		// Solo issues (evita PR/Draft si no deseas mostrarlos como módulos)
+		// Solo issues (evita PR/Draft como módulos)
 		if strings.ToLower(it.Content.Typename) != "issue" {
 			continue
 		}
-		// Filtra por label 'module' si así lo requieres
+		// Filtra por label 'module' en el issue
 		hasModule := false
 		for _, l := range it.Content.Labels.Nodes {
 			if strings.ToLower(l.Name) == moduleLabel {
@@ -159,7 +162,7 @@ func main() {
 			fv[v.Field.Name] = v
 		}
 
-		// estado
+		// Estado
 		estado := ""
 		if v, ok := fv["Status"]; ok && v.Name != "" {
 			estado = v.Name
@@ -174,47 +177,57 @@ func main() {
 			}
 		}
 
-		// porcentaje: Progreso/Progress/Percent (Number) -> entero 0..100
+		// Porcentaje (Progreso/Progress/Percent)
 		porc := -1
 		for _, key := range []string{"Progreso", "Progress", "Percent"} {
-			if v, ok := fv[key]; ok && v.Number != nil {
-				n := *v.Number
-				if n <= 1.0 {
-					porc = int(n*100 + 0.5)
-				} else {
-					porc = int(n + 0.5)
+			if v, ok := fv[key]; ok {
+				if v.Number != nil {
+					n := *v.Number
+					if n <= 1.0 {
+						porc = int(n*100 + 0.5)
+					} else {
+						porc = int(n + 0.5)
+					}
+					break
+				} else if v.Text != nil {
+					porc = atoiSafe(*v.Text)
+					break
 				}
-				break
 			}
 		}
 		if porc < 0 {
-			porc = calcProgressFromBody(body)
+			porc = calcProgressFromBody(body) // fallback a body (checklists / progress:)
 		}
 		porc = clamp(porc, 0, 100)
 
 		// ETA: campo 'ETA' -> milestone.dueOn -> 'eta:' en body
 		eta := ""
-		if v, ok := fv["ETA"]; ok && v.Date != nil {
-			eta = *v.Date
-		} else if it.Content.Milestone != nil && it.Content.Milestone.DueOn != nil {
-			eta = *it.Content.Milestone.DueOn
-			eta = strings.Split(eta, "T")[0]
-		} else {
-			eta = parseETAFromBody(body)
+		if v, ok := fv["ETA"]; ok {
+			if v.Date != nil {
+				eta = strings.Split(*v.Date, "T")[0]
+			} else if v.Text != nil {
+				eta = strings.TrimSpace(*v.Text)
+			}
+		}
+		if eta == "" {
+			if it.Content.Milestone != nil && it.Content.Milestone.DueOn != nil {
+				eta = strings.Split(*it.Content.Milestone.DueOn, "T")[0]
+			} else {
+				eta = parseETAFromBody(body)
+			}
 		}
 
-		// inicio: 'Start date' o createdAt
+		// Inicio: campo 'Start date' o createdAt
 		inicio := ""
 		if v, ok := fv["Start date"]; ok && v.Date != nil {
-			inicio = *v.Date
+			inicio = strings.Split(*v.Date, "T")[0]
 		} else if created != "" {
 			inicio = strings.Split(created, "T")[0]
 		}
 
-		// propietario
+		// Propietario (desde Project User field o directos del issue)
 		prop := joinUsersFromValues(fv, it)
 
-		// descripción
 		desc := firstParagraph(clean(body))
 
 		modules = append(modules, Module{
@@ -464,4 +477,3 @@ func fatal(msg string) {
 	fmt.Fprintln(os.Stderr, "ERROR:", msg)
 	os.Exit(1)
 }
-
