@@ -29,6 +29,8 @@ type Link struct {
 	URL   string `json:"url"`
 }
 
+/*** ---------------- GraphQL payloads ---------------- ***/
+
 type gqlRequest struct {
 	Query     string                 `json:"query"`
 	Variables map[string]interface{} `json:"variables"`
@@ -120,6 +122,7 @@ func main() {
 		fatal("PROJECT_ORG no definido y no pude inferirlo de REPO_SLUG/GITHUB_REPOSITORY")
 	}
 
+	// Si quieres limitar por label 'module' en el issue contenido:
 	moduleLabel := strings.ToLower(getEnv("MODULE_LABEL", "module"))
 
 	items, err := fetchProjectItems(token, org, projectNumber)
@@ -129,9 +132,11 @@ func main() {
 
 	modules := make([]Module, 0, len(items))
 	for _, it := range items {
+		// Solo issues (evita PR/Draft si no deseas mostrarlos como módulos)
 		if strings.ToLower(it.Content.Typename) != "issue" {
 			continue
 		}
+		// Filtra por label 'module' si así lo requieres
 		hasModule := false
 		for _, l := range it.Content.Labels.Nodes {
 			if strings.ToLower(l.Name) == moduleLabel {
@@ -148,11 +153,13 @@ func main() {
 		body := nz(it.Content.Body)
 		created := it.Content.CreatedAt
 
+		// Field map por nombre
 		fv := map[string]gqlFieldValue{}
 		for _, v := range it.FieldValues.Nodes {
 			fv[v.Field.Name] = v
 		}
 
+		// estado
 		estado := ""
 		if v, ok := fv["Status"]; ok && v.Name != "" {
 			estado = v.Name
@@ -167,6 +174,7 @@ func main() {
 			}
 		}
 
+		// porcentaje: Progreso/Progress/Percent (Number) -> entero 0..100
 		porc := -1
 		for _, key := range []string{"Progreso", "Progress", "Percent"} {
 			if v, ok := fv[key]; ok && v.Number != nil {
@@ -184,6 +192,7 @@ func main() {
 		}
 		porc = clamp(porc, 0, 100)
 
+		// ETA: campo 'ETA' -> milestone.dueOn -> 'eta:' en body
 		eta := ""
 		if v, ok := fv["ETA"]; ok && v.Date != nil {
 			eta = *v.Date
@@ -194,6 +203,7 @@ func main() {
 			eta = parseETAFromBody(body)
 		}
 
+		// inicio: 'Start date' o createdAt
 		inicio := ""
 		if v, ok := fv["Start date"]; ok && v.Date != nil {
 			inicio = *v.Date
@@ -201,7 +211,10 @@ func main() {
 			inicio = strings.Split(created, "T")[0]
 		}
 
+		// propietario
 		prop := joinUsersFromValues(fv, it)
+
+		// descripción
 		desc := firstParagraph(clean(body))
 
 		modules = append(modules, Module{
@@ -309,6 +322,8 @@ query ($org: String!, $number: Int!, $first: Int!, $after: String) {
 	}
 	return items, nil
 }
+
+/*** ---------------- helpers ---------------- ***/
 
 func firstParagraph(s string) string {
 	parts := strings.Split(s, "\n\n")
@@ -449,3 +464,4 @@ func fatal(msg string) {
 	fmt.Fprintln(os.Stderr, "ERROR:", msg)
 	os.Exit(1)
 }
+
