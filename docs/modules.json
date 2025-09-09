@@ -1,1 +1,114 @@
-null
+[
+  {
+    "id": "issue-68",
+    "nombre": "[ÉPICA] Fase 6 — Desmantelamiento controlado",
+    "descripcion": "﻿Objetivo: retirar el viejo EOS de forma ordenada.",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "inicio": "2025-09-04",
+    "eta": "",
+    "enlaces": [
+      {
+        "label": "Issue",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/68"
+      }
+    ]
+  },
+  {
+    "id": "issue-62",
+    "nombre": "[ÉPICA] Fase 5 — Corte (Blue/Green) y Monitoreo",
+    "descripcion": "Objetivo: hacer el switch de tráfico a nuevo EOS.",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "—",
+    "inicio": "2025-09-04",
+    "eta": "",
+    "enlaces": [
+      {
+        "label": "Issue",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/62"
+      }
+    ]
+  },
+  {
+    "id": "issue-56",
+    "nombre": "[ÉPICA] Fase 4 — Dual-write/Dual-read + Backfill",
+    "descripcion": "Objetivo: correr nuevo en paralelo al viejo sin riesgo.",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "—",
+    "inicio": "2025-09-04",
+    "eta": "",
+    "enlaces": [
+      {
+        "label": "Issue",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/56"
+      }
+    ]
+  },
+  {
+    "id": "issue-41",
+    "nombre": "[ÉPICA] Fase 3 — Microservicios y BFF",
+    "descripcion": "Objetivo: levantar servicios core con TDD y contratos claros.",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "inicio": "2025-09-03",
+    "eta": "",
+    "enlaces": [
+      {
+        "label": "Issue",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/41"
+      }
+    ]
+  },
+  {
+    "id": "issue-25",
+    "nombre": "[ÉPICA] Fase 2 — ETL reproducible + validación",
+    "descripcion": "Objetivo: pipeline ETL confiable y testeado.",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "inicio": "2025-09-03",
+    "eta": "",
+    "enlaces": [
+      {
+        "label": "Issue",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/25"
+      }
+    ]
+  },
+  {
+    "id": "issue-13",
+    "nombre": "[ÉPICA] Fase 1 — Modelo canónico y mapeo",
+    "descripcion": "Objetivo: congelar el modelo canónico (Cassandra) y el mapeo viejo→nuevo.",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "charlydelgado",
+    "inicio": "2025-09-01",
+    "eta": "",
+    "enlaces": [
+      {
+        "label": "Issue",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/13"
+      }
+    ]
+  },
+  {
+    "id": "issue-1",
+    "nombre": "[ÉPICA] Fase 0 — Descubrimiento y Salvaguarda",
+    "descripcion": "Objetivo: congelar el estado del EOS viejo.",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "inicio": "2025-09-01",
+    "eta": "",
+    "enlaces": [
+      {
+        "label": "Issue",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/1"
+      }
+    ]
+  }
+]
