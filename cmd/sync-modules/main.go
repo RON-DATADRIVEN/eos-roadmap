@@ -29,14 +29,18 @@ type Link struct {
 	URL   string `json:"url"`
 }
 
+/*** ---------------- GraphQL payloads ---------------- ***/
+
 type gqlRequest struct {
 	Query     string                 `json:"query"`
 	Variables map[string]interface{} `json:"variables"`
 }
+
 type gqlResponse struct {
 	Data   *gqlData       `json:"data"`
 	Errors []gqlRespError `json:"errors"`
 }
+
 type gqlRespError struct {
 	Message string `json:"message"`
 }
@@ -107,6 +111,7 @@ func main() {
 
 	out := getEnv("OUTPUT", "docs/modules.json")
 
+	// ORGANIZACIÓN y NÚMERO DE PROYECTO (Projects v2)
 	org := os.Getenv("PROJECT_ORG")
 	projectNumber := getenvInt("PROJECT_NUMBER", 3)
 	if org == "" {
@@ -120,6 +125,7 @@ func main() {
 		fatal("PROJECT_ORG no definido y no pude inferirlo de REPO_SLUG/GITHUB_REPOSITORY")
 	}
 
+	// Si quieres limitar por label 'module' en el issue contenido:
 	moduleLabel := strings.ToLower(getEnv("MODULE_LABEL", "module"))
 
 	items, err := fetchProjectItems(token, org, projectNumber)
@@ -129,9 +135,11 @@ func main() {
 
 	modules := make([]Module, 0, len(items))
 	for _, it := range items {
+		// Solo issues (evita PR/Draft como módulos)
 		if strings.ToLower(it.Content.Typename) != "issue" {
 			continue
 		}
+		// Filtra por label 'module' en el issue
 		hasModule := false
 		for _, l := range it.Content.Labels.Nodes {
 			if strings.ToLower(l.Name) == moduleLabel {
@@ -148,11 +156,13 @@ func main() {
 		body := nz(it.Content.Body)
 		created := it.Content.CreatedAt
 
+		// Field map por nombre
 		fv := map[string]gqlFieldValue{}
 		for _, v := range it.FieldValues.Nodes {
 			fv[v.Field.Name] = v
 		}
 
+		// Estado
 		estado := ""
 		if v, ok := fv["Status"]; ok && v.Name != "" {
 			estado = v.Name
@@ -167,6 +177,7 @@ func main() {
 			}
 		}
 
+		// Porcentaje (Progreso/Progress/Percent)
 		porc := -1
 		for _, key := range []string{"Progreso", "Progress", "Percent"} {
 			if v, ok := fv[key]; ok {
@@ -177,19 +188,19 @@ func main() {
 					} else {
 						porc = int(n + 0.5)
 					}
+					break
 				} else if v.Text != nil {
 					porc = atoiSafe(*v.Text)
-				}
-				if porc >= 0 {
 					break
 				}
 			}
 		}
 		if porc < 0 {
-			porc = calcProgressFromBody(body)
+			porc = calcProgressFromBody(body) // fallback a body (checklists / progress:)
 		}
 		porc = clamp(porc, 0, 100)
 
+		// ETA: campo 'ETA' -> milestone.dueOn -> 'eta:' en body
 		eta := ""
 		if v, ok := fv["ETA"]; ok {
 			if v.Date != nil {
@@ -206,6 +217,7 @@ func main() {
 			}
 		}
 
+		// Inicio: campo 'Start date' o createdAt
 		inicio := ""
 		if v, ok := fv["Start date"]; ok && v.Date != nil {
 			inicio = strings.Split(*v.Date, "T")[0]
@@ -213,7 +225,9 @@ func main() {
 			inicio = strings.Split(created, "T")[0]
 		}
 
+		// Propietario (desde Project User field o directos del issue)
 		prop := joinUsersFromValues(fv, it)
+
 		desc := firstParagraph(clean(body))
 
 		modules = append(modules, Module{
@@ -321,6 +335,8 @@ query ($org: String!, $number: Int!, $first: Int!, $after: String) {
 	}
 	return items, nil
 }
+
+/*** ---------------- helpers ---------------- ***/
 
 func firstParagraph(s string) string {
 	parts := strings.Split(s, "\n\n")
