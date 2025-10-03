@@ -5,15 +5,25 @@ on:
   schedule:
     - cron: "*/30 * * * *"   # cada 30 minutos
 
+# Permisos mínimos para el GITHUB_TOKEN (el PAT va como secret aparte)
 permissions:
-  contents: write             # para commit/push de docs/modules.json
-  issues: read                # leer issues (si lo usas en el futuro)
-  # OJO: repository-projects: read solo aplica a Projects "classic" del repo.
-  # Para Projects v2 de la org, usamos un PAT (PROJECTS_TOKEN).
+  contents: write             # commit/push o crear PR
+  issues: read                # (opcional) por si luego lees issues
+  # OJO: Projects v2 de la ORG NO se autorizan aquí. Para eso usamos secrets.PROJECTS_TOKEN.
+
+# Evita que dos ejecuciones pisen el mismo archivo al mismo tiempo
+concurrency:
+  group: sync-modules-json
+  cancel-in-progress: false
 
 jobs:
   sync:
     runs-on: ubuntu-latest
+    env:
+      ORG: RON-DATADRIVEN
+      PROJECT_NUMBER: "3"
+      OUTPUT: docs/modules.json
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,12 +39,12 @@ jobs:
             go.sum
             **/go.sum
 
-      # Sanity: usa el PAT con read:project/read:org (secret PROJECTS_TOKEN)
+      # Sanity: verifica acceso a Projects v2 con TU PAT (Projects classic ≠ Projects v2)
       - name: Sanity GraphQL (Projects v2)
         env:
-          GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}   # <-- CAMBIO CLAVE
-          ORG: RON-DATADRIVEN
-          PROJ: "3"
+          GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}   # PAT con scopes: project (read) y read:org
+          ORG: ${{ env.ORG }}
+          PROJ: ${{ env.PROJECT_NUMBER }}
         run: |
           set -euo pipefail
           gh api graphql -f query='
@@ -50,38 +60,43 @@ jobs:
           go mod tidy || true
           go build -o sync-modules ./cmd/sync-modules
 
-      # Ejecuta el binario con el MISMO PAT pero en la var que espera el código: GITHUB_TOKEN
+      # Ejecuta el binario usando el MISMO PAT pero en la var que espera el código: GITHUB_TOKEN
       - name: Run sync
         env:
-          GITHUB_TOKEN: ${{ secrets.PROJECTS_TOKEN }}  # <-- CAMBIO CLAVE (binario usa GITHUB_TOKEN)
-          ORG: RON-DATADRIVEN
-          PROJECT_NUMBER: "3"
-          OUTPUT: docs/modules.json
+          GITHUB_TOKEN: ${{ secrets.PROJECTS_TOKEN }}  # PAT para GraphQL Projects v2
+          ORG: ${{ env.ORG }}
+          PROJECT_NUMBER: ${{ env.PROJECT_NUMBER }}
+          OUTPUT: ${{ env.OUTPUT }}
         run: |
           set -euo pipefail
           ./sync-modules
 
-      # Commit directo (si main no es protegida). Si lo es, cambia por PR step.
+      # Commit directo a la rama actual (si la rama es protegida, usa el bloque de PR de abajo)
       - name: Commit & push if changed
         run: |
           set -euo pipefail
-          if ! git diff --quiet -- docs/modules.json; then
+          if ! git diff --quiet -- ${{ env.OUTPUT }}; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add docs/modules.json
+            git add ${{ env.OUTPUT }}
             git commit -m "ci(sync): update modules.json [skip ci]"
             git push
           else
             echo "No changes to commit."
           fi
 
-      # Alternativa si main es protegida:
+      # --- Alternativa si la rama de destino es protegida (habilita este bloque y comenta el de commit/push):
       # - name: Create Pull Request
       #   if: success()
       #   uses: peter-evans/create-pull-request@v6
       #   with:
-      #     add-paths: docs/modules.json         # <-- limita el PR a ese archivo
+      #     add-paths: ${{ env.OUTPUT }}              # limita el PR a ese archivo
       #     branch: chore/sync-modules-json
-      #     title: 'ci(sync): update modules.json'
-      #     commit-message: 'ci(sync): update modules.json'
-      #     body: 'Actualización automática desde Project EOS 2.0'
+      #     title: "ci(sync): update modules.json"
+      #     commit-message: "ci(sync): update modules.json"
+      #     body: "Actualización automática desde Project EOS 2.0"
+      #
+      # # Si usas el bloque de PR, añade este permiso arriba:
+      # # permissions:
+      # #   contents: write
+      # #   pull-requests: write
