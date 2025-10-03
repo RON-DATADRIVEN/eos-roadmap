@@ -1,13 +1,14 @@
 name: Sync modules.json from Issues
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
   schedule:
-    - cron: '*/30 * * * *'  # cada 30 minutos
+    - cron: '*/30 * * * *'
 
 permissions:
-  contents: write   # para commitear modules.json
+  contents: write
   issues: read
+  projects: read
 
 jobs:
   sync:
@@ -15,34 +16,39 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.22.x'
+          cache: true
+          cache-dependency-path: |
+            go.sum
+            **/go.sum
 
       - name: Build sync tool
         run: |
-          go mod tidy
+          set -euo pipefail
+          go mod tidy || true
           go build -o sync-modules ./cmd/sync-modules
 
       - name: Run sync
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO_SLUG: ${{ github.repository }} # owner/repo
+          GITHUB_TOKEN: ${{ github.token }}
+          ORG: RON-DATADRIVEN
+          PROJECT_NUMBER: '3'
           OUTPUT: docs/modules.json
-          MODULE_LABEL: module
         run: |
+          set -euo pipefail
           ./sync-modules
 
-      - name: Commit & push if changed
-        run: |
-          if ! git diff --quiet -- docs/modules.json; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add docs/modules.json
-            git commit -m "chore(roadmap): sync modules.json from Issues [skip ci]"
-            git push
-          else
-            echo "No changes to commit."
-          fi
+      - name: Create Pull Request
+        if: success()
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: chore/sync-modules-json
+          title: 'chore: sync modules.json'
+          commit-message: 'chore: sync modules.json'
+          body: 'Actualización automática desde Project EOS 2.0'
