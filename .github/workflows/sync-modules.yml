@@ -1,30 +1,46 @@
 name: Sync modules.json from Issues
 
 on:
+  # Permite lanzarlo manualmente desde la pestaña "Actions"
   workflow_dispatch: {}
+  # Corre cada 30 minutos (ajústalo si quieres)
   schedule:
-    - cron: "*/30 * * * *"     # cada 30 min
-  # Opcional: ejecuta en pushes solo si tocas estas rutas
-  push:
-    paths:
-      - ".github/workflows/sync-modules.yml"
-      - "cmd/sync-modules/**"
+    - cron: "*/30 * * * *"
 
+# Permisos mínimos para el trabajo:
+# - contents: write -> para commitear/crear rama y abrir PR
+# - pull-requests: write -> para abrir/actualizar el PR
+# - issues: read -> por si se consultan issues
+# - repository-projects: read -> inofensivo; el acceso real lo da el PAT del secreto
 permissions:
-  contents: write              # commit/crear PR
-  pull-requests: write         # crear/actualizar PR
-  issues: read                 # leer issues
-  repository-projects: read    # Projects v2 (org)
+  contents: write
+  pull-requests: write
+  issues: read
+  repository-projects: read
+
+# Evita ejecuciones traslapadas de este mismo flujo
+concurrency:
+  group: sync-modules-json
+  cancel-in-progress: true
 
 jobs:
   sync:
     runs-on: ubuntu-latest
+
+    # Variables comunes del job (ajusta si cambian)
+    env:
+      ORG: RON-DATADRIVEN
+      PROJECT_NUMBER: "3"
+      OUTPUT: docs/modules.json
+
     steps:
+      # 1) Trae el repo
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      # 2) Go listo y con cache (si tienes go.sum en el repo)
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -34,70 +50,64 @@ jobs:
             go.sum
             **/go.sum
 
-      # Sanity: valida que el token puede leer Projects v2
-      - name: Sanity GraphQL (Projects v2)
+      # 3) Sanity: prueba que el PAT tiene acceso a Projects v2 de la organización
+      #    OJO: gh CLI usa GH_TOKEN, no GITHUB_TOKEN
+      - name: Sanity GraphQL (Projects v2 con PAT)
         env:
-          GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}   # <= usa tu PAT
+          GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}   # PAT con al menos read:project (+ read:org si el project es privado)
         run: |
           set -euo pipefail
           gh api graphql -f query='
           query($org:String!, $n:Int!){
             organization(login:$org){
-              projectV2(number:$n){
-                items(first:1){
-                  nodes{
-                    area: fieldValueByName(name:"Area"){
-                      __typename
-                      ... on ProjectV2ItemFieldSingleSelectValue { name }
-                    }
-                  }
-                }
-              }
+              projectV2(number:$n){ id }
             }
-          }' -f org=RON-DATADRIVEN -F n=3 >/dev/null
+          }' -f org="$ORG" -F n="$PROJECT_NUMBER" >/dev/null
 
+      # 4) Construye el binario (usa vendor/ si lo manejas así)
       - name: Build sync tool
         run: |
           set -euo pipefail
           go mod tidy || true
           go build -o sync-modules ./cmd/sync-modules
+          ls -l sync-modules
 
-      - name: Run sync
+      # 5) Ejecuta el export: tu binario lee GITHUB_TOKEN (le pasamos el PAT)
+      - name: Run sync (genera docs/modules.json)
         env:
-          GITHUB_TOKEN: ${{ secrets.PROJECTS_TOKEN }}  # <= usa tu PAT en el binario
-          ORG: RON-DATADRIVEN
-          PROJECT_NUMBER: "3"
-          OUTPUT: docs/modules.json
+          GITHUB_TOKEN: ${{ secrets.PROJECTS_TOKEN }}  # PAT con read:project
+          ORG: ${{ env.ORG }}
+          PROJECT_NUMBER: ${{ env.PROJECT_NUMBER }}
+          OUTPUT: ${{ env.OUTPUT }}
         run: |
           set -euo pipefail
           ./sync-modules
+          test -s "$OUTPUT" && echo "OK: $OUTPUT generado"
 
-      # Opción 1: si main NO es protegida (push directo)
+      # 6) Abre un PR solo con el archivo actualizado (ideal si main está protegida)
+      - name: Create Pull Request con docs/modules.json
+        if: success()
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ github.token }}            # Para crear rama/PR en este repo
+          branch: ci/sync-modules-json          # Rama temporal del bot
+          title: "ci(sync): update modules.json"
+          commit-message: "ci(sync): update modules.json"
+          body: "Actualización automática desde Project EOS 2.0."
+          add-paths: |                           # Limita el PR a este archivo
+            docs/modules.json
+          delete-branch: true
+
+      # (Alternativa a PR: push directo. Úsala solo si main NO está protegida)
       # - name: Commit & push if changed
       #   run: |
       #     set -euo pipefail
       #     if ! git diff --quiet -- docs/modules.json; then
-      #       git config user.name "github-actions[bot]"
+      #       git config user.name  "github-actions[bot]"
       #       git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
       #       git add docs/modules.json
-      #       git commit -m "chore(roadmap): sync modules.json from Issues [skip ci]"
+      #       git commit -m "ci(sync): update modules.json [skip ci]"
       #       git push
       #     else
       #       echo "No changes to commit."
       #     fi
-
-      # Opción 2 (recomendada): main protegida → PR solo con el PATH deseado
-      - name: Create Pull Request (docs/modules.json only)
-        if: success()
-        uses: peter-evans/create-pull-request@v6
-        with:
-          branch: chore/sync-modules-json
-          title: "ci(sync): update modules.json"
-          commit-message: "ci(sync): update modules.json"
-          body: "Actualización automática desde Project EOS 2.0"
-          add-paths: |                 # <= AQUÍ usas *el Path* a incluir en el PR
-            docs/modules.json
-          labels: |
-            automation
-            roadmap
-
