@@ -42,7 +42,7 @@ type Item struct {
 	} `graphql:"size: fieldValueByName(name:\"Size\")"`
 
 	Iter struct {
-		Typename  githubv4.String `graphql:"__typename"`
+		Typename  githubv4.String               `graphql:"__typename"`
 		Iteration struct {
 			Title     githubv4.String
 			StartDate githubv4.DateTime
