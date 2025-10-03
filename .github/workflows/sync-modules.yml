@@ -1,14 +1,14 @@
 name: Sync modules.json from Issues
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: {}
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '*/30 * * * *'  # cada 30 minutos
 
 permissions:
-  contents: write
-  issues: read
-  repository-projects: read
+  contents: write             # para commitear/crear PR
+  issues: read                # leer issues
+  repository-projects: read   # <-- necesario para Projects v2
 
 jobs:
   sync:
@@ -23,20 +23,45 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.22.x'
+          # Si NO usas vendor/, puedes activar cache:
           cache: true
           cache-dependency-path: |
             go.sum
             **/go.sum
 
+      # (Opcional pero útil) sanity check: GraphQL Projects v2 funciona con el token
+      - name: Sanity GraphQL (Projects v2)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api graphql -f query='
+          query($org:String!, $n:Int!){
+            organization(login:$org){
+              projectV2(number:$n){
+                items(first:1){
+                  nodes{
+                    area: fieldValueByName(name:"Area"){
+                      __typename
+                      ... on ProjectV2ItemFieldSingleSelectValue { name }
+                    }
+                  }
+                }
+              }
+            }
+          }' -f org=RON-DATADRIVEN -F n=3 >/dev/null
+
       - name: Build sync tool
         run: |
           set -euo pipefail
-          go mod tidy || true
+          # Si tienes vendor/ en el repo, usa:
+          # go build -mod=vendor -ldflags "-s -w" -o sync-modules ./cmd/sync-modules
+          go mod tidy
           go build -o sync-modules ./cmd/sync-modules
 
       - name: Run sync
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}  # usa la forma recomendada
           ORG: RON-DATADRIVEN
           PROJECT_NUMBER: '3'
           OUTPUT: docs/modules.json
@@ -44,11 +69,28 @@ jobs:
           set -euo pipefail
           ./sync-modules
 
-      - name: Create Pull Request
-        if: success()
-        uses: peter-evans/create-pull-request@v6
-        with:
-          branch: chore/sync-modules-json
-          title: 'chore: sync modules.json'
-          commit-message: 'chore: sync modules.json'
-          body: 'Actualización automática desde Project EOS 2.0'
+      # Si main NO es protegida y quieres push directo, deja este bloque;
+      # si está protegida, comenta este y usa el paso de PR de abajo.
+      - name: Commit & push if changed
+        run: |
+          set -euo pipefail
+          if ! git diff --quiet -- docs/modules.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add docs/modules.json
+            git commit -m "chore(roadmap): sync modules.json from Issues [skip ci]"
+            git push
+          else
+            echo "No changes to commit."
+          fi
+
+      # ---> Alternativa si main ES protegida (descomenta esto y comenta el bloque anterior):
+      # - name: Create Pull Request
+      #   if: success()
+      #   uses: peter-evans/create-pull-request@v6
+      #   with:
+      #     branch: chore/sync-modules-json
+      #     title: 'ci(sync): update modules.json'
+      #     commit-message: 'ci(sync): update modules.json'
+      #     body: 'Actualización automática desde Project EOS 2.0'
+
