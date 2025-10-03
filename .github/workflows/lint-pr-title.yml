@@ -12,7 +12,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          types: >
-            chore,docs,feat,fix,refactor,style,test,ci,ops
-          scopes: >
-            module,roadmap,docs,automation,labels,pages
+          titleOnly: true
+          types: |
+            chore
+            docs
+            feat
+            fix
+            refactor
+            style
+            test
+            ci
+            ops
+          # Opción A: permitir 'graphql' como scope
+          scopes: |
+            module
+            roadmap
+            docs
+            automation
+            labels
+            pages
+            graphql
+          # Opción B (en lugar de A): quita 'scopes' por completo para no restringirlos
