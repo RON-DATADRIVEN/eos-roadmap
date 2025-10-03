@@ -33,4 +33,3 @@ jobs:
             pages
             graphql
           # Opción B (en lugar de A): quita 'scopes' por completo para no restringirlos
-
