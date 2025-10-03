@@ -27,22 +27,22 @@ type Item struct {
 	} `graphql:"area: fieldValueByName(name:\"Area\")"`
 
 	Status struct {
-		Typename githubv4.String
+		Typename githubv4.String                `graphql:"__typename"`
 		Single   struct{ Name githubv4.String } `graphql:"... on ProjectV2ItemFieldSingleSelectValue"`
 	} `graphql:"status: fieldValueByName(name:\"Status\")"`
 
 	Prioridad struct {
-		Typename githubv4.String
+		Typename githubv4.String                `graphql:"__typename"`
 		Single   struct{ Name githubv4.String } `graphql:"... on ProjectV2ItemFieldSingleSelectValue"`
 	} `graphql:"prioridad: fieldValueByName(name:\"Prioridad\")"`
 
 	Size struct {
-		Typename githubv4.String
+		Typename githubv4.String                `graphql:"__typename"`
 		Single   struct{ Name githubv4.String } `graphql:"... on ProjectV2ItemFieldSingleSelectValue"`
 	} `graphql:"size: fieldValueByName(name:\"Size\")"`
 
 	Iter struct {
-		Typename  githubv4.String
+		Typename  githubv4.String               `graphql:"__typename"`
 		Iteration struct {
 			Title     githubv4.String
 			StartDate githubv4.DateTime
@@ -51,13 +51,17 @@ type Item struct {
 	} `graphql:"iter: fieldValueByName(name:\"Iteration\")"`
 
 	Start struct {
-		Typename githubv4.String
-		Date     githubv4.DateTime `graphql:"date"`
+		Typename githubv4.String `graphql:"__typename"`
+		DateVal  struct {
+			Date githubv4.DateTime
+		} `graphql:"... on ProjectV2ItemFieldDateValue"`
 	} `graphql:"start: fieldValueByName(name:\"Start date\")"`
 
 	ETA struct {
-		Typename githubv4.String
-		Date     githubv4.DateTime `graphql:"date"`
+		Typename githubv4.String `graphql:"__typename"`
+		DateVal  struct {
+			Date githubv4.DateTime
+		} `graphql:"... on ProjectV2ItemFieldDateValue"`
 	} `graphql:"eta: fieldValueByName(name:\"ETA\")"`
 }
 
@@ -171,8 +175,8 @@ func main() {
 				Status:    singleName(it.Status),
 				Prioridad: singleName(it.Prioridad),
 				Size:      singleName(it.Size),
-				StartDate: toISO(it.Start.Date),
-				ETA:       toISO(it.ETA.Date),
+				StartDate: toISO(it.Start.DateVal.Date),
+				ETA:       toISO(it.ETA.DateVal.Date),
 			}
 			if it.Iter.Typename == "ProjectV2ItemFieldIterationValue" {
 				m.Iteration = string(it.Iter.Iteration.Title)
