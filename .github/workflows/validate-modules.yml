@@ -2,6 +2,8 @@ name: Validate modules.json
 
 on:
   push:
+    branches:
+      - main
     paths:
       - 'docs/modules.json'
       - 'docs/modules.schema.json'
@@ -34,11 +36,10 @@ jobs:
       # Validación con draft 2020-12 (Ajv ya incluye el metaschema; no usar -r)
       - name: Validate JSON (draft 2020-12, offline)
         if: ${{ hashFiles('docs/modules.json') != '' }}
-        run: >
-          ajv validate
-          -s docs/modules.schema.json
-          -d docs/modules.json
-          --spec=draft2020
-          -c ajv-formats
-          --strict=false
-
+        run: |
+          ajv validate \
+            -s docs/modules.schema.json \
+            -d docs/modules.json \
+            --spec=draft2020 \
+            -c ajv-formats \
+            --strict=false
