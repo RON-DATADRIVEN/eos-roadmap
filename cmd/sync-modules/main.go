@@ -1,20 +1,25 @@
 package main
-package flexdate
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"strconv"
 	"time"
+
+	"github.com/shurcooL/githubv4"
 )
 
-// GHFlexDate acepta "YYYY-MM-DD" (Date) y "YYYY-MM-DDTHH:MM:SSZ" (DateTime).
+// ---------- Flex date that accepts "YYYY-MM-DD" or RFC3339 ----------
 type GHFlexDate struct {
 	time.Time
 	Raw string
 }
 
 func (fd *GHFlexDate) UnmarshalJSON(b []byte) error {
-	// Null o string vacío
 	if string(b) == "null" {
 		fd.Time = time.Time{}
 		fd.Raw = ""
@@ -29,7 +34,7 @@ func (fd *GHFlexDate) UnmarshalJSON(b []byte) error {
 		fd.Time = time.Time{}
 		return nil
 	}
-	// 1) DateTime (RFC3339 / RFC3339Nano)
+	// DateTime (RFC3339 / RFC3339Nano)
 	if t, err := time.Parse(time.RFC3339, s); err == nil {
 		fd.Time = t
 		return nil
@@ -38,7 +43,7 @@ func (fd *GHFlexDate) UnmarshalJSON(b []byte) error {
 		fd.Time = t
 		return nil
 	}
-	// 2) Date (YYYY-MM-DD) -> lo parseamos en UTC
+	// Date only (YYYY-MM-DD) -> parse in UTC
 	if t, err := time.ParseInLocation("2006-01-02", s, time.UTC); err == nil {
 		fd.Time = t
 		return nil
@@ -46,32 +51,24 @@ func (fd *GHFlexDate) UnmarshalJSON(b []byte) error {
 	return fmt.Errorf("GHFlexDate: formato no reconocido: %q", s)
 }
 
-// Helpers de salida
 func (fd GHFlexDate) IsZero() bool { return fd.Time.IsZero() }
-
 func (fd GHFlexDate) ISODate() string {
-	if fd.IsZero() { return "" }
+	if fd.IsZero() {
+		return ""
+	}
 	return fd.Time.UTC().Format("2006-01-02")
 }
-
 func (fd GHFlexDate) ISODateTime() string {
-	if fd.IsZero() { return "" }
+	if fd.IsZero() {
+		return ""
+	}
 	return fd.Time.UTC().Format(time.RFC3339)
 }
 
+// Helper para imprimir YYYY-MM-DD
+func toISO(d GHFlexDate) string { return d.ISODate() }
 
-import (
-	"context"
-	"encoding/json"
-	"log"
-	"net/http"
-	"os"
-	"strconv"
-	"time"
-
-	"github.com/shurcooL/githubv4"
-)
-
+// ---------- GraphQL types ----------
 type Item struct {
 	Content struct {
 		Issue struct {
@@ -105,7 +102,7 @@ type Item struct {
 		Typename  githubv4.String `graphql:"__typename"`
 		Iteration struct {
 			Title     githubv4.String
-			StartDate githubv4.Date
+			StartDate GHFlexDate // <- acepta Date o DateTime
 			Duration  int
 		} `graphql:"... on ProjectV2ItemFieldIterationValue"`
 	} `graphql:"iter: fieldValueByName(name:\"Iteration\")"`
@@ -113,14 +110,14 @@ type Item struct {
 	Start struct {
 		Typename githubv4.String `graphql:"__typename"`
 		DateVal  struct {
-			Date githubv4.Date
+			Date GHFlexDate // <- acepta Date o DateTime
 		} `graphql:"... on ProjectV2ItemFieldDateValue"`
 	} `graphql:"start: fieldValueByName(name:\"Start date\")"`
 
 	ETA struct {
 		Typename githubv4.String `graphql:"__typename"`
 		DateVal  struct {
-			Date githubv4.Date
+			Date GHFlexDate // <- acepta Date o DateTime
 		} `graphql:"... on ProjectV2ItemFieldDateValue"`
 	} `graphql:"eta: fieldValueByName(name:\"ETA\")"`
 }
@@ -141,6 +138,7 @@ type Query struct {
 	} `graphql:"organization(login: $org)"`
 }
 
+// ---------- Output JSON ----------
 type ModuleOut struct {
 	Issue     int    `json:"issue"`
 	Title     string `json:"title"`
@@ -163,13 +161,7 @@ func singleName(typename githubv4.String, name githubv4.String) string {
 	return ""
 }
 
-func toISO(d githubv4.Date) string {
-	if d.Time.IsZero() {
-		return ""
-	}
-	return d.Time.Format("2006-01-02")
-}
-
+// ---------- Main ----------
 func main() {
 	log.SetFlags(0)
 
@@ -195,7 +187,6 @@ func main() {
 		log.Fatal("GITHUB_TOKEN no está definido")
 	}
 
-	// HTTP client con auth
 	httpClient := &http.Client{
 		Transport: roundTripperWithToken{token: token},
 		Timeout:   30 * time.Second,
@@ -219,7 +210,6 @@ func main() {
 		}
 
 		for _, it := range q.Org.Project.Items.Nodes {
-			// Sólo Issues; ignora PRs/Drafts si aparecieran
 			iss := it.Content.Issue
 			if iss.Number == 0 {
 				continue
@@ -249,7 +239,7 @@ func main() {
 		after = &q.Org.Project.Items.PageInfo.EndCursor
 	}
 
-	// Crea carpeta si no existe
+	// Crear carpeta si no existe y escribir JSON
 	if err := os.MkdirAll(dirOf(outPath), 0o755); err != nil {
 		log.Fatalf("mkdir: %v", err)
 	}
@@ -266,6 +256,7 @@ func main() {
 	log.Printf("OK: escrito %s con %d elementos", outPath, len(all))
 }
 
+// ---------- Utils ----------
 type roundTripperWithToken struct{ token string }
 
 func (rt roundTripperWithToken) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -282,4 +273,3 @@ func dirOf(p string) string {
 	}
 	return "."
 }
-
