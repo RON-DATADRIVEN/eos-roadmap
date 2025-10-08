@@ -42,7 +42,7 @@ type Item struct {
 	} `graphql:"size: fieldValueByName(name:\"Size\")"`
 
 	Iter struct {
-		Typename  githubv4.String               `graphql:"__typename"`
+		Typename  githubv4.String `graphql:"__typename"`
 		Iteration struct {
 			Title     githubv4.String
 			StartDate githubv4.DateTime
@@ -96,21 +96,18 @@ type ModuleOut struct {
 	ETA       string `json:"eta,omitempty"`
 }
 
-func singleName(v struct {
-	Typename githubv4.String
-	Single   struct{ Name githubv4.String }
-}) string {
-	if v.Typename == "ProjectV2ItemFieldSingleSelectValue" {
-		return string(v.Single.Name)
+func singleName(typename githubv4.String, name githubv4.String) string {
+	if typename == "ProjectV2ItemFieldSingleSelectValue" {
+		return string(name)
 	}
 	return ""
 }
 
 func toISO(d githubv4.DateTime) string {
-	if d.Time().IsZero() {
+	if d.Time.IsZero() {
 		return ""
 	}
-	return d.Time().Format("2006-01-02")
+	return d.Time.Format("2006-01-02")
 }
 
 func main() {
@@ -171,10 +168,10 @@ func main() {
 				Issue:     iss.Number,
 				Title:     iss.Title,
 				URL:       iss.URL.String(),
-				Area:      singleName(it.Area),
-				Status:    singleName(it.Status),
-				Prioridad: singleName(it.Prioridad),
-				Size:      singleName(it.Size),
+				Area:      singleName(it.Area.Typename, it.Area.Single.Name),
+				Status:    singleName(it.Status.Typename, it.Status.Single.Name),
+				Prioridad: singleName(it.Prioridad.Typename, it.Prioridad.Single.Name),
+				Size:      singleName(it.Size.Typename, it.Size.Single.Name),
 				StartDate: toISO(it.Start.DateVal.Date),
 				ETA:       toISO(it.ETA.DateVal.Date),
 			}
