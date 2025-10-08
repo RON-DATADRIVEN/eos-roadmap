@@ -1,4 +1,64 @@
 package main
+package flexdate
+
+import (
+	"encoding/json"
+	"fmt"
+	"time"
+)
+
+// GHFlexDate acepta "YYYY-MM-DD" (Date) y "YYYY-MM-DDTHH:MM:SSZ" (DateTime).
+type GHFlexDate struct {
+	time.Time
+	Raw string
+}
+
+func (fd *GHFlexDate) UnmarshalJSON(b []byte) error {
+	// Null o string vacío
+	if string(b) == "null" {
+		fd.Time = time.Time{}
+		fd.Raw = ""
+		return nil
+	}
+	var s string
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+	fd.Raw = s
+	if s == "" {
+		fd.Time = time.Time{}
+		return nil
+	}
+	// 1) DateTime (RFC3339 / RFC3339Nano)
+	if t, err := time.Parse(time.RFC3339, s); err == nil {
+		fd.Time = t
+		return nil
+	}
+	if t, err := time.Parse(time.RFC3339Nano, s); err == nil {
+		fd.Time = t
+		return nil
+	}
+	// 2) Date (YYYY-MM-DD) -> lo parseamos en UTC
+	if t, err := time.ParseInLocation("2006-01-02", s, time.UTC); err == nil {
+		fd.Time = t
+		return nil
+	}
+	return fmt.Errorf("GHFlexDate: formato no reconocido: %q", s)
+}
+
+// Helpers de salida
+func (fd GHFlexDate) IsZero() bool { return fd.Time.IsZero() }
+
+func (fd GHFlexDate) ISODate() string {
+	if fd.IsZero() { return "" }
+	return fd.Time.UTC().Format("2006-01-02")
+}
+
+func (fd GHFlexDate) ISODateTime() string {
+	if fd.IsZero() { return "" }
+	return fd.Time.UTC().Format(time.RFC3339)
+}
+
 
 import (
 	"context"
