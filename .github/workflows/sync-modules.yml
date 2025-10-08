@@ -5,12 +5,10 @@ on:
   schedule:
     - cron: "*/30 * * * *"   # cada 30 minutos
 
-# Permisos del GITHUB_TOKEN del job (el acceso a Projects v2 lo da PROJECTS_TOKEN)
 permissions:
-  contents: write             # commit/push o PR
-  issues: read                # opcional, por si luego consultas issues
+  contents: write
+  issues: read
 
-# Evita solapes si se encola otra ejecución
 concurrency:
   group: sync-modules-json
   cancel-in-progress: false
@@ -24,9 +22,10 @@ jobs:
       OUTPUT: docs/modules.json
 
     steps:
-      - name: Checkout
+      - name: Checkout @ triggering commit
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.sha }}   # fuerza el commit exacto que disparó el run
           fetch-depth: 0
 
       - name: Setup Go
@@ -38,24 +37,31 @@ jobs:
             go.sum
             **/go.sum
 
-      # Sanity: fuerza a gh a usar TU PAT (PROJECTS_TOKEN) y muestra viewer/scopes/SSO/projects
+      - name: Sanity repo (HEAD/replace/vendor)
+        run: |
+          set -euo pipefail
+          echo "HEAD:"; git log -1 --oneline
+          echo "replace en go.mod:"
+          grep -n 'replace github.com/shurcooL/githubv4 => ./third_party/githubv4' go.mod
+          echo "¿existe third_party/githubv4/go.mod?"
+          test -f third_party/githubv4/go.mod && echo "OK" || (echo "Falta vendor third_party/githubv4" && exit 1)
+          echo "Comprobando replace con go list:"
+          go list -m -json github.com/shurcooL/githubv4 | sed -n '1,120p'
+
       - name: Sanity GraphQL (Projects v2)
         env:
-          GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}       # PAT con scopes: project (read) y read:org
-          GITHUB_TOKEN: ${{ secrets.PROJECTS_TOKEN }}   # por si alguna lib lee GITHUB_TOKEN
+          GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
           ORG: ${{ env.ORG }}
           PROJ: ${{ env.PROJECT_NUMBER }}
         run: |
           set -euo pipefail
           echo "Viewer con este token:"
           gh api graphql -f query='{ viewer { login } }' --jq '.data.viewer.login'
-
           echo "Scopes del PAT:"
           gh api -i user | sed -n 's/^X-Oauth-Scopes: //p'
-
           echo "Header SSO (si aplica, debe decir 'authorized'):"
           gh api -i orgs/$ORG | sed -n '/^X-GitHub-SSO/p' || true
-
           echo "Projects v2 visibles en $ORG:"
           gh api graphql -f query='
           query($org:String!){
@@ -65,7 +71,6 @@ jobs:
               }
             }
           }' -f org="$ORG" --jq '.data.organization.projectsV2.nodes'
-
           echo "Probar acceso directo a ProjectV2 #$PROJ"
           gh api graphql -f query='
           query($org:String!, $n:Int!){
@@ -80,11 +85,10 @@ jobs:
           go mod tidy || true
           go build -o sync-modules ./cmd/sync-modules
 
-      # Ejecuta el binario usando el MISMO PAT en GITHUB_TOKEN
       - name: Run sync
         env:
-          GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}        # por si algo invoca gh
-          GITHUB_TOKEN: ${{ secrets.PROJECTS_TOKEN }}    # el binario usa esta var
+          GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
           ORG: ${{ env.ORG }}
           PROJECT_NUMBER: ${{ env.PROJECT_NUMBER }}
           OUTPUT: ${{ env.OUTPUT }}
@@ -92,7 +96,6 @@ jobs:
           set -euo pipefail
           ./sync-modules
 
-      # Commit directo (si la rama destino no es protegida). Si es protegida, usa el bloque de PR.
       - name: Commit & push if changed
         run: |
           set -euo pipefail
@@ -105,14 +108,3 @@ jobs:
           else
             echo "No changes to commit."
           fi
-
-      # --- Alternativa: crear PR si la rama es protegida (descomenta y comenta el bloque anterior)
-      # - name: Create Pull Request
-      #   if: success()
-      #   uses: peter-evans/create-pull-request@v6
-      #   with:
-      #     add-paths: ${{ env.OUTPUT }}              # limita el PR al JSON
-      #     branch: chore/sync-modules-json
-      #     title: "ci(sync): update modules.json"
-      #     commit-message: "ci(sync): update modules.json"
-      #     body: "Actualización automática desde Project EOS 2.0"
