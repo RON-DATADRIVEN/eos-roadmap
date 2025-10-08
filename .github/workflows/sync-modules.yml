@@ -22,11 +22,12 @@ jobs:
       OUTPUT: docs/modules.json
 
     steps:
-      - name: Checkout @ triggering commit
+      - name: Checkout @ branch main
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }}   # fuerza el commit exacto que disparó el run
+          ref: main              # evita detached HEAD
           fetch-depth: 0
+          persist-credentials: true
 
       - name: Setup Go
         uses: actions/setup-go@v5
