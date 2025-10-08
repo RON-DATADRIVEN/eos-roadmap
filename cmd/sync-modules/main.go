@@ -45,7 +45,7 @@ type Item struct {
 		Typename  githubv4.String `graphql:"__typename"`
 		Iteration struct {
 			Title     githubv4.String
-			StartDate githubv4.Date // <-- Date (no DateTime)
+			StartDate githubv4.Date
 			Duration  int
 		} `graphql:"... on ProjectV2ItemFieldIterationValue"`
 	} `graphql:"iter: fieldValueByName(name:\"Iteration\")"`
@@ -53,14 +53,14 @@ type Item struct {
 	Start struct {
 		Typename githubv4.String `graphql:"__typename"`
 		DateVal  struct {
-			Date githubv4.Date // <-- Date (no DateTime)
+			Date githubv4.Date
 		} `graphql:"... on ProjectV2ItemFieldDateValue"`
 	} `graphql:"start: fieldValueByName(name:\"Start date\")"`
 
 	ETA struct {
 		Typename githubv4.String `graphql:"__typename"`
 		DateVal  struct {
-			Date githubv4.Date // <-- Date (no DateTime)
+			Date githubv4.Date
 		} `graphql:"... on ProjectV2ItemFieldDateValue"`
 	} `graphql:"eta: fieldValueByName(name:\"ETA\")"`
 }
@@ -135,6 +135,7 @@ func main() {
 		log.Fatal("GITHUB_TOKEN no está definido")
 	}
 
+	// HTTP client con auth
 	httpClient := &http.Client{
 		Transport: roundTripperWithToken{token: token},
 		Timeout:   30 * time.Second,
@@ -158,6 +159,7 @@ func main() {
 		}
 
 		for _, it := range q.Org.Project.Items.Nodes {
+			// Sólo Issues; ignora PRs/Drafts si aparecieran
 			iss := it.Content.Issue
 			if iss.Number == 0 {
 				continue
@@ -187,6 +189,7 @@ func main() {
 		after = &q.Org.Project.Items.PageInfo.EndCursor
 	}
 
+	// Crea carpeta si no existe
 	if err := os.MkdirAll(dirOf(outPath), 0o755); err != nil {
 		log.Fatalf("mkdir: %v", err)
 	}
@@ -219,3 +222,4 @@ func dirOf(p string) string {
 	}
 	return "."
 }
+
