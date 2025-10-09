@@ -66,7 +66,8 @@
       const filtered = modules.filter(m => {
         const matchStatus = !st || m.estado === st;
         const matchText = !term || (m.nombre + ' ' + (m.descripcion||'')).toLowerCase().includes(term);
-        return matchStatus && matchText;
+        const isEpic = m.tipo === 'epic';
+        return matchStatus && matchText && isEpic;
       });
 
       grid.innerHTML = filtered.map(m => `
