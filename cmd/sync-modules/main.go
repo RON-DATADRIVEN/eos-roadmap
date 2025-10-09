@@ -73,10 +73,13 @@ func toISO(d GHFlexDate) string { return d.ISODate() }
 type Item struct {
 	Content struct {
 		Issue struct {
-			Number    int
-			Title     string
-			URL       githubv4.URI
-			Body      string
+			Number int
+			Title  string
+			URL    githubv4.URI
+			Body   string
+			Labels struct {
+				Nodes []labelNode
+			} `graphql:"labels(first: 20)"`
 			Assignees struct {
 				Nodes []assigneeNode
 			} `graphql:"assignees(first: 10)"`
@@ -111,6 +114,12 @@ type Item struct {
 			Duration  int
 		} `graphql:"... on ProjectV2ItemFieldIterationValue"`
 	} `graphql:"iter: fieldValueByName(name:\"Iteration\")"`
+
+	Tipo struct {
+		Typename githubv4.String                 `graphql:"__typename"`
+		Single   struct{ Name githubv4.String }  `graphql:"... on ProjectV2ItemFieldSingleSelectValue"`
+		Text     struct{ Value githubv4.String } `graphql:"... on ProjectV2ItemFieldTextValue"`
+	} `graphql:"tipo: fieldValueByName(name:\"Tipo\")"`
 
 	Start struct {
 		Typename githubv4.String `graphql:"__typename"`
@@ -148,6 +157,10 @@ type assigneeNode struct {
 	Login string
 }
 
+type labelNode struct {
+	Name string
+}
+
 type ModuleOut struct {
 	ID          string    `json:"id"`
 	Nombre      string    `json:"nombre"`
@@ -158,6 +171,7 @@ type ModuleOut struct {
 	Inicio      string    `json:"inicio,omitempty"`
 	ETA         string    `json:"eta,omitempty"`
 	Enlaces     []LinkOut `json:"enlaces,omitempty"`
+	Tipo        string    `json:"tipo,omitempty"`
 }
 
 type LinkOut struct {
@@ -253,6 +267,79 @@ func buildLinks(url string) []LinkOut {
 	}}
 }
 
+func labelNames(nodes []labelNode) []string {
+	if len(nodes) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(nodes))
+	for _, n := range nodes {
+		name := strings.TrimSpace(n.Name)
+		if name != "" {
+			out = append(out, name)
+		}
+	}
+	return out
+}
+
+func collectProjectProps(it Item) map[string]string {
+	props := make(map[string]string)
+	if v := projectValueToString(it.Tipo.Typename, string(it.Tipo.Single.Name), string(it.Tipo.Text.Value)); v != "" {
+		props["Tipo"] = v
+	}
+	if len(props) == 0 {
+		return nil
+	}
+	return props
+}
+
+func projectValueToString(typename githubv4.String, single string, text string) string {
+	switch string(typename) {
+	case "ProjectV2ItemFieldSingleSelectValue":
+		return strings.TrimSpace(single)
+	case "ProjectV2ItemFieldTextValue":
+		return strings.TrimSpace(text)
+	default:
+		return ""
+	}
+}
+
+func detectTipo(title string, labels []string, projectFields map[string]string) string {
+	if projectFields != nil {
+		if v, ok := projectFields["Tipo"]; ok && isEpicValue(v) {
+			return "epic"
+		}
+	}
+	for _, l := range labels {
+		if isEpicValue(l) {
+			return "epic"
+		}
+	}
+	t := strings.TrimSpace(title)
+	if t == "" {
+		return ""
+	}
+	up := strings.ToUpper(t)
+	if strings.HasPrefix(up, "[ÉPICA]") || strings.HasPrefix(up, "[EPICA]") || strings.HasPrefix(up, "[EPIC]") {
+		return "epic"
+	}
+	return ""
+}
+
+func isEpicValue(raw string) bool {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return false
+	}
+	if strings.EqualFold(trimmed, "epic") {
+		return true
+	}
+	upper := strings.ToUpper(trimmed)
+	if strings.HasPrefix(upper, "ÉPICA") || strings.HasPrefix(upper, "EPICA") || strings.HasPrefix(upper, "EPIC") {
+		return true
+	}
+	return false
+}
+
 // ---------- Main ----------
 func main() {
 	log.SetFlags(0)
@@ -308,6 +395,8 @@ func main() {
 			}
 			rawStatus := singleName(it.Status.Typename, it.Status.Single.Name)
 			estado, porcentaje := normalizeStatus(rawStatus)
+			labels := labelNames(iss.Labels.Nodes)
+			projectProps := collectProjectProps(it)
 			m := ModuleOut{
 				ID:          strconv.Itoa(iss.Number),
 				Nombre:      iss.Title,
@@ -318,6 +407,7 @@ func main() {
 				Inicio:      toISO(it.Start.DateVal.Date),
 				ETA:         toISO(it.ETA.DateVal.Date),
 				Enlaces:     buildLinks(iss.URL.String()),
+				Tipo:        detectTipo(iss.Title, labels, projectProps),
 			}
 			all = append(all, m)
 		}
