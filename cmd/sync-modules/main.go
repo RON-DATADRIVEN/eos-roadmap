@@ -116,9 +116,11 @@ type Item struct {
 	} `graphql:"iter: fieldValueByName(name:\"Iteration\")"`
 
 	Tipo struct {
-		Typename githubv4.String                 `graphql:"__typename"`
-		Single   struct{ Name githubv4.String }  `graphql:"... on ProjectV2ItemFieldSingleSelectValue"`
-		Text     struct{ Value githubv4.String } `graphql:"... on ProjectV2ItemFieldTextValue"`
+		Typename githubv4.String                `graphql:"__typename"`
+		Single   struct{ Name githubv4.String } `graphql:"... on ProjectV2ItemFieldSingleSelectValue"`
+		Text     struct {
+			Text githubv4.String `graphql:"text"`
+		} `graphql:"... on ProjectV2ItemFieldTextValue"`
 	} `graphql:"tipo: fieldValueByName(name:\"Tipo\")"`
 
 	Start struct {
@@ -283,7 +285,7 @@ func labelNames(nodes []labelNode) []string {
 
 func collectProjectProps(it Item) map[string]string {
 	props := make(map[string]string)
-	if v := projectValueToString(it.Tipo.Typename, string(it.Tipo.Single.Name), string(it.Tipo.Text.Value)); v != "" {
+	if v := projectValueToString(it.Tipo.Typename, string(it.Tipo.Single.Name), string(it.Tipo.Text.Text)); v != "" {
 		props["Tipo"] = v
 	}
 	if len(props) == 0 {
