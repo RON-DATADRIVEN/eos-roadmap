@@ -172,7 +172,7 @@
   },
   {
     "id": "13",
-    "nombre": "[ÉPICA] Fase 1 — Modelo canónico y mapeo",
+    "nombre": "Fase 1 — Modelo canónico y mapeo",
     "descripcion": "**Objetivo:** congelar el modelo canónico (Cassandra) y el mapeo viejo→nuevo.",
     "estado": "En curso",
     "porcentaje": 50,
@@ -341,7 +341,7 @@
   },
   {
     "id": "25",
-    "nombre": "[ÉPICA] Fase 2 — ETL reproducible + validación",
+    "nombre": "Fase 2 — ETL reproducible + validación",
     "descripcion": "**Objetivo:** pipeline ETL confiable y testeado.",
     "estado": "Planificado",
     "porcentaje": 0,
@@ -566,7 +566,7 @@
   },
   {
     "id": "41",
-    "nombre": "[ÉPICA] Fase 3 — Microservicios y BFF",
+    "nombre": "Fase 3 — Microservicios y BFF",
     "descripcion": "**Objetivo:** levantar servicios core con TDD y contratos claros.",
     "estado": "Planificado",
     "porcentaje": 0,
@@ -623,7 +623,7 @@
   },
   {
     "id": "45",
-    "nombre": "[ÉPICA] Fase 3 — Microservicios y BFF",
+    "nombre": "Fase 3 — Microservicios y BFF",
     "descripcion": "**Objetivo:** levantar servicios core con TDD y contratos claros.",
     "estado": "Planificado",
     "porcentaje": 0,
@@ -863,7 +863,7 @@
   },
   {
     "id": "62",
-    "nombre": "[ÉPICA] Fase 5 — Corte (Blue/Green) y Monitoreo",
+    "nombre": "Fase 5 — Corte (Blue/Green) y Monitoreo",
     "descripcion": "**Objetivo:** hacer el switch de tráfico a nuevo EOS.",
     "estado": "Planificado",
     "porcentaje": 0,
@@ -954,7 +954,7 @@
   },
   {
     "id": "68",
-    "nombre": "[ÉPICA] Fase 6 — Desmantelamiento controlado",
+    "nombre": "Fase 6 — Desmantelamiento controlado",
     "descripcion": "﻿**Objetivo:** retirar el viejo EOS de forma ordenada.",
     "estado": "Planificado",
     "porcentaje": 0,
