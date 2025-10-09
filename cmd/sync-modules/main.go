@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/shurcooL/githubv4"
@@ -72,9 +73,13 @@ func toISO(d GHFlexDate) string { return d.ISODate() }
 type Item struct {
 	Content struct {
 		Issue struct {
-			Number int
-			Title  string
-			URL    githubv4.URI
+			Number    int
+			Title     string
+			URL       githubv4.URI
+			Body      string
+			Assignees struct {
+				Nodes []assigneeNode
+			} `graphql:"assignees(first: 10)"`
 		} `graphql:"... on Issue"`
 	} `graphql:"content"`
 
@@ -139,19 +144,25 @@ type Query struct {
 }
 
 // ---------- Output JSON ----------
+type assigneeNode struct {
+	Login string
+}
+
 type ModuleOut struct {
-	Issue     int    `json:"issue"`
-	Title     string `json:"title"`
-	URL       string `json:"url"`
-	Area      string `json:"area,omitempty"`
-	Status    string `json:"status,omitempty"`
-	Prioridad string `json:"prioridad,omitempty"`
-	Size      string `json:"size,omitempty"`
-	Iteration string `json:"iteration,omitempty"`
-	IterStart string `json:"iterationStart,omitempty"`
-	IterDays  int    `json:"iterationDays,omitempty"`
-	StartDate string `json:"startDate,omitempty"`
-	ETA       string `json:"eta,omitempty"`
+	ID          string    `json:"id"`
+	Nombre      string    `json:"nombre"`
+	Descripcion string    `json:"descripcion"`
+	Estado      string    `json:"estado"`
+	Porcentaje  int       `json:"porcentaje"`
+	Propietario string    `json:"propietario"`
+	Inicio      string    `json:"inicio,omitempty"`
+	ETA         string    `json:"eta,omitempty"`
+	Enlaces     []LinkOut `json:"enlaces,omitempty"`
+}
+
+type LinkOut struct {
+	Label string `json:"label"`
+	URL   string `json:"url"`
 }
 
 func singleName(typename githubv4.String, name githubv4.String) string {
@@ -159,6 +170,87 @@ func singleName(typename githubv4.String, name githubv4.String) string {
 		return string(name)
 	}
 	return ""
+}
+
+func normalizeStatus(raw string) (string, int) {
+	s := strings.TrimSpace(strings.ToLower(raw))
+	if s == "" {
+		return "Planificado", 0
+	}
+	switch s {
+	case "hecho", "done", "completado", "completo", "finalizado", "cerrado", "closed":
+		return "Hecho", 100
+	case "en curso", "curso", "en ejecución", "en ejecucion", "desarrollo", "en desarrollo", "in progress", "progress", "bloqueado", "bloqueada":
+		return "En curso", 50
+	case "planificado", "planificada", "planificación", "planificacion", "en planeación", "en planeacion", "planeado", "planeada", "por hacer", "pendiente", "backlog":
+		return "Planificado", 0
+	}
+	if strings.Contains(s, "hech") || strings.Contains(s, "done") || strings.Contains(s, "final") {
+		return "Hecho", 100
+	}
+	if strings.Contains(s, "curso") || strings.Contains(s, "desarr") || strings.Contains(s, "progres") || strings.Contains(s, "bloq") {
+		return "En curso", 50
+	}
+	return "Planificado", 0
+}
+
+func buildDescription(body, title string) string {
+	cleaned := strings.ReplaceAll(body, "\r", "\n")
+	cleaned = strings.TrimSpace(cleaned)
+	if cleaned == "" {
+		return fmt.Sprintf("Seguimiento del issue \"%s\".", title)
+	}
+	parts := strings.Split(cleaned, "\n\n")
+	candidate := strings.TrimSpace(parts[0])
+	if candidate == "" {
+		candidate = cleaned
+	}
+	candidate = collapseSpaces(candidate)
+	return truncateRunes(candidate, 280)
+}
+
+func collapseSpaces(s string) string {
+	fields := strings.Fields(s)
+	return strings.Join(fields, " ")
+}
+
+func truncateRunes(s string, max int) string {
+	if max <= 0 {
+		return ""
+	}
+	r := []rune(s)
+	if len(r) <= max {
+		return s
+	}
+	if max <= 3 {
+		return string(r[:max])
+	}
+	return string(r[:max-3]) + "..."
+}
+
+func buildOwner(nodes []assigneeNode) string {
+	owners := make([]string, 0, len(nodes))
+	for _, n := range nodes {
+		login := strings.TrimSpace(n.Login)
+		if login != "" {
+			owners = append(owners, login)
+		}
+	}
+	if len(owners) == 0 {
+		return "Sin asignar"
+	}
+	return strings.Join(owners, ", ")
+}
+
+func buildLinks(url string) []LinkOut {
+	url = strings.TrimSpace(url)
+	if url == "" {
+		return nil
+	}
+	return []LinkOut{{
+		Label: "GitHub",
+		URL:   url,
+	}}
 }
 
 // ---------- Main ----------
@@ -214,21 +306,18 @@ func main() {
 			if iss.Number == 0 {
 				continue
 			}
+			rawStatus := singleName(it.Status.Typename, it.Status.Single.Name)
+			estado, porcentaje := normalizeStatus(rawStatus)
 			m := ModuleOut{
-				Issue:     iss.Number,
-				Title:     iss.Title,
-				URL:       iss.URL.String(),
-				Area:      singleName(it.Area.Typename, it.Area.Single.Name),
-				Status:    singleName(it.Status.Typename, it.Status.Single.Name),
-				Prioridad: singleName(it.Prioridad.Typename, it.Prioridad.Single.Name),
-				Size:      singleName(it.Size.Typename, it.Size.Single.Name),
-				StartDate: toISO(it.Start.DateVal.Date),
-				ETA:       toISO(it.ETA.DateVal.Date),
-			}
-			if it.Iter.Typename == "ProjectV2ItemFieldIterationValue" {
-				m.Iteration = string(it.Iter.Iteration.Title)
-				m.IterStart = toISO(it.Iter.Iteration.StartDate)
-				m.IterDays = it.Iter.Iteration.Duration
+				ID:          strconv.Itoa(iss.Number),
+				Nombre:      iss.Title,
+				Descripcion: buildDescription(iss.Body, iss.Title),
+				Estado:      estado,
+				Porcentaje:  porcentaje,
+				Propietario: buildOwner(iss.Assignees.Nodes),
+				Inicio:      toISO(it.Start.DateVal.Date),
+				ETA:         toISO(it.ETA.DateVal.Date),
+				Enlaces:     buildLinks(iss.URL.String()),
 			}
 			all = append(all, m)
 		}

@@ -12,7 +12,7 @@ jobs:
         run: |
           ref="${GITHUB_HEAD_REF}"
           echo "Branch: $ref"
-          if [[ ! $ref =~ ^(feat|fix|docs|chore|ops|ci|refactor)/[a-z0-9._-]+$ ]]; then
+          if [[ ! $ref =~ ^(feat|fix|docs|chore|ops|ci|refactor|codex|)/[a-z0-9._-]+$ ]]; then
             echo "Nombre de rama inválido. Usa: feat/..., fix/..., docs/..., chore/..., ops/..., ci/..., refactor/..."
             exit 1
           fi
