@@ -2,10 +2,10 @@
   {
     "id": "1",
     "nombre": "[ÉPICA] Fase 0 — Descubrimiento y Salvaguarda",
-    "descripcion": "Seguimiento del issue \"[ÉPICA] Fase 0 — Descubrimiento y Salvaguarda\".",
+    "descripcion": "**Objetivo:** congelar el estado del EOS viejo.",
     "estado": "En curso",
     "porcentaje": 50,
-    "propietario": "Sin asignar",
+    "propietario": "ArturoPlascenciaRodriguez",
     "inicio": "2025-09-01",
     "eta": "2025-09-16",
     "enlaces": [
@@ -18,10 +18,10 @@
   {
     "id": "2",
     "nombre": "Dump PostgreSQL lógico (pg_dump)",
-    "descripcion": "Seguimiento del issue \"Dump PostgreSQL lógico (pg_dump)\".",
+    "descripcion": "- Exportar DB completa (roles, esquemas, datos) - Validar integridad del archivo",
     "estado": "En curso",
     "porcentaje": 50,
-    "propietario": "Sin asignar",
+    "propietario": "ArturoPlascenciaRodriguez",
     "enlaces": [
       {
         "label": "GitHub",
@@ -32,10 +32,10 @@
   {
     "id": "3",
     "nombre": "Snapshot Droplet (DigitalOcean)",
-    "descripcion": "Seguimiento del issue \"Snapshot Droplet (DigitalOcean)\".",
+    "descripcion": "- Crear snapshot de la instancia EOS - Documentar ID, fecha, región",
     "estado": "En curso",
     "porcentaje": 50,
-    "propietario": "Sin asignar",
+    "propietario": "ArturoPlascenciaRodriguez",
     "enlaces": [
       {
         "label": "GitHub",
@@ -46,10 +46,10 @@
   {
     "id": "4",
     "nombre": "Verificación de restauración en local",
-    "descripcion": "Seguimiento del issue \"Verificación de restauración en local\".",
+    "descripcion": "- Restaurar dump en Postgres temporal - Ejecutar queries básicas de validación",
     "estado": "En curso",
     "porcentaje": 50,
-    "propietario": "Sin asignar",
+    "propietario": "ArturoPlascenciaRodriguez",
     "enlaces": [
       {
         "label": "GitHub",
@@ -60,10 +60,10 @@
   {
     "id": "5",
     "nombre": "Esqueleto script de inventario",
-    "descripcion": "Seguimiento del issue \"Esqueleto script de inventario\".",
+    "descripcion": "- Conexión a Postgres (env/DSN) - Output inicial en JSON+MD",
     "estado": "En curso",
     "porcentaje": 50,
-    "propietario": "Sin asignar",
+    "propietario": "ArturoPlascenciaRodriguez",
     "enlaces": [
       {
         "label": "GitHub",
@@ -74,10 +74,10 @@
   {
     "id": "6",
     "nombre": "Exportar esquema (tablas, columnas, tipos)",
-    "descripcion": "Seguimiento del issue \"Exportar esquema (tablas, columnas, tipos)\".",
+    "descripcion": "- Query information_schema - Export JSON+MD",
     "estado": "En curso",
     "porcentaje": 50,
-    "propietario": "Sin asignar",
+    "propietario": "ArturoPlascenciaRodriguez",
     "enlaces": [
       {
         "label": "GitHub",
@@ -88,10 +88,10 @@
   {
     "id": "7",
     "nombre": "Inferencia de relaciones",
-    "descripcion": "Seguimiento del issue \"Inferencia de relaciones\".",
+    "descripcion": "- Basada en *_id / joins - Exportar grafo DOT/PNG",
     "estado": "En curso",
     "porcentaje": 50,
-    "propietario": "Sin asignar",
+    "propietario": "ArturoPlascenciaRodriguez",
     "enlaces": [
       {
         "label": "GitHub",
@@ -102,10 +102,10 @@
   {
     "id": "8",
     "nombre": "Definir consultas baseline",
-    "descripcion": "Seguimiento del issue \"Definir consultas baseline\".",
+    "descripcion": "- #usuarios, #programas, #módulos - Última fecha actualización - Tasas clave (a definir)",
     "estado": "En curso",
     "porcentaje": 50,
-    "propietario": "Sin asignar",
+    "propietario": "ArturoPlascenciaRodriguez",
     "enlaces": [
       {
         "label": "GitHub",
@@ -116,10 +116,10 @@
   {
     "id": "9",
     "nombre": "Script de cálculo baseline",
-    "descripcion": "Seguimiento del issue \"Script de cálculo baseline\".",
+    "descripcion": "- Genera JSON + MD en cada commit",
     "estado": "En curso",
     "porcentaje": 50,
-    "propietario": "Sin asignar",
+    "propietario": "ArturoPlascenciaRodriguez",
     "enlaces": [
       {
         "label": "GitHub",
@@ -130,10 +130,10 @@
   {
     "id": "10",
     "nombre": "Integración baseline en flujo de commits",
-    "descripcion": "Seguimiento del issue \"Integración baseline en flujo de commits\".",
+    "descripcion": "- Hook/Action recalcula baseline - Métricas aparecen en PRs",
     "estado": "En curso",
     "porcentaje": 50,
-    "propietario": "Sin asignar",
+    "propietario": "ArturoPlascenciaRodriguez",
     "enlaces": [
       {
         "label": "GitHub",
@@ -144,10 +144,10 @@
   {
     "id": "11",
     "nombre": "Plan de congelamiento controlado",
-    "descripcion": "Seguimiento del issue \"Plan de congelamiento controlado\".",
+    "descripcion": "- Definir qué operaciones se permiten - Procedimiento para reabrir",
     "estado": "En curso",
     "porcentaje": 50,
-    "propietario": "Sin asignar",
+    "propietario": "ArturoPlascenciaRodriguez",
     "enlaces": [
       {
         "label": "GitHub",
@@ -158,10 +158,10 @@
   {
     "id": "12",
     "nombre": "Informe final Fase 0 (riesgos y hallazgos)",
-    "descripcion": "Seguimiento del issue \"Informe final Fase 0 (riesgos y hallazgos)\".",
+    "descripcion": "- Consolidar backups + inventario + baseline - Identificar datos huérfanos/nulos críticos",
     "estado": "En curso",
     "porcentaje": 50,
-    "propietario": "Sin asignar",
+    "propietario": "ArturoPlascenciaRodriguez",
     "enlaces": [
       {
         "label": "GitHub",
@@ -172,10 +172,10 @@
   {
     "id": "13",
     "nombre": "[ÉPICA] Fase 1 — Modelo canónico y mapeo",
-    "descripcion": "Seguimiento del issue \"[ÉPICA] Fase 1 — Modelo canónico y mapeo\".",
+    "descripcion": "**Objetivo:** congelar el modelo canónico (Cassandra) y el mapeo viejo→nuevo.",
     "estado": "En curso",
     "porcentaje": 50,
-    "propietario": "Sin asignar",
+    "propietario": "charlydelgado, M4r71N3zCoD3, eveDev1412, ArturoPlascenciaRodriguez",
     "enlaces": [
       {
         "label": "GitHub",
@@ -186,10 +186,10 @@
   {
     "id": "14",
     "nombre": "ADR: Esquema canónico Cassandra",
-    "descripcion": "Seguimiento del issue \"ADR: Esquema canónico Cassandra\".",
+    "descripcion": "- docs/adr/0001-esquema-canonico-cassandra.md - Justificar particiones/PK/CK y tablas base.",
     "estado": "En curso",
     "porcentaje": 50,
-    "propietario": "Sin asignar",
+    "propietario": "charlydelgado, M4r71N3zCoD3",
     "enlaces": [
       {
         "label": "GitHub",
@@ -200,10 +200,10 @@
   {
     "id": "15",
     "nombre": "DDL Cassandra v1 (users, programs, modules, telemetry)",
-    "descripcion": "Seguimiento del issue \"DDL Cassandra v1 (users, programs, modules, telemetry)\".",
+    "descripcion": "- /db/cassandra/ddl/*.cql - users_by_id, programs_by_id, modules_by_program, events_by_entity",
     "estado": "En curso",
     "porcentaje": 50,
-    "propietario": "Sin asignar",
+    "propietario": "eveDev1412",
     "enlaces": [
       {
         "label": "GitHub",
@@ -214,10 +214,10 @@
   {
     "id": "16",
     "nombre": "Mapping viejo→nuevo (docs/mapping.yaml)",
-    "descripcion": "Seguimiento del issue \"Mapping viejo→nuevo (docs/mapping.yaml)\".",
+    "descripcion": "- campo_origen → campo_destino, reglas, defaults. - Casos borde definidos.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "ArturoPlascenciaRodriguez",
     "enlaces": [
       {
         "label": "GitHub",
@@ -228,10 +228,10 @@
   {
     "id": "17",
     "nombre": "DDL: users_by_id",
-    "descripcion": "Seguimiento del issue \"DDL: users_by_id\".",
+    "descripcion": "- Tabla de usuarios por id (PK: user_id). - Índices secundarios si aplica.",
     "estado": "En curso",
     "porcentaje": 50,
-    "propietario": "Sin asignar",
+    "propietario": "eveDev1412, ArturoPlascenciaRodriguez",
     "enlaces": [
       {
         "label": "GitHub",
@@ -242,10 +242,10 @@
   {
     "id": "18",
     "nombre": "DDL: programs_by_id",
-    "descripcion": "Seguimiento del issue \"DDL: programs_by_id\".",
+    "descripcion": "- Tabla de programas por id (PK: program_id).",
     "estado": "En curso",
     "porcentaje": 50,
-    "propietario": "Sin asignar",
+    "propietario": "eveDev1412, ArturoPlascenciaRodriguez",
     "enlaces": [
       {
         "label": "GitHub",
@@ -256,10 +256,10 @@
   {
     "id": "19",
     "nombre": "DDL: modules_by_program",
-    "descripcion": "Seguimiento del issue \"DDL: modules_by_program\".",
+    "descripcion": "- Por programa, módulos con cluster por module_id.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "eveDev1412",
     "enlaces": [
       {
         "label": "GitHub",
@@ -270,10 +270,10 @@
   {
     "id": "20",
     "nombre": "DDL: events_by_entity (telemetría/auditoría)",
-    "descripcion": "Seguimiento del issue \"DDL: events_by_entity (telemetría/auditoría)\".",
+    "descripcion": "- entity_type, entity_id, ts (timeuuid o timestamp) para auditoría/telemetría.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "eveDev1412",
     "enlaces": [
       {
         "label": "GitHub",
@@ -284,10 +284,10 @@
   {
     "id": "21",
     "nombre": "Aplicación DDL (local y DO) + Make/Taskfile",
-    "descripcion": "Seguimiento del issue \"Aplicación DDL (local y DO) + Make/Taskfile\".",
+    "descripcion": "- Makefile/Taskfile para aplicar DDL a local y cluster DO. - Variables de entorno y DSN documentados.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "charlydelgado, eveDev1412",
     "enlaces": [
       {
         "label": "GitHub",
@@ -298,10 +298,10 @@
   {
     "id": "22",
     "nombre": "Validación DDL aplicada sin errores (local/DO)",
-    "descripcion": "Seguimiento del issue \"Validación DDL aplicada sin errores (local/DO)\".",
+    "descripcion": "- Ejecutar DDL en ambos entornos. - Evidencia (logs/outputs) en artifacts/.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "charlydelgado, eveDev1412",
     "enlaces": [
       {
         "label": "GitHub",
@@ -312,10 +312,10 @@
   {
     "id": "23",
     "nombre": "Muestras reales anonimizadas para mapping",
-    "descripcion": "Seguimiento del issue \"Muestras reales anonimizadas para mapping\".",
+    "descripcion": "- Generar CSV/JSON con registros representativos (anónimos). - Adjuntar a artifacts/samples/.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "charlydelgado, eveDev1412",
     "enlaces": [
       {
         "label": "GitHub",
@@ -326,10 +326,10 @@
   {
     "id": "24",
     "nombre": "Revisión de mapping con PO (muestras reales)",
-    "descripcion": "Seguimiento del issue \"Revisión de mapping con PO (muestras reales)\".",
+    "descripcion": "- Sesión de revisión con PO. - Ajustes finales a mapping.yaml.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "charlydelgado, ArturoPlascenciaRodriguez",
     "enlaces": [
       {
         "label": "GitHub",
@@ -340,10 +340,10 @@
   {
     "id": "25",
     "nombre": "[ÉPICA] Fase 2 — ETL reproducible + validación",
-    "descripcion": "Seguimiento del issue \"[ÉPICA] Fase 2 — ETL reproducible + validación\".",
+    "descripcion": "**Objetivo:** pipeline ETL confiable y testeado.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "ArturoPlascenciaRodriguez",
     "enlaces": [
       {
         "label": "GitHub",
@@ -354,10 +354,10 @@
   {
     "id": "26",
     "nombre": "Servicio etl-migrator: esqueleto cmd/etl-migrator",
-    "descripcion": "Seguimiento del issue \"Servicio etl-migrator: esqueleto cmd/etl-migrator\".",
+    "descripcion": "- Comando base y wiring inicial. - Estructura de paquetes (extract/transform/load).",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "ArturoPlascenciaRodriguez",
     "enlaces": [
       {
         "label": "GitHub",
@@ -368,10 +368,10 @@
   {
     "id": "27",
     "nombre": "ETL: Extract (origen legacy)",
-    "descripcion": "Seguimiento del issue \"ETL: Extract (origen legacy)\".",
+    "descripcion": "- Selects/paginación/ventanas. - Serialización a DTO interno.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "eveDev1412",
     "enlaces": [
       {
         "label": "GitHub",
@@ -382,10 +382,10 @@
   {
     "id": "28",
     "nombre": "ETL: Transform (mapping.yaml)",
-    "descripcion": "Seguimiento del issue \"ETL: Transform (mapping.yaml)\".",
+    "descripcion": "- Aplicar reglas y defaults del mapping. - Normalización/casts.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "eveDev1412",
     "enlaces": [
       {
         "label": "GitHub",
@@ -396,10 +396,10 @@
   {
     "id": "29",
     "nombre": "ETL: Load (Cassandra) con upsert/batching/retry/checksums",
-    "descripcion": "Seguimiento del issue \"ETL: Load (Cassandra) con upsert/batching/retry/checksums\".",
+    "descripcion": "- Lotes configurables y upserts idempotentes. - Reintentos exponenciales. - Checksums por batch.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "eveDev1412",
     "enlaces": [
       {
         "label": "GitHub",
@@ -410,10 +410,10 @@
   {
     "id": "30",
     "nombre": "ETL: Logging JSON + request_id + métricas básicas",
-    "descripcion": "Seguimiento del issue \"ETL: Logging JSON + request_id + métricas básicas\".",
+    "descripcion": "- Logs estructurados y correlación. - Métricas: filas/s, errores, retries, tam. lote.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "eveDev1412",
     "enlaces": [
       {
         "label": "GitHub",
@@ -424,10 +424,10 @@
   {
     "id": "31",
     "nombre": "ETL: Gestión de configuración (env/flags/Taskfile)",
-    "descripcion": "Seguimiento del issue \"ETL: Gestión de configuración (env/flags/Taskfile)\".",
+    "descripcion": "- Variables de entorno y flags. - Taskfile/Makefile para targets comunes.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "eveDev1412",
     "enlaces": [
       {
         "label": "GitHub",
@@ -438,10 +438,10 @@
   {
     "id": "32",
     "nombre": "Tests: Unit (reglas de mapeo, TDD)",
-    "descripcion": "Seguimiento del issue \"Tests: Unit (reglas de mapeo, TDD)\".",
+    "descripcion": "- Casos nominales y bordes. - Cobertura mínima acordada.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "charlydelgado, M4r71N3zCoD3",
     "enlaces": [
       {
         "label": "GitHub",
@@ -452,10 +452,10 @@
   {
     "id": "33",
     "nombre": "Tests: Property-based (limpieza/casteo)",
-    "descripcion": "Seguimiento del issue \"Tests: Property-based (limpieza/casteo)\".",
+    "descripcion": "- Generadores de datos anómalos. - Propiedades: idempotencia, rango fechas, etc.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "charlydelgado, M4r71N3zCoD3",
     "enlaces": [
       {
         "label": "GitHub",
@@ -466,10 +466,10 @@
   {
     "id": "34",
     "nombre": "Tests: Contract (payloads Cassandra)",
-    "descripcion": "Seguimiento del issue \"Tests: Contract (payloads Cassandra)\".",
+    "descripcion": "- Contratos por tabla/DAO. - Fixtures y asserts de escritura/lectura.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "charlydelgado, M4r71N3zCoD3",
     "enlaces": [
       {
         "label": "GitHub",
@@ -480,10 +480,10 @@
   {
     "id": "35",
     "nombre": "Tests: Data quality (conteos, duplicados, % nulos)",
-    "descripcion": "Seguimiento del issue \"Tests: Data quality (conteos, duplicados, % nulos)\".",
+    "descripcion": "- Reglas de calidad y umbrales. - Reporte consolidado en artifacts/.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "charlydelgado, M4r71N3zCoD3",
     "enlaces": [
       {
         "label": "GitHub",
@@ -494,10 +494,10 @@
   {
     "id": "36",
     "nombre": "Validación: definir KPIs y umbrales (≤1% mismatch)",
-    "descripcion": "Seguimiento del issue \"Validación: definir KPIs y umbrales (≤1% mismatch)\".",
+    "descripcion": "- KPIs base (usuarios, programas, módulos, etc.). - Umbrales por entidad/atributo.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "charlydelgado, ArturoPlascenciaRodriguez",
     "enlaces": [
       {
         "label": "GitHub",
@@ -507,11 +507,11 @@
   },
   {
     "id": "37",
-    "nombre": "Dry-run 5–10% dataset + reporte validation_<fecha>.md",
-    "descripcion": "Seguimiento del issue \"Dry-run 5–10% dataset + reporte validation_<fecha>.md\".",
+    "nombre": "Dry-run 5–10% dataset + reporte validation_\u003cfecha\u003e.md",
+    "descripcion": "- Ejecución parcial (ventanas). - Reporte en reports/validation_\u003cfecha\u003e.md.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "charlydelgado",
     "enlaces": [
       {
         "label": "GitHub",
@@ -522,10 +522,10 @@
   {
     "id": "38",
     "nombre": "CI/CD: pipeline de pruebas y build etl-migrator",
-    "descripcion": "Seguimiento del issue \"CI/CD: pipeline de pruebas y build etl-migrator\".",
+    "descripcion": "- Workflow: lint + tests + build. - Artefactos y cachés.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "charlydelgado, M4r71N3zCoD3",
     "enlaces": [
       {
         "label": "GitHub",
@@ -536,10 +536,10 @@
   {
     "id": "39",
     "nombre": "Docker image + Make/Taskfile targets",
-    "descripcion": "Seguimiento del issue \"Docker image + Make/Taskfile targets\".",
+    "descripcion": "- Dockerfile multi-stage. - Targets: build/run/test.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "eveDev1412",
     "enlaces": [
       {
         "label": "GitHub",
@@ -550,10 +550,10 @@
   {
     "id": "40",
     "nombre": "Observabilidad ETL: métricas y alertas básicas",
-    "descripcion": "Seguimiento del issue \"Observabilidad ETL: métricas y alertas básicas\".",
+    "descripcion": "- Dash/alerts sobre errores, retries, throughput.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "charlydelgado",
     "enlaces": [
       {
         "label": "GitHub",
@@ -564,10 +564,10 @@
   {
     "id": "41",
     "nombre": "[ÉPICA] Fase 3 — Microservicios y BFF",
-    "descripcion": "Seguimiento del issue \"[ÉPICA] Fase 3 — Microservicios y BFF\".",
+    "descripcion": "**Objetivo:** levantar servicios core con TDD y contratos claros.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "ArturoPlascenciaRodriguez",
     "enlaces": [
       {
         "label": "GitHub",
@@ -578,10 +578,10 @@
   {
     "id": "42",
     "nombre": "svc-authz (IAM ligero): bootstrap + contratos",
-    "descripcion": "Seguimiento del issue \"svc-authz (IAM ligero): bootstrap + contratos\".",
+    "descripcion": "- Handlers base + contratos (OpenAPI/Protobuf). - Reglas de autorización mínimas.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "charlydelgado",
     "enlaces": [
       {
         "label": "GitHub",
@@ -592,10 +592,10 @@
   {
     "id": "43",
     "nombre": "svc-programs (CRUD programas)",
-    "descripcion": "Seguimiento del issue \"svc-programs (CRUD programas)\".",
+    "descripcion": "- POST/GET/PUT/DELETE + validaciones. - DAO Cassandra y tests de contrato.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "M4r71N3zCoD3",
     "enlaces": [
       {
         "label": "GitHub",
@@ -606,10 +606,10 @@
   {
     "id": "44",
     "nombre": "svc-modules (lectura módulos)",
-    "descripcion": "Seguimiento del issue \"svc-modules (lectura módulos)\".",
+    "descripcion": "- GET por program_id y filtros. - DAO Cassandra y paginado.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "M4r71N3zCoD3",
     "enlaces": [
       {
         "label": "GitHub",
@@ -620,10 +620,10 @@
   {
     "id": "45",
     "nombre": "[ÉPICA] Fase 3 — Microservicios y BFF",
-    "descripcion": "Seguimiento del issue \"[ÉPICA] Fase 3 — Microservicios y BFF\".",
+    "descripcion": "**Objetivo:** levantar servicios core con TDD y contratos claros.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "charlydelgado",
     "enlaces": [
       {
         "label": "GitHub",
@@ -634,10 +634,10 @@
   {
     "id": "46",
     "nombre": "svc-authz (IAM ligero): bootstrap + contratos",
-    "descripcion": "Seguimiento del issue \"svc-authz (IAM ligero): bootstrap + contratos\".",
+    "descripcion": "- Handlers base + contratos (OpenAPI/Protobuf). - Reglas de autorización mínimas.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "eveDev1412",
     "enlaces": [
       {
         "label": "GitHub",
@@ -648,10 +648,10 @@
   {
     "id": "47",
     "nombre": "svc-programs (CRUD programas)",
-    "descripcion": "Seguimiento del issue \"svc-programs (CRUD programas)\".",
+    "descripcion": "- POST/GET/PUT/DELETE + validaciones. - DAO Cassandra y tests de contrato.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "M4r71N3zCoD3",
     "enlaces": [
       {
         "label": "GitHub",
@@ -662,10 +662,10 @@
   {
     "id": "48",
     "nombre": "svc-modules (lectura módulos)",
-    "descripcion": "Seguimiento del issue \"svc-modules (lectura módulos)\".",
+    "descripcion": "- GET por program_id y filtros. - DAO Cassandra y paginado.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "M4r71N3zCoD3",
     "enlaces": [
       {
         "label": "GitHub",
@@ -676,10 +676,10 @@
   {
     "id": "49",
     "nombre": "svc-telemetry (eventos/auditoría)",
-    "descripcion": "Seguimiento del issue \"svc-telemetry (eventos/auditoría)\".",
+    "descripcion": "- Ingesta de eventos y lectura por entidad. - Esquema 'events_by_entity' en Cassandra.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "M4r71N3zCoD3",
     "enlaces": [
       {
         "label": "GitHub",
@@ -690,10 +690,10 @@
   {
     "id": "50",
     "nombre": "bff-api-gateway (unificación + rate limit)",
-    "descripcion": "Seguimiento del issue \"bff-api-gateway (unificación + rate limit)\".",
+    "descripcion": "- Enrutamiento a servicios y rate-limit básico. - Contratos y pruebas de integración.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "M4r71N3zCoD3, eveDev1412",
     "enlaces": [
       {
         "label": "GitHub",
@@ -704,10 +704,10 @@
   {
     "id": "51",
     "nombre": "Monorepo/repos Go: estructura /cmd /internal /pkg",
-    "descripcion": "Seguimiento del issue \"Monorepo/repos Go: estructura /cmd /internal /pkg\".",
+    "descripcion": "- Plantilla mínima por servicio. - Make/Taskfile y mod tidy.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "M4r71N3zCoD3",
     "enlaces": [
       {
         "label": "GitHub",
@@ -718,10 +718,10 @@
   {
     "id": "52",
     "nombre": "TDD end-to-end: handlers → DAO Cassandra → refactor",
-    "descripcion": "Seguimiento del issue \"TDD end-to-end: handlers → DAO Cassandra → refactor\".",
+    "descripcion": "- Tests primero para rutas clave. - Doble loop de refactor seguro.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "eveDev1412",
     "enlaces": [
       {
         "label": "GitHub",
@@ -732,10 +732,10 @@
   {
     "id": "53",
     "nombre": "Healthz, readiness, logs JSON + request-id",
-    "descripcion": "Seguimiento del issue \"Healthz, readiness, logs JSON + request-id\".",
+    "descripcion": "- Endpoints /healthz y /readyz. - Logging estructurado y correlación.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "M4r71N3zCoD3, eveDev1412",
     "enlaces": [
       {
         "label": "GitHub",
@@ -746,10 +746,10 @@
   {
     "id": "54",
     "nombre": "Preview DO: endpoints clave GET/POST operando",
-    "descripcion": "Seguimiento del issue \"Preview DO: endpoints clave GET/POST operando\".",
+    "descripcion": "- Despliegue en entorno de preview (DO). - Smoke tests automatizados.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "M4r71N3zCoD3",
     "enlaces": [
       {
         "label": "GitHub",
@@ -759,11 +759,11 @@
   },
   {
     "id": "55",
-    "nombre": "SLI/SLO Fase 3: p95<400ms y 5xx sostenido=0",
-    "descripcion": "Seguimiento del issue \"SLI/SLO Fase 3: p95<400ms y 5xx sostenido=0\".",
+    "nombre": "SLI/SLO Fase 3: p95\u003c400ms y 5xx sostenido=0",
+    "descripcion": "- Medición de latencia p95 y errores 5xx. - Alarmas básicas si se degradan.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "charlydelgado, M4r71N3zCoD3",
     "enlaces": [
       {
         "label": "GitHub",
@@ -774,10 +774,10 @@
   {
     "id": "56",
     "nombre": "[ÉPICA] Fase 4 — Dual-write/Dual-read + Backfill",
-    "descripcion": "Seguimiento del issue \"[ÉPICA] Fase 4 — Dual-write/Dual-read + Backfill\".",
+    "descripcion": "**Objetivo:** correr nuevo en paralelo al viejo sin riesgo.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "ArturoPlascenciaRodriguez",
     "enlaces": [
       {
         "label": "GitHub",
@@ -788,10 +788,10 @@
   {
     "id": "57",
     "nombre": "BFF: Dual-read (comparar viejo vs nuevo en lectura)",
-    "descripcion": "Seguimiento del issue \"BFF: Dual-read (comparar viejo vs nuevo en lectura)\".",
+    "descripcion": "- Al leer, consulta ambos orígenes y compara payloads. - Registrar diffs y KPIs de divergencia.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "charlydelgado, M4r71N3zCoD3",
     "enlaces": [
       {
         "label": "GitHub",
@@ -802,10 +802,10 @@
   {
     "id": "58",
     "nombre": "Servicios: Dual-write temporal (sin riesgo)",
-    "descripcion": "Seguimiento del issue \"Servicios: Dual-write temporal (sin riesgo)\".",
+    "descripcion": "- Si hay escrituras en el viejo, replicar en el nuevo. - Guardas/feature flags y kill-switch.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "M4r71N3zCoD3, eveDev1412",
     "enlaces": [
       {
         "label": "GitHub",
@@ -816,10 +816,10 @@
   {
     "id": "59",
     "nombre": "Backfill final (cambios desde el primer corte)",
-    "descripcion": "Seguimiento del issue \"Backfill final (cambios desde el primer corte)\".",
+    "descripcion": "- ETL incremental de datos modificados. - Verificación de conteos/no duplicados.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "M4r71N3zCoD3, eveDev1412",
     "enlaces": [
       {
         "label": "GitHub",
@@ -830,10 +830,10 @@
   {
     "id": "60",
     "nombre": "OBS: Alertas y validación de integridad en escritura",
-    "descripcion": "Seguimiento del issue \"OBS: Alertas y validación de integridad en escritura\".",
+    "descripcion": "- Alarmas si falla escritura en alguno de los dos lados. - Tablero de errores y reintentos.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "charlydelgado, M4r71N3zCoD3",
     "enlaces": [
       {
         "label": "GitHub",
@@ -844,10 +844,10 @@
   {
     "id": "61",
     "nombre": "Reporte de divergencia (≤ 0.5%) y métricas",
-    "descripcion": "Seguimiento del issue \"Reporte de divergencia (≤ 0.5%) y métricas\".",
+    "descripcion": "- Consolidar diffs por entidad y KPIs. - Publicar reporte en docs/.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "charlydelgado",
     "enlaces": [
       {
         "label": "GitHub",
@@ -858,10 +858,10 @@
   {
     "id": "62",
     "nombre": "[ÉPICA] Fase 5 — Corte (Blue/Green) y Monitoreo",
-    "descripcion": "Seguimiento del issue \"[ÉPICA] Fase 5 — Corte (Blue/Green) y Monitoreo\".",
+    "descripcion": "**Objetivo:** hacer el switch de tráfico a nuevo EOS.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "ArturoPlascenciaRodriguez",
     "eta": "2025-11-10",
     "enlaces": [
       {
@@ -873,10 +873,10 @@
   {
     "id": "63",
     "nombre": "Plan de despliegue Canary (10%→50%→100%)",
-    "descripcion": "Seguimiento del issue \"Plan de despliegue Canary (10%→50%→100%)\".",
+    "descripcion": "- Estrategia paso a paso con umbrales (errores\u003c1%, p95 OK) - Documentación de rollback y ventanas",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "charlydelgado, M4r71N3zCoD3, eveDev1412",
     "eta": "2025-11-10",
     "enlaces": [
       {
@@ -888,10 +888,10 @@
   {
     "id": "64",
     "nombre": "Implementar flag/param de reversión rápida",
-    "descripcion": "Seguimiento del issue \"Implementar flag/param de reversión rápida\".",
+    "descripcion": "- Kill-switch en Gateway/DO - Procedimiento de reversión inmediata",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "M4r71N3zCoD3, eveDev1412",
     "eta": "2025-11-10",
     "enlaces": [
       {
@@ -903,10 +903,10 @@
   {
     "id": "65",
     "nombre": "Monitoreo intensivo 48–72h post-corte",
-    "descripcion": "Seguimiento del issue \"Monitoreo intensivo 48–72h post-corte\".",
+    "descripcion": "- KPIs: error-rate\u003c1%, p95 por servicio - Alertas y tableros en OBS",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "charlydelgado, M4r71N3zCoD3, ArturoPlascenciaRodriguez",
     "eta": "2025-11-10",
     "enlaces": [
       {
@@ -918,10 +918,10 @@
   {
     "id": "66",
     "nombre": "Validación de integridad de datos post-corte",
-    "descripcion": "Seguimiento del issue \"Validación de integridad de datos post-corte\".",
+    "descripcion": "- Checksums, conteos, reconciliación de entidades críticas",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "charlydelgado, M4r71N3zCoD3, ArturoPlascenciaRodriguez",
     "eta": "2025-11-10",
     "enlaces": [
       {
@@ -933,10 +933,10 @@
   {
     "id": "67",
     "nombre": "Stakeholder review / Go-Live signoff",
-    "descripcion": "Seguimiento del issue \"Stakeholder review / Go-Live signoff\".",
+    "descripcion": "- Reunión con PO/stakeholders - Acta de aceptación final",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "charlydelgado, ArturoPlascenciaRodriguez",
     "eta": "2025-11-10",
     "enlaces": [
       {
@@ -948,10 +948,10 @@
   {
     "id": "68",
     "nombre": "[ÉPICA] Fase 6 — Desmantelamiento controlado",
-    "descripcion": "Seguimiento del issue \"[ÉPICA] Fase 6 — Desmantelamiento controlado\".",
+    "descripcion": "﻿**Objetivo:** retirar el viejo EOS de forma ordenada.",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "ArturoPlascenciaRodriguez",
     "eta": "2025-11-17",
     "enlaces": [
       {
@@ -963,10 +963,10 @@
   {
     "id": "69",
     "nombre": "Archivar servicios viejos",
-    "descripcion": "Seguimiento del issue \"Archivar servicios viejos\".",
+    "descripcion": "- Inventario de servicios antiguos - Scripts de apagado/deprovision en DO - Evidencia de archivado",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "ArturoPlascenciaRodriguez",
     "eta": "2025-11-17",
     "enlaces": [
       {
@@ -978,10 +978,10 @@
   {
     "id": "70",
     "nombre": "Export final + retención N días",
-    "descripcion": "Seguimiento del issue \"Export final + retención N días\".",
+    "descripcion": "- Export de datos y adjuntos finales - Almacenamiento seguro - Política de retención definida/comunicada",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "ArturoPlascenciaRodriguez",
     "eta": "2025-11-17",
     "enlaces": [
       {
@@ -993,10 +993,10 @@
   {
     "id": "71",
     "nombre": "Cierre de accesos y reducción de costos",
-    "descripcion": "Seguimiento del issue \"Cierre de accesos y reducción de costos\".",
+    "descripcion": "- Revocar credenciales DB/infra - Eliminar cuentas de servicio - Validar que costos residuales queden en 0",
     "estado": "Planificado",
     "porcentaje": 0,
-    "propietario": "Sin asignar",
+    "propietario": "ArturoPlascenciaRodriguez",
     "eta": "2025-11-17",
     "enlaces": [
       {
