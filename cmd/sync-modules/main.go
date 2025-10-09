@@ -305,16 +305,12 @@ func projectValueToString(typename githubv4.String, single string, text string) 
 
 func detectTipo(title string, labels []string, projectFields map[string]string) string {
 	if projectFields != nil {
-		if v, ok := projectFields["Tipo"]; ok && strings.EqualFold(v, "epic") {
+		if v, ok := projectFields["Tipo"]; ok && isEpicValue(v) {
 			return "epic"
 		}
 	}
 	for _, l := range labels {
-		if strings.EqualFold(l, "epic") {
-			return "epic"
-		}
-		upper := strings.ToUpper(strings.TrimSpace(l))
-		if strings.HasPrefix(upper, "ÉPICA") || strings.HasPrefix(upper, "EPICA") {
+		if isEpicValue(l) {
 			return "epic"
 		}
 	}
@@ -327,6 +323,21 @@ func detectTipo(title string, labels []string, projectFields map[string]string) 
 		return "epic"
 	}
 	return ""
+}
+
+func isEpicValue(raw string) bool {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return false
+	}
+	if strings.EqualFold(trimmed, "epic") {
+		return true
+	}
+	upper := strings.ToUpper(trimmed)
+	if strings.HasPrefix(upper, "ÉPICA") || strings.HasPrefix(upper, "EPICA") || strings.HasPrefix(upper, "EPIC") {
+		return true
+	}
+	return false
 }
 
 // ---------- Main ----------
