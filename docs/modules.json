@@ -13,7 +13,8 @@
         "label": "GitHub",
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/1"
       }
-    ]
+    ],
+    "tipo": "epic"
   },
   {
     "id": "2",
@@ -181,7 +182,8 @@
         "label": "GitHub",
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/13"
       }
-    ]
+    ],
+    "tipo": "epic"
   },
   {
     "id": "14",
@@ -349,7 +351,8 @@
         "label": "GitHub",
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/25"
       }
-    ]
+    ],
+    "tipo": "epic"
   },
   {
     "id": "26",
@@ -573,7 +576,8 @@
         "label": "GitHub",
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/41"
       }
-    ]
+    ],
+    "tipo": "epic"
   },
   {
     "id": "42",
@@ -629,7 +633,8 @@
         "label": "GitHub",
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/45"
       }
-    ]
+    ],
+    "tipo": "epic"
   },
   {
     "id": "46",
@@ -783,7 +788,8 @@
         "label": "GitHub",
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/56"
       }
-    ]
+    ],
+    "tipo": "epic"
   },
   {
     "id": "57",
@@ -868,7 +874,8 @@
         "label": "GitHub",
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/62"
       }
-    ]
+    ],
+    "tipo": "epic"
   },
   {
     "id": "63",
@@ -958,7 +965,8 @@
         "label": "GitHub",
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/68"
       }
-    ]
+    ],
+    "tipo": "epic"
   },
   {
     "id": "69",
