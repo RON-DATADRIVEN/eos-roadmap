@@ -1,7 +1,7 @@
 name: 🗿 Blank issue
 description: Issue libre con estructura mínima
 title: "[ISSUE] Título"
-labels: ["status: todo"]
+labels: ["Status: Ideas"]
 body:
   - type: textarea
     id: descripcion
