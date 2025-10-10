@@ -1,0 +1,7 @@
+# binarios y logs locales
+sync-modules
+sync-modules.exe
+run.log
+run-failed.log
+labels_from_project.csv
+ss/
