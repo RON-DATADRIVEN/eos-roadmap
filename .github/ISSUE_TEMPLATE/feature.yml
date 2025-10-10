@@ -1,7 +1,7 @@
 name:  ⚙ Feature
 description: Nueva capacidad o mejora
 title: "[FEAT] Título de la feature"
-labels: ["type: feature","status: todo"]
+labels: ["Tipo: Feature","Status: Ideas"]
 body:
   - type: textarea
     id: descripcion
