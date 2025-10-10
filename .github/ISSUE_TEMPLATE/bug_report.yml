@@ -1,7 +1,7 @@
 name: "🐞 Bug"
 description: "Reportar un defecto"
 title: "fix: <resumen>"
-labels: ["Tipo:Bug", "Status:En planeación"]
+labels: ["Tipo: Bug", "Status :En planeación"]
 body:
   - type: input
     id: summary
