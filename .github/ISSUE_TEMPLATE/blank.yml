@@ -1,0 +1,19 @@
+name: Blank issue
+description: Issue libre con estructura mínima
+title: "[ISSUE] Título"
+labels: ["status: todo"]
+body:
+  - type: textarea
+    id: descripcion
+    attributes:
+      label: Descripción
+      placeholder: Escribe aquí…
+      value: |
+        **Contexto**
+        - 
+
+        **Detalles**
+        - 
+
+        **Criterio de aceptación**
+        - 
