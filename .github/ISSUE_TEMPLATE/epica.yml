@@ -1,0 +1,35 @@
+name: Épica
+description: Trabajo grande que agrupa historias/tareas
+title: "[EPIC] Título claro de la épica"
+labels: ["type: epic","status: todo"]
+assignees: []
+body:
+  - type: input
+    id: objetivo
+    attributes:
+      label: Objetivo
+      description: Resultado de negocio esperado
+      placeholder: "Incrementar X en Y%"
+    validations:
+      required: true
+
+  - type: textarea
+    id: alcance
+    attributes:
+      label: Alcance (done criteria)
+      description: Condiciones verificables de término
+      placeholder: "Debe pasar A/B/C..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: entregables
+    attributes:
+      label: Entregables
+      placeholder: "Documentos, features, manuales, etc."
+
+  - type: textarea
+    id: riesgos
+    attributes:
+      label: Riesgos/Dependencias
+      placeholder: "Bloqueadores, dependencias externas, etc."
