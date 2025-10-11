@@ -60,19 +60,19 @@ textarea:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .template-option.active { border-color: var(--blue); background: rgba(78, 161, 255, .1); }
 .template-name { font-weight: 600; }
 .template-option-description { font-size: 13px; color: var(--muted); }
-.template-form { display: flex; flex-direction: column; gap: 16px; padding-bottom: 16px; }
+.template-form { display: flex; flex-direction: column; gap: 24px; padding-bottom: 16px; }
 .template-meta { display: flex; flex-direction: column; gap: 8px; }
-.template-summary { margin: 0; color: var(--muted); font-size: 14px; }
+.template-summary { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
 .issue-labels { display: flex; flex-wrap: wrap; gap: 6px; }
 .label-chip { background: rgba(78, 161, 255, .15); color: var(--blue); border: 1px solid rgba(78, 161, 255, .3); padding: 4px 8px; border-radius: 999px; font-size: 12px; }
-.field-group { display: flex; flex-direction: column; gap: 14px; }
+.field-group { display: flex; flex-direction: column; gap: 20px; }
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field.markdown { padding: 12px; border: 1px dashed var(--border); border-radius: 10px; background: rgba(21, 24, 33, .6); }
 .field.required label::after { content: ' *'; color: var(--yellow); }
 .field.invalid input,
 .field.invalid textarea { border-color: var(--red); }
-.markdown-hint { margin: 0; color: var(--muted); font-size: 14px; white-space: pre-line; }
-.form-actions { display: flex; justify-content: flex-end; }
+.markdown-hint { margin: 8px 0 0; color: var(--muted); font-size: 14px; white-space: pre-line; }
+.form-actions { display: flex; justify-content: flex-end; margin-top: 24px; }
 .form-message { min-height: 20px; font-size: 14px; }
 .form-message.success { color: var(--green); }
 .form-message.error { color: var(--red); }
