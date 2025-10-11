@@ -275,7 +275,7 @@ func configureAllowedOrigins(current, fallback string) []originEntry {
 		seen[normalized] = struct{}{}
 	}
 
-	for _, candidate := range strings.Split(current, ",") {
+	for _, candidate := range splitOriginCandidates(current) {
 		addOrigin(candidate, "ALLOWED_ORIGIN")
 	}
 
@@ -313,9 +313,42 @@ func normalizeOrigin(value string) (string, error) {
 	}
 
 	scheme := strings.ToLower(parsed.Scheme)
-	host := strings.ToLower(parsed.Host)
+	host := strings.ToLower(parsed.Hostname())
+
+	port := parsed.Port()
+	if port != "" {
+		if !(scheme == "http" && port == "80") && !(scheme == "https" && port == "443") {
+			host = fmt.Sprintf("%s:%s", host, port)
+		}
+	}
 
 	return fmt.Sprintf("%s://%s", scheme, host), nil
+}
+
+func splitOriginCandidates(raw string) []string {
+	if strings.TrimSpace(raw) == "" {
+		return []string{}
+	}
+
+	fields := strings.FieldsFunc(raw, func(r rune) bool {
+		switch r {
+		case ',', '\n', '\r', '\t', ';':
+			return true
+		default:
+			return false
+		}
+	})
+
+	cleaned := make([]string, 0, len(fields))
+	for _, candidate := range fields {
+		candidate = strings.TrimSpace(candidate)
+		if candidate == "" {
+			continue
+		}
+		cleaned = append(cleaned, candidate)
+	}
+
+	return cleaned
 }
 
 func handlePost(w http.ResponseWriter, r *http.Request) {
