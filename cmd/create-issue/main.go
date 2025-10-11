@@ -234,6 +234,33 @@ func (n *noopLogBackend) Log(context.Context, logEntry) error { return nil }
 
 func (n *noopLogBackend) Close() error { return nil }
 
+// stdoutLogBackend envía los registros al estándar de salida del contenedor.
+// Esta variante nos mantiene totalmente independientes de proveedores externos
+// porque solo usamos las capacidades básicas del sistema operativo. Además,
+// al apoyarnos en JSON garantizamos que cualquier persona pueda copiar y
+// pegar la línea en un visor de logs de GitHub Actions o Codespaces para
+// entender qué ocurrió en una solicitud concreta sin conocimientos técnicos
+// avanzados.
+type stdoutLogBackend struct{}
+
+// Log serializa la entrada y la imprime con un prefijo reconocible. Ante un
+// fallo en la serialización devolvemos el error para que el llamador lo deje
+// registrado y nadie pierda información útil durante la investigación.
+func (s *stdoutLogBackend) Log(_ context.Context, entry logEntry) error {
+	payload, err := json.Marshal(entry)
+	if err != nil {
+		log.Printf("stdoutLogBackend: no se pudo serializar la entrada: %v", err)
+		return err
+	}
+	log.Printf("request-log: %s", payload)
+	return nil
+}
+
+// Close no realiza ninguna acción porque no existen conexiones externas que
+// liberar, pero devolvemos nil para conservar la interfaz homogénea con otros
+// backends.
+func (s *stdoutLogBackend) Close() error { return nil }
+
 // requestLogger concentra toda la información relevante de la petición en
 // curso. Lleva el control del estado HTTP, la plantilla y el tiempo empleado,
 // lo que nos permite detectar cuellos de botella o fallos específicos sin
@@ -681,24 +708,37 @@ func main() {
 	if projectID == "" {
 		log.Fatal("GITHUB_PROJECT_ID no configurado")
 	}
-	if logProjectID == "" {
-		log.Fatal("LOGGING_PROJECT_ID no configurado")
-	}
 	if strings.TrimSpace(logID) == "" {
 		logID = defaultLogID
 	}
 
 	ctx := context.Background()
-	backend, err := newCloudLoggingBackend(ctx, logProjectID, logID)
-	if err != nil {
-		log.Fatalf("no se pudo inicializar Cloud Logging: %v", err)
-	}
-	requestLogBackend = backend
-	defer func() {
-		if err := backend.Close(); err != nil {
-			log.Printf("error al cerrar el cliente de logging: %v", err)
+	if logProjectID == "" {
+		// Si la persona operadora decidió no usar Google Cloud seguimos
+		// ofreciendo observabilidad escribiendo en stdout. De esta
+		// manera GitHub Actions, Codespaces o cualquier servidor
+		// simple pueden almacenar los registros sin configuraciones
+		// adicionales.
+		stdoutBackend := &stdoutLogBackend{}
+		requestLogBackend = stdoutBackend
+		defer func() {
+			if err := stdoutBackend.Close(); err != nil {
+				log.Printf("error al cerrar el backend de stdout: %v", err)
+			}
+		}()
+		log.Print("LOGGING_PROJECT_ID vacío: se usará stdout para los registros")
+	} else {
+		backend, err := newCloudLoggingBackend(ctx, logProjectID, logID)
+		if err != nil {
+			log.Fatalf("no se pudo inicializar Cloud Logging: %v", err)
 		}
-	}()
+		requestLogBackend = backend
+		defer func() {
+			if err := backend.Close(); err != nil {
+				log.Printf("error al cerrar el cliente de logging: %v", err)
+			}
+		}()
+	}
 
 	if allowAnyOrigin {
 		log.Print("CORS abierto: se permiten todos los orígenes (ALLOWED_ORIGIN=*)")

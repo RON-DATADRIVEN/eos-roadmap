@@ -27,9 +27,9 @@ El comando `cmd/create-issue` expone un endpoint HTTP pensado para Cloud Run/Fun
   añadirá automáticamente `https://ron-datadriven.github.io` (o la lista definida en `-ldflags "-X main.buildDefaultAllowedOrigins=..."`)
   para evitar bloqueos, pero se recomienda actualizarla siempre que cambie el dominio público.
 - `PORT`: opcional, puerto de escucha cuando se ejecuta localmente.
-- `LOGGING_PROJECT_ID`: proyecto de Google Cloud donde se registrarán las solicitudes (Cloud Logging debe estar habilitado).
+- `LOGGING_PROJECT_ID`: opcional. Si deseas Cloud Logging indica aquí el proyecto de Google Cloud. Cuando se omite se registra todo en stdout para que GitHub Actions, Codespaces o cualquier servidor simple puedan almacenar los eventos.
 - `LOGGING_LOG_ID`: opcional, nombre del log dentro de Cloud Logging. Si no se define se usa `create-issue-requests`.
-- `GOOGLE_APPLICATION_CREDENTIALS`: ruta al archivo JSON del servicio con permisos `roles/logging.logWriter` para ejecuciones locales.
+- `GOOGLE_APPLICATION_CREDENTIALS`: ruta al archivo JSON del servicio con permisos `roles/logging.logWriter` para ejecuciones locales (solo necesaria si decides usar Google Cloud Logging).
 
 ### Despliegue en Cloud Run
 1. Habilita los servicios necesarios (solo la primera vez): `gcloud services enable logging.googleapis.com run.googleapis.com`.
@@ -42,4 +42,7 @@ El comando `cmd/create-issue` expone un endpoint HTTP pensado para Cloud Run/Fun
 - Define la URL del servicio en GitHub Pages usando el atributo `data-issue-service-url` del elemento `<html>` o asignando `window.ISSUE_SERVICE_URL` antes de cargar el script.
 - El modal nunca expone el token; solo envía título y campos normalizados al backend.
 - Los mensajes del modal reflejan el estado (envío, reintentos, advertencias si el Project no se actualiza).
+
+### Operación sin servicios de Google
+Si prefieres mantener toda la infraestructura dentro del ecosistema de GitHub, consulta `docs/operacion-solo-github.md`. Allí se detalla cómo ejecutar el backend en Actions, Codespaces o servidores propios usando únicamente GitHub Pages y Projects para la gestión del roadmap.
 
