@@ -501,9 +501,8 @@ func (c *cloudLoggingBackend) Close() error { return nil }
 func fetchToken(ctx context.Context) (string, time.Time, error) {
 	if token, expiry, err := fetchTokenFromMetadata(ctx); err == nil {
 		return token, expiry, nil
-	} else {
-		log.Printf("no se pudo obtener token de metadata: %v", err)
 	}
+	log.Printf("no se pudo obtener token de metadata: %v", err)
 
 	credentialsPath := strings.TrimSpace(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"))
 	if credentialsPath == "" {
