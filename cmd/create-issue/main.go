@@ -54,9 +54,12 @@ var templates = map[string]issueTemplate{
 	"blank": {
 		ID:    "blank",
 		Title: "[ISSUE] Título",
+		// Mantenemos las etiquetas exactamente como existen en GitHub para
+		// evitar rechazos por diferencias mínimas (poka-yoke: prevenir errores
+		// antes de que sucedan al confiar en textos iguales a los del tablero).
 		Labels: []string{
 			"Status: Ideas",
-			"Tipo: Blank Issue",
+			"Tipo :Blank Issue",
 		},
 		Body: []templateField{
 			{
