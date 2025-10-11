@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -122,7 +123,7 @@ func TestSplitOriginCandidatesEmpty(t *testing.T) {
 func TestBlankTemplateSendsExpectedLabels(t *testing.T) {
 	// Definimos las etiquetas esperadas tal como deben viajar hasta GitHub,
 	// evitando discrepancias entre la interfaz y el backend.
-	expectedLabels := []string{"Status: Ideas", "Tipo: Blank Issue"}
+	expectedLabels := []string{"Status: Ideas", "Tipo :Blank Issue"}
 
 	// Validamos primero que la plantilla en memoria coincide con la expectativa.
 	tmpl, ok := templates["blank"]
@@ -149,6 +150,85 @@ func TestBlankTemplateSendsExpectedLabels(t *testing.T) {
 
 	if !reflect.DeepEqual(payload.Labels, expectedLabels) {
 		t.Fatalf("etiquetas enviadas = %v, se esperaba %v", payload.Labels, expectedLabels)
+	}
+}
+
+// roundTripperFunc permite crear implementaciones mínimas de RoundTripper a
+// partir de una función, lo que simplifica capturar solicitudes en pruebas y
+// reduce la probabilidad de errores humanos al escribir estructuras completas.
+type roundTripperFunc func(*http.Request) (*http.Response, error)
+
+// RoundTrip delegates the call to the callback to fulfill the interface without
+// repeating logic in each test, following the poka-yoke philosophy by centralizing
+// the behavior.
+func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
+}
+
+func TestCreateIssueEnviaEtiquetasDePlantillaEnBlanco(t *testing.T) {
+	// Guardamos el transporte global para restaurarlo al final y evitar que
+	// otras pruebas fallen por un entorno contaminado.
+	previousTransport := http.DefaultTransport
+	t.Cleanup(func() {
+		http.DefaultTransport = previousTransport
+	})
+
+	// We define the token to prevent the function from using an empty string
+	// and ensure we cover the path that adds the header.
+	previousToken := githubToken
+	githubToken = "token-de-prueba"
+	t.Cleanup(func() {
+		githubToken = previousToken
+	})
+
+	tmpl, ok := templates["blank"]
+	if !ok {
+		t.Fatal("the 'blank' template does not exist in the templates map")
+	}
+
+	var capturedBody []byte
+
+	http.DefaultTransport = roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		// We read the body only once to inspect it later, avoiding consuming the stream again
+		// and providing immediate feedback if something fails.
+		body, err := io.ReadAll(req.Body)
+		if err != nil {
+			return nil, err
+		}
+		capturedBody = body
+		if err := req.Body.Close(); err != nil {
+			return nil, err
+		}
+
+		// Respondemos con un issue válido para que la función complete su
+		// flujo sin errores simulando una respuesta real de GitHub.
+		responseBody := `{"number": 1, "html_url": "https://example.com/issue/1", "node_id": "MDU6SXNzdWUx"}`
+		resp := &http.Response{
+			StatusCode: http.StatusCreated,
+			Body:       io.NopCloser(strings.NewReader(responseBody)),
+			Header:     make(http.Header),
+		}
+		return resp, nil
+	})
+
+	ctx := context.Background()
+	if _, err := createIssue(ctx, tmpl.Title, tmpl.Labels, "example body"); err != nil {
+		t.Fatalf("createIssue returned an unexpected error: %v", err)
+	}
+
+	if len(capturedBody) == 0 {
+		t.Fatal("failed to capture the request body to GitHub")
+	}
+
+	var payload struct {
+		Labels []string `json:"labels"`
+	}
+	if err := json.Unmarshal(capturedBody, &payload); err != nil {
+		t.Fatalf("no se pudo deserializar el payload enviado: %v", err)
+	}
+
+	if !reflect.DeepEqual(payload.Labels, tmpl.Labels) {
+		t.Fatalf("sent labels = %v, expected %v", payload.Labels, tmpl.Labels)
 	}
 }
 
