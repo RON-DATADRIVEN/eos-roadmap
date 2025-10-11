@@ -189,9 +189,8 @@ func TestCreateIssueEnviaEtiquetasDePlantillaEnBlanco(t *testing.T) {
 	var capturedBody []byte
 
 	http.DefaultTransport = roundTripperFunc(func(req *http.Request) (*http.Response, error) {
-		// Leemos el cuerpo una sola vez para inspeccionarlo después, evitando
-		// volver a consumir el stream y generando retroalimentación inmediata
-		// si algo falla.
+		// We read the body only once to inspect it later, avoiding consuming the stream again
+		// and providing immediate feedback if something fails.
 		body, err := io.ReadAll(req.Body)
 		if err != nil {
 			return nil, err
