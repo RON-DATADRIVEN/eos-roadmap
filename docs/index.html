@@ -340,7 +340,7 @@
       });
     }
 
-    function showMessage(message, variant = 'info', link) {
+    function showMessage(message, variant = 'info', options = {}) {
       issueFormMessage.textContent = '';
       issueFormMessage.className = `form-message ${variant}`;
 
@@ -348,6 +348,16 @@
         issueFormMessage.append(document.createTextNode(message));
       }
 
+      if (options.debugId) {
+        // Adjuntamos el identificador para que soporte pueda solicitarlo sin
+        // exponer detalles técnicos al usuario final.
+        const debugLine = document.createElement('div');
+        debugLine.classList.add('form-message-debug');
+        debugLine.textContent = `Código de seguimiento: ${options.debugId}`;
+        issueFormMessage.append(debugLine);
+      }
+
+      const link = options.link || options;
       if (link && link.href && link.label) {
         const anchor = document.createElement('a');
         anchor.href = link.href;
@@ -566,6 +576,9 @@
       submitIssueBtn.textContent = originalText;
 
       const friendlyError = normalizeServiceError(lastError);
+      // Guardamos el identificador proporcionado por el backend para adjuntarlo
+      // en cualquier mensaje que se muestre al usuario.
+      const debugOptions = responseData && responseData.debugId ? { debugId: responseData.debugId } : {};
 
       if (!responseData) {
         showMessage(friendlyError || 'No se pudo crear el issue.', 'error');
@@ -575,13 +588,14 @@
       if (responseData.error && !responseData.issueUrl) {
         showMessage(
           normalizeServiceError(responseData.error.message) || 'No se pudo crear el issue.',
-          'error'
+          'error',
+          debugOptions
         );
         return;
       }
 
       if (!responseData.issueUrl) {
-        showMessage('Respuesta del servicio incompleta.', 'error');
+        showMessage('Respuesta del servicio incompleta.', 'error', debugOptions);
         return;
       }
 
@@ -589,13 +603,19 @@
         const warningMessage =
           normalizeServiceError(responseData.error.message) || 'Issue creado con observaciones.';
         showMessage(warningMessage, 'warning', {
-          href: responseData.issueUrl,
-          label: 'Abrir issue'
+          ...debugOptions,
+          link: {
+            href: responseData.issueUrl,
+            label: 'Abrir issue'
+          }
         });
       } else {
         showMessage('Issue creado correctamente.', 'success', {
-          href: responseData.issueUrl,
-          label: 'Abrir issue'
+          ...debugOptions,
+          link: {
+            href: responseData.issueUrl,
+            label: 'Abrir issue'
+          }
         });
         issueForm.reset();
         populateTemplateFields(template);

@@ -87,6 +87,15 @@ textarea:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .form-message a:focus {
   text-decoration: none;
 }
+
+/* Mostramos el identificador de depuración en un estilo sutil para no
+   distraer al usuario pero permitir que soporte lo copie con facilidad. */
+.form-message-debug {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.85;
+}
 .payload-preview { background: #090b10; border: 1px solid var(--border); border-radius: 12px; padding: 16px; max-height: 220px; overflow: auto; font-size: 13px; line-height: 1.45; }
 
 @media (max-width: 960px) {
