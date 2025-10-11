@@ -408,7 +408,21 @@ func TestHandleRequestCORSPreflightAndPost(t *testing.T) {
 
 	// Repetimos ahora la solicitud real para comprobar que la ruta POST llega a
 	// handlePost y que los encabezados de CORS acompañan la respuesta.
-	body := strings.NewReader("{\"templateId\":\"blank\",\"title\":\"Ejemplo\",\"fields\":{\"descripcion\":\"Texto\"}}")
+	type postRequestBody struct {
+		TemplateID string                 `json:"templateId"`
+		Title      string                 `json:"title"`
+		Fields     map[string]interface{} `json:"fields"`
+	}
+	reqBody := postRequestBody{
+		TemplateID: "blank",
+		Title:      "Ejemplo",
+		Fields:     map[string]interface{}{"descripcion": "Texto"},
+	}
+	jsonBytes, err := json.Marshal(reqBody)
+	if err != nil {
+		t.Fatalf("no se pudo serializar el cuerpo JSON: %v", err)
+	}
+	body := strings.NewReader(string(jsonBytes))
 	postReq, err := http.NewRequest(http.MethodPost, server.URL+"/", body)
 	if err != nil {
 		t.Fatalf("no se pudo crear la solicitud POST: %v", err)
