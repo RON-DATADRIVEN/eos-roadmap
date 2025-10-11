@@ -217,7 +217,7 @@ func TestCreateIssueEnviaEtiquetasDePlantillaEnBlanco(t *testing.T) {
 	}
 
 	if len(capturedBody) == 0 {
-		t.Fatal("no se capturó el cuerpo de la solicitud hacia GitHub")
+		t.Fatal("failed to capture the request body to GitHub")
 	}
 
 	var payload struct {
