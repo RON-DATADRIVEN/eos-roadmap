@@ -17,6 +17,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"os"
 	"strings"
@@ -499,10 +500,14 @@ func (c *cloudLoggingBackend) Close() error { return nil }
 // fetchToken intenta primero obtener un token mediante metadata y, si falla,
 // recurre a las credenciales locales definidas por el operador.
 func fetchToken(ctx context.Context) (string, time.Time, error) {
-	if token, expiry, err := fetchTokenFromMetadata(ctx); err == nil {
+	token, expiry, metadataErr := fetchTokenFromMetadata(ctx)
+	if metadataErr == nil {
 		return token, expiry, nil
 	}
-	log.Printf("no se pudo obtener token de metadata: %v", err)
+	// Registramos el error específico para documentar qué ruta falló. De esta
+	// forma, si la obtención mediante metadata se rompe en producción, el log
+	// deja constancia del motivo antes de intentar con credenciales locales.
+	log.Printf("no se pudo obtener token de metadata: %v", metadataErr)
 
 	credentialsPath := strings.TrimSpace(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"))
 	if credentialsPath == "" {
@@ -759,7 +764,39 @@ func handleCORS(ctx context.Context, w http.ResponseWriter, r *http.Request) boo
 		w.Header().Set("Vary", "Origin")
 	}
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	// Construimos la lista de encabezados permitidos replicando cualquier valor
+	// solicitado por el navegador. De este modo evitamos errores cuando el
+	// agente de usuario envía los nombres en minúsculas o agrega elementos
+	// adicionales, lo que anteriormente dejaba al preflight sin respuesta
+	// válida.
+	allowedHeaders := []string{}
+	seenHeaders := map[string]struct{}{}
+	addHeader := func(value string) {
+		cleaned := strings.TrimSpace(value)
+		if cleaned == "" {
+			return
+		}
+		canonical := textproto.CanonicalMIMEHeaderKey(cleaned)
+		if canonical == "" {
+			return
+		}
+		if _, exists := seenHeaders[canonical]; exists {
+			return
+		}
+		seenHeaders[canonical] = struct{}{}
+		allowedHeaders = append(allowedHeaders, canonical)
+	}
+
+	addHeader("Content-Type")
+
+	requestedHeaders := r.Header.Get("Access-Control-Request-Headers")
+	if requestedHeaders != "" {
+		for _, header := range strings.Split(requestedHeaders, ",") {
+			addHeader(header)
+		}
+	}
+
+	w.Header().Set("Access-Control-Allow-Headers", strings.Join(allowedHeaders, ", "))
 	w.Header().Set("Access-Control-Max-Age", "3600")
 	return true
 }

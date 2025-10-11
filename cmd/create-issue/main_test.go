@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -332,6 +333,183 @@ func TestHandleCORSRejectsWhenNoOriginsConfigured(t *testing.T) {
 	if resp.StatusCode != http.StatusForbidden {
 		t.Fatalf("expected status %d, got %d", http.StatusForbidden, resp.StatusCode)
 	}
+}
+
+func TestHandleRequestCORSPreflightAndPost(t *testing.T) {
+	t.Helper()
+
+	restoreOrigins := preserveOriginGlobals(t)
+	defer restoreOrigins()
+
+	restoreLogger := preserveRequestLogger(t)
+	defer restoreLogger()
+
+	// Configuramos los orígenes permitidos incluyendo el dominio público, evitando
+	// depender de variables de entorno implícitas dentro de la prueba.
+	allowAnyOrigin = false
+	allowedOriginEntries = configureAllowedOrigins(defaultAllowedOrigin, defaultAllowedOrigin)
+
+	// Reemplazamos las funciones externas para observar que handlePost se ejecuta
+	// sin invocar servicios reales. Guardamos banderas para detectar la llamada.
+	postCalled := false
+	projectCalled := false
+	issueCreator = func(context.Context, string, []string, string) (*githubIssueResponse, error) {
+		postCalled = true
+		return &githubIssueResponse{Number: 7, HTMLURL: "https://example.com/issues/7", NodeID: "node-7"}, nil
+	}
+	projectAdder = func(context.Context, string) error {
+		projectCalled = true
+		return nil
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(handleRequest))
+	defer server.Close()
+
+	client := server.Client()
+
+	allowedOrigin := defaultAllowedOrigin
+
+	// Simulamos primero la petición de preflight que ejecuta el navegador antes
+	// del POST real. Incluimos el encabezado solicitado en minúsculas para
+	// replicar lo que observamos en producción.
+	preflightReq, err := http.NewRequest(http.MethodOptions, server.URL+"/", nil)
+	if err != nil {
+		t.Fatalf("no se pudo crear la solicitud OPTIONS: %v", err)
+	}
+	preflightReq.Header.Set("Origin", allowedOrigin)
+	preflightReq.Header.Set("Access-Control-Request-Method", http.MethodPost)
+	preflightReq.Header.Set("Access-Control-Request-Headers", "content-type")
+
+	preflightResp, err := client.Do(preflightReq)
+	if err != nil {
+		t.Fatalf("error ejecutando preflight: %v", err)
+	}
+	defer preflightResp.Body.Close()
+
+	if preflightResp.StatusCode != http.StatusNoContent {
+		t.Fatalf("preflight status = %d, se esperaba %d", preflightResp.StatusCode, http.StatusNoContent)
+	}
+
+	if got := preflightResp.Header.Get("Access-Control-Allow-Origin"); got != allowedOrigin {
+		t.Fatalf("Access-Control-Allow-Origin preflight = %q, se esperaba %q", got, allowedOrigin)
+	}
+
+	if got := preflightResp.Header.Get("Access-Control-Allow-Methods"); !strings.Contains(got, http.MethodPost) {
+		t.Fatalf("Access-Control-Allow-Methods no incluye POST: %q", got)
+	}
+
+	if got := preflightResp.Header.Get("Access-Control-Allow-Headers"); !headerListContains(got, "content-type") {
+		t.Fatalf("Access-Control-Allow-Headers no contiene content-type: %q", got)
+	}
+
+	if postCalled {
+		t.Fatalf("handlePost no debe ejecutarse durante el preflight")
+	}
+
+	// Repetimos ahora la solicitud real para comprobar que la ruta POST llega a
+	// handlePost y que los encabezados de CORS acompañan la respuesta.
+	body := strings.NewReader("{\"templateId\":\"blank\",\"title\":\"Ejemplo\",\"fields\":{\"descripcion\":\"Texto\"}}")
+	postReq, err := http.NewRequest(http.MethodPost, server.URL+"/", body)
+	if err != nil {
+		t.Fatalf("no se pudo crear la solicitud POST: %v", err)
+	}
+	postReq.Header.Set("Origin", allowedOrigin)
+	postReq.Header.Set("Content-Type", "application/json")
+
+	postResp, err := client.Do(postReq)
+	if err != nil {
+		t.Fatalf("error ejecutando POST: %v", err)
+	}
+	defer postResp.Body.Close()
+
+	if postResp.StatusCode != http.StatusOK {
+		t.Fatalf("status del POST = %d, se esperaba %d", postResp.StatusCode, http.StatusOK)
+	}
+
+	if got := postResp.Header.Get("Access-Control-Allow-Origin"); got != allowedOrigin {
+		t.Fatalf("Access-Control-Allow-Origin en POST = %q, se esperaba %q", got, allowedOrigin)
+	}
+
+	if got := postResp.Header.Get("Access-Control-Allow-Headers"); !headerListContains(got, "content-type") {
+		t.Fatalf("Access-Control-Allow-Headers en POST no contiene content-type: %q", got)
+	}
+
+	if !postCalled {
+		t.Fatalf("handlePost no fue invocado tras el POST")
+	}
+
+	if !projectCalled {
+		t.Fatalf("projectAdder no fue invocado tras el POST")
+	}
+}
+
+func TestHandleRequestCORSForbiddenOrigin(t *testing.T) {
+	t.Helper()
+
+	restoreOrigins := preserveOriginGlobals(t)
+	defer restoreOrigins()
+
+	restoreLogger := preserveRequestLogger(t)
+	defer restoreLogger()
+
+	allowAnyOrigin = false
+	allowedOriginEntries = configureAllowedOrigins(defaultAllowedOrigin, defaultAllowedOrigin)
+
+	postCalled := false
+	issueCreator = func(context.Context, string, []string, string) (*githubIssueResponse, error) {
+		postCalled = true
+		return nil, nil
+	}
+	projectAdder = func(context.Context, string) error { return nil }
+
+	server := httptest.NewServer(http.HandlerFunc(handleRequest))
+	defer server.Close()
+
+	client := server.Client()
+
+	body := strings.NewReader("{\"templateId\":\"blank\",\"title\":\"Ejemplo\",\"fields\":{\"descripcion\":\"Texto\"}}")
+	req, err := http.NewRequest(http.MethodPost, server.URL+"/", body)
+	if err != nil {
+		t.Fatalf("no se pudo crear la solicitud POST: %v", err)
+	}
+	req.Header.Set("Origin", "https://bloqueado.example")
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("error ejecutando POST bloqueado: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("status del POST bloqueado = %d, se esperaba %d", resp.StatusCode, http.StatusForbidden)
+	}
+
+	var payload issueResponse
+	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		t.Fatalf("no se pudo leer la respuesta JSON: %v", err)
+	}
+
+	if payload.Error == nil || payload.Error.Code != "forbidden_origin" {
+		t.Fatalf("el JSON de error no coincide: %+v", payload.Error)
+	}
+
+	if postCalled {
+		t.Fatalf("handlePost no debe ejecutarse cuando el origen está bloqueado")
+	}
+}
+
+// headerListContains revisa listas de encabezados separadas por comas ignorando el
+// uso de mayúsculas, evitando que pequeñas diferencias de formato provoquen falsos
+// negativos en las comprobaciones de CORS.
+func headerListContains(raw string, target string) bool {
+	parts := strings.Split(raw, ",")
+	for _, part := range parts {
+		if strings.EqualFold(strings.TrimSpace(part), target) {
+			return true
+		}
+	}
+	return false
 }
 
 func TestRequestLoggerCapturesSuccessfulPost(t *testing.T) {
