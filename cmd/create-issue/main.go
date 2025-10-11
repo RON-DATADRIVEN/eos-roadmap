@@ -56,7 +56,7 @@ var templates = map[string]issueTemplate{
 		Title: "[ISSUE] Título",
 		Labels: []string{
 			"Status: Ideas",
-			"Tipo :Blank Issue",
+			"Tipo: Blank Issue",
 		},
 		Body: []templateField{
 			{
@@ -1035,12 +1035,7 @@ func displayLabel(field templateField) string {
 }
 
 func createIssue(ctx context.Context, title string, labels []string, body string) (*githubIssueResponse, error) {
-	payload := map[string]any{
-		"title":  title,
-		"body":   body,
-		"labels": labels,
-	}
-	buf, err := json.Marshal(payload)
+	buf, err := buildIssuePayload(title, labels, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1081,6 +1076,18 @@ func createIssue(ctx context.Context, title string, labels []string, body string
 		return nil, errors.New("respuesta sin node_id")
 	}
 	return &issue, nil
+}
+
+// buildIssuePayload centraliza la construcción del JSON que enviamos a GitHub, de modo
+// que podamos validarlo en pruebas y evitar errores de tipeo o cambios silenciosos en
+// las etiquetas.
+func buildIssuePayload(title string, labels []string, body string) ([]byte, error) {
+	payload := map[string]any{
+		"title":  title,
+		"body":   body,
+		"labels": labels,
+	}
+	return json.Marshal(payload)
 }
 
 func addToProject(ctx context.Context, nodeID string) error {

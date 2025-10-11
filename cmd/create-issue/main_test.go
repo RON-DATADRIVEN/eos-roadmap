@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -116,6 +115,39 @@ func TestSplitOriginCandidatesEmpty(t *testing.T) {
 	got := splitOriginCandidates("   \n\t")
 	if len(got) != 0 {
 		t.Fatalf("expected empty slice, got %d elements", len(got))
+	}
+}
+
+func TestBlankTemplateSendsExpectedLabels(t *testing.T) {
+	// Definimos las etiquetas esperadas tal como deben viajar hasta GitHub,
+	// evitando discrepancias entre la interfaz y el backend.
+	expectedLabels := []string{"Status: Ideas", "Tipo: Blank Issue"}
+
+	// Validamos primero que la plantilla en memoria coincide con la expectativa.
+	tmpl, ok := templates["blank"]
+	if !ok {
+		t.Fatal("la plantilla 'blank' no existe en el mapa de plantillas")
+	}
+	if !reflect.DeepEqual(tmpl.Labels, expectedLabels) {
+		t.Fatalf("etiquetas configuradas = %v, se esperaba %v", tmpl.Labels, expectedLabels)
+	}
+
+	// Construimos el payload mediante la función compartida con createIssue para
+	// asegurarnos de que las etiquetas correctas llegan sin modificación.
+	payloadBytes, err := buildIssuePayload("[ISSUE] título de prueba", tmpl.Labels, "cuerpo de prueba")
+	if err != nil {
+		t.Fatalf("no se pudo generar el payload: %v", err)
+	}
+
+	var payload struct {
+		Labels []string `json:"labels"`
+	}
+	if err := json.Unmarshal(payloadBytes, &payload); err != nil {
+		t.Fatalf("no se pudo deserializar el payload: %v", err)
+	}
+
+	if !reflect.DeepEqual(payload.Labels, expectedLabels) {
+		t.Fatalf("etiquetas enviadas = %v, se esperaba %v", payload.Labels, expectedLabels)
 	}
 }
 
