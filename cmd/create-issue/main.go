@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -179,22 +180,52 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleCORS(w http.ResponseWriter, r *http.Request) bool {
-	origin := r.Header.Get("Origin")
+	origin := strings.TrimSpace(r.Header.Get("Origin"))
 	if origin == "" {
 		return true
 	}
 
-	if allowedOrigin == "" || origin != allowedOrigin {
+	if !isOriginAllowed(origin) {
 		http.Error(w, "origen no permitido", http.StatusForbidden)
 		return false
 	}
 
-	w.Header().Set("Access-Control-Allow-Origin", allowedOrigin)
+	w.Header().Set("Access-Control-Allow-Origin", origin)
 	w.Header().Set("Vary", "Origin")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Access-Control-Max-Age", "3600")
 	return true
+}
+
+func isOriginAllowed(origin string) bool {
+	if allowedOrigin == "" {
+		return false
+	}
+
+	reqURL, err := url.Parse(origin)
+	if err != nil || reqURL.Scheme == "" || reqURL.Host == "" {
+		return false
+	}
+
+	for _, candidate := range strings.Split(allowedOrigin, ",") {
+		candidate = strings.TrimSpace(candidate)
+		if candidate == "" {
+			continue
+		}
+
+		allowedURL, err := url.Parse(candidate)
+		if err != nil || allowedURL.Scheme == "" || allowedURL.Host == "" {
+			log.Printf("origen permitido inválido ignorado: %q", candidate)
+			continue
+		}
+
+		if strings.EqualFold(allowedURL.Scheme, reqURL.Scheme) && strings.EqualFold(allowedURL.Host, reqURL.Host) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func handlePost(w http.ResponseWriter, r *http.Request) {
