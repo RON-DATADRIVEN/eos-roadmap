@@ -228,7 +228,7 @@ func TestCreateIssueEnviaEtiquetasDePlantillaEnBlanco(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(payload.Labels, tmpl.Labels) {
-		t.Fatalf("las etiquetas enviadas = %v, se esperaba %v", payload.Labels, tmpl.Labels)
+		t.Fatalf("sent labels = %v, expected %v", payload.Labels, tmpl.Labels)
 	}
 }
 
