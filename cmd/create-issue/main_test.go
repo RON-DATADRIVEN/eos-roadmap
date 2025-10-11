@@ -237,3 +237,34 @@ func TestDenyOrigin(t *testing.T) {
 		t.Errorf("expected empty Access-Control-Allow-Origin, got %q", h)
 	}
 }
+
+func TestHandleCORSRejectsWhenNoOriginsConfigured(t *testing.T) {
+	t.Helper()
+
+	// Explicamos que restauramos los valores globales para no afectar a otras pruebas,
+	// igual que haría una persona que ordena su espacio de trabajo antes de comenzar.
+	restore := preserveOriginGlobals(t)
+	defer restore()
+
+	// Dejamos el sistema sin orígenes permitidos, representando un despliegue con
+	// configuración vacía o dañada. Lo hacemos manualmente para imitar el fallo
+	// original incluso después de mejorar la lógica de respaldo.
+	allowAnyOrigin = false
+	allowedOrigin = ""
+	allowedOriginEntries = nil
+
+	// Construimos una petición desde el dominio público actual para validar que la
+	// respuesta sea de rechazo y así detectar el problema original.
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "http://example.com", nil)
+	req.Header.Set("Origin", "https://ron-datadriven.github.io")
+
+	if handleCORS(rr, req) {
+		t.Fatalf("expected handleCORS to reject origin when configuration is empty")
+	}
+
+	resp := rr.Result()
+	if resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("expected status %d, got %d", http.StatusForbidden, resp.StatusCode)
+	}
+}
