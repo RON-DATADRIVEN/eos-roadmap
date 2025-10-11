@@ -1130,10 +1130,15 @@ func writeResponse(ctx context.Context, w http.ResponseWriter, status int, resp 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		if logger := loggerFromContext(ctx); logger != nil {
-			logger.LogError(ctx, "write_response_error", "error al escribir respuesta", err)
-		} else {
-			log.Printf("error al escribir respuesta: %v", err)
-		}
+		logErrorWithFallback(ctx, "write_response_error", "error al escribir respuesta", err)
+	}
+}
+
+// logErrorWithFallback logs an error using the logger from context if available, otherwise falls back to log.Printf.
+func logErrorWithFallback(ctx context.Context, code, message string, err error) {
+	if logger := loggerFromContext(ctx); logger != nil {
+		logger.LogError(ctx, code, message, err)
+	} else {
+		log.Printf("%s: %s: %v", code, message, err)
 	}
 }
