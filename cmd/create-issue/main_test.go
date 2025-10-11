@@ -212,7 +212,7 @@ func TestCreateIssueEnviaEtiquetasDePlantillaEnBlanco(t *testing.T) {
 	})
 
 	ctx := context.Background()
-	if _, err := createIssue(ctx, tmpl.Title, tmpl.Labels, "cuerpo de ejemplo"); err != nil {
+	if _, err := createIssue(ctx, tmpl.Title, tmpl.Labels, "example body"); err != nil {
 		t.Fatalf("createIssue devolvió un error inesperado: %v", err)
 	}
 
