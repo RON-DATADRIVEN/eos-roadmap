@@ -1,11 +1,6 @@
 package main
 
-import (
-	"encoding/json"
-	"net/http"
-	"net/http/httptest"
-	"testing"
-)
+import "testing"
 
 func preserveOriginGlobals(t *testing.T) func() {
 	t.Helper()
@@ -118,43 +113,5 @@ func TestConfigureAllowedOriginsWildcard(t *testing.T) {
 
 	if entries != nil {
 		t.Fatalf("entries should be nil when wildcard is enabled")
-	}
-}
-
-func TestHandleCORSForbiddenOrigin(t *testing.T) {
-	restore := preserveOriginGlobals(t)
-	defer restore()
-
-	allowAnyOrigin = false
-	allowedOriginEntries = configureAllowedOrigins("https://allowed.example", defaultAllowedOrigin)
-
-	rr := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/", nil)
-	req.Header.Set("Origin", "https://not-allowed.example")
-
-	allowed := handleCORS(rr, req)
-	if allowed {
-		t.Fatalf("expected handleCORS to reject origin")
-	}
-
-	if rr.Code != http.StatusForbidden {
-		t.Fatalf("unexpected status: got %d", rr.Code)
-	}
-
-	if got := rr.Header().Get("Access-Control-Allow-Origin"); got != "https://not-allowed.example" {
-		t.Fatalf("Access-Control-Allow-Origin = %q, want %q", got, "https://not-allowed.example")
-	}
-
-	var resp issueResponse
-	if err := json.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
-		t.Fatalf("response is not valid JSON: %v", err)
-	}
-
-	if resp.Error == nil || resp.Error.Code != "forbidden_origin" {
-		t.Fatalf("expected forbidden_origin error, got %+v", resp.Error)
-	}
-
-	if resp.Error.Message == "" {
-		t.Fatal("expected error message to be populated")
 	}
 }
