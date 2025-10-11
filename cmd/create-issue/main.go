@@ -200,7 +200,7 @@ func handleCORS(w http.ResponseWriter, r *http.Request) bool {
 	}
 
 	if !isOriginAllowed(origin) {
-		http.Error(w, "origen no permitido", http.StatusForbidden)
+		denyOrigin(w, origin)
 		return false
 	}
 
@@ -214,6 +214,17 @@ func handleCORS(w http.ResponseWriter, r *http.Request) bool {
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Access-Control-Max-Age", "3600")
 	return true
+}
+
+func denyOrigin(w http.ResponseWriter, origin string) {
+	w.Header().Set("Access-Control-Allow-Origin", origin)
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Max-Age", "3600")
+	w.Header().Set("Vary", "Origin")
+
+	message := fmt.Sprintf("Origen no permitido: %s", origin)
+	writeError(w, http.StatusForbidden, "forbidden_origin", message)
 }
 
 func isOriginAllowed(origin string) bool {
