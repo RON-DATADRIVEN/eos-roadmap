@@ -146,6 +146,7 @@ var (
 	projectID     = strings.TrimSpace(os.Getenv("GITHUB_PROJECT_ID"))
 	allowedOrigin = strings.TrimSpace(os.Getenv("ALLOWED_ORIGIN"))
 
+	allowAnyOrigin       bool
 	allowedOriginEntries = configureAllowedOrigins(allowedOrigin, defaultAllowedOrigin)
 )
 
@@ -156,7 +157,9 @@ func main() {
 	if projectID == "" {
 		log.Fatal("GITHUB_PROJECT_ID no configurado")
 	}
-	if len(allowedOriginEntries) == 0 {
+	if allowAnyOrigin {
+		log.Print("CORS abierto: se permiten todos los orígenes (ALLOWED_ORIGIN=*)")
+	} else if len(allowedOriginEntries) == 0 {
 		log.Print("ADVERTENCIA: ALLOWED_ORIGIN vacío o sin valores válidos, se rechazarán solicitudes con origen")
 	} else {
 		log.Printf("Orígenes permitidos: %s", allowedOrigin)
@@ -201,8 +204,12 @@ func handleCORS(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 
-	w.Header().Set("Access-Control-Allow-Origin", origin)
-	w.Header().Set("Vary", "Origin")
+	if allowAnyOrigin {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+	} else {
+		w.Header().Set("Access-Control-Allow-Origin", origin)
+		w.Header().Set("Vary", "Origin")
+	}
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Access-Control-Max-Age", "3600")
@@ -210,6 +217,10 @@ func handleCORS(w http.ResponseWriter, r *http.Request) bool {
 }
 
 func isOriginAllowed(origin string) bool {
+	if allowAnyOrigin {
+		return true
+	}
+
 	if len(allowedOriginEntries) == 0 {
 		return false
 	}
@@ -238,6 +249,18 @@ func configureAllowedOrigins(current, fallback string) []originEntry {
 			return
 		}
 
+		if value == "*" {
+			allowAnyOrigin = true
+			allowedOrigin = "*"
+			entries = nil
+			seen = map[string]struct{}{}
+			return
+		}
+
+		if allowAnyOrigin {
+			return
+		}
+
 		normalized, err := normalizeOrigin(value)
 		if err != nil {
 			log.Printf("origen permitido inválido ignorado (%s): %q", source, value)
@@ -256,7 +279,15 @@ func configureAllowedOrigins(current, fallback string) []originEntry {
 		addOrigin(candidate, "ALLOWED_ORIGIN")
 	}
 
+	if allowAnyOrigin {
+		return nil
+	}
+
 	addOrigin(fallback, "predeterminado")
+
+	if allowAnyOrigin {
+		return nil
+	}
 
 	if len(entries) == 0 {
 		allowedOrigin = ""

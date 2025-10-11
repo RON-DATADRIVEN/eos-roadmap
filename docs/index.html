@@ -369,6 +369,23 @@
       return new Promise(resolve => setTimeout(resolve, ms));
     }
 
+    function normalizeServiceError(message) {
+      if (!message) {
+        return '';
+      }
+
+      const normalized = message.toLowerCase();
+      if (normalized.includes('failed to fetch') || normalized.includes('networkerror')) {
+        return 'No se pudo contactar al servicio de issues. Verifica la configuración de CORS o la disponibilidad del servicio.';
+      }
+
+      if (normalized.includes('origen no permitido')) {
+        return 'El origen de la petición no está autorizado en el servicio de issues. Revisa la variable ALLOWED_ORIGIN en el backend.';
+      }
+
+      return message;
+    }
+
     function getFocusableElements() {
       return Array.from(issueModal.querySelectorAll('a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'));
     }
@@ -548,13 +565,18 @@
       submitIssueBtn.disabled = false;
       submitIssueBtn.textContent = originalText;
 
+      const friendlyError = normalizeServiceError(lastError);
+
       if (!responseData) {
-        showMessage(lastError || 'No se pudo crear el issue.', 'error');
+        showMessage(friendlyError || 'No se pudo crear el issue.', 'error');
         return;
       }
 
       if (responseData.error && !responseData.issueUrl) {
-        showMessage(responseData.error.message || 'No se pudo crear el issue.', 'error');
+        showMessage(
+          normalizeServiceError(responseData.error.message) || 'No se pudo crear el issue.',
+          'error'
+        );
         return;
       }
 
@@ -564,7 +586,9 @@
       }
 
       if (responseData.error) {
-        showMessage(responseData.error.message || 'Issue creado con observaciones.', 'warning', {
+        const warningMessage =
+          normalizeServiceError(responseData.error.message) || 'Issue creado con observaciones.';
+        showMessage(warningMessage, 'warning', {
           href: responseData.issueUrl,
           label: 'Abrir issue'
         });
