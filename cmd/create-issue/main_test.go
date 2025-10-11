@@ -183,7 +183,7 @@ func TestCreateIssueEnviaEtiquetasDePlantillaEnBlanco(t *testing.T) {
 
 	tmpl, ok := templates["blank"]
 	if !ok {
-		t.Fatal("la plantilla 'blank' no existe en el mapa de plantillas")
+		t.Fatal("the 'blank' template does not exist in the templates map")
 	}
 
 	var capturedBody []byte
