@@ -11,6 +11,9 @@ Repositorio para **planificación visible** del proyecto EOS y su **página púb
 - Issues: Feature, Bug, Change Request.
 - Pull Request template + CODEOWNERS.
 
-## Página pública
-Habilita Pages (Settings → Pages) con carpeta `/docs`. La home es `docs/index.html`.
+## 🌐 Página pública
+https://ron-datadriven.github.io/eos-roadmap/
+
+## 🔧 New Issues
+https://github.com/RON-DATADRIVEN/eos-roadmap/issues/new/choose
 
