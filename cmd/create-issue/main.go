@@ -217,12 +217,6 @@ func handleCORS(w http.ResponseWriter, r *http.Request) bool {
 }
 
 func denyOrigin(w http.ResponseWriter, origin string) {
-	w.Header().Set("Access-Control-Allow-Origin", origin)
-	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	w.Header().Set("Access-Control-Max-Age", "3600")
-	w.Header().Set("Vary", "Origin")
-
 	message := fmt.Sprintf("Origen no permitido: %s", origin)
 	writeError(w, http.StatusForbidden, "forbidden_origin", message)
 }
@@ -262,13 +256,6 @@ func configureAllowedOrigins(current, fallback string) []originEntry {
 
 		if value == "*" {
 			allowAnyOrigin = true
-			allowedOrigin = "*"
-			entries = nil
-			seen = map[string]struct{}{}
-			return
-		}
-
-		if allowAnyOrigin {
 			return
 		}
 
@@ -286,17 +273,18 @@ func configureAllowedOrigins(current, fallback string) []originEntry {
 		seen[normalized] = struct{}{}
 	}
 
-	for _, candidate := range splitOriginCandidates(current) {
-		addOrigin(candidate, "ALLOWED_ORIGIN")
-	}
-
-	if allowAnyOrigin {
-		return nil
-	}
-
 	addOrigin(fallback, "predeterminado")
 
+	candidates := splitOriginCandidates(current)
+	for _, candidate := range candidates {
+		addOrigin(candidate, "ALLOWED_ORIGIN")
+		if allowAnyOrigin {
+			break
+		}
+	}
+
 	if allowAnyOrigin {
+		allowedOrigin = "*"
 		return nil
 	}
 
@@ -305,11 +293,11 @@ func configureAllowedOrigins(current, fallback string) []originEntry {
 		return nil
 	}
 
-	values := make([]string, 0, len(entries))
+	rawOrigins := make([]string, 0, len(entries))
 	for _, entry := range entries {
-		values = append(values, entry.raw)
+		rawOrigins = append(rawOrigins, entry.raw)
 	}
-	allowedOrigin = strings.Join(values, ",")
+	allowedOrigin = strings.Join(rawOrigins, ",")
 
 	return entries
 }

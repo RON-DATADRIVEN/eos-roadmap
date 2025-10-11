@@ -1,6 +1,12 @@
 package main
 
-import "testing"
+import (
+	"net/http"
+	"net/http/httptest"
+	"reflect"
+	"sort"
+	"testing"
+)
 
 func preserveOriginGlobals(t *testing.T) func() {
 	t.Helper()
@@ -113,5 +119,121 @@ func TestConfigureAllowedOriginsWildcard(t *testing.T) {
 
 	if entries != nil {
 		t.Fatalf("entries should be nil when wildcard is enabled")
+	}
+}
+
+func TestConfigureAllowedOrigins(t *testing.T) {
+	const fallbackOrigin = "https://fallback.example"
+
+	tests := []struct {
+		name         string
+		envVar       string
+		wantOrigins  []string
+		wantWildcard bool
+	}{
+		{
+			name:        "env var and fallback",
+			envVar:      "https://a.example.com,https://b.example.com",
+			wantOrigins: []string{"https://a.example.com", "https://b.example.com", fallbackOrigin},
+		},
+		{
+			name:        "env var with duplicates",
+			envVar:      "https://a.example.com, https://a.example.com",
+			wantOrigins: []string{"https://a.example.com", fallbackOrigin},
+		},
+		{
+			name:        "env var with invalid and valid",
+			envVar:      "invalid-origin, https://a.example.com",
+			wantOrigins: []string{"https://a.example.com", fallbackOrigin},
+		},
+		{
+			name:        "env var empty with fallback",
+			envVar:      " ",
+			wantOrigins: []string{fallbackOrigin},
+		},
+		{
+			name:         "wildcard takes precedence",
+			envVar:       "https://a.example.com, *",
+			wantOrigins:  nil,
+			wantWildcard: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			restore := preserveOriginGlobals(t)
+			defer restore()
+
+			allowAnyOrigin = false
+			allowedOrigin = ""
+
+			entries := configureAllowedOrigins(tt.envVar, fallbackOrigin)
+
+			if allowAnyOrigin != tt.wantWildcard {
+				t.Fatalf("allowAnyOrigin = %v, want %v", allowAnyOrigin, tt.wantWildcard)
+			}
+
+			if tt.wantWildcard {
+				if len(entries) != 0 {
+					t.Fatalf("expected no entries for wildcard, got %d", len(entries))
+				}
+				return
+			}
+
+			gotOrigins := make([]string, len(entries))
+			for i, e := range entries {
+				gotOrigins[i] = e.normalized
+			}
+
+			sort.Strings(gotOrigins)
+			sort.Strings(tt.wantOrigins)
+
+			if !reflect.DeepEqual(gotOrigins, tt.wantOrigins) {
+				t.Fatalf("allowed origins mismatch:\ngot:  %v\nwant: %v", gotOrigins, tt.wantOrigins)
+			}
+		})
+	}
+}
+
+func TestIsOriginAllowed(t *testing.T) {
+	restore := preserveOriginGlobals(t)
+	defer restore()
+
+	allowedOriginEntries = configureAllowedOrigins("https://a.example.com, https://b.example.com", "https://default.example")
+
+	tests := []struct {
+		name   string
+		origin string
+		want   bool
+	}{
+		{"allowed custom", "https://a.example.com", true},
+		{"allowed default", "https://default.example", true},
+		{"denied", "https://c.example.com", false},
+		{"subdomain not allowed", "https://sub.a.example.com", false},
+		{"empty origin", "", false},
+		{"malformed origin", "http//bad", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := isOriginAllowed(tt.origin); got != tt.want {
+				t.Fatalf("isOriginAllowed(%q) = %v, want %v", tt.origin, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDenyOrigin(t *testing.T) {
+	rr := httptest.NewRecorder()
+	denyOrigin(rr, "https://unauthorized.example.com")
+
+	resp := rr.Result()
+
+	if resp.StatusCode != http.StatusForbidden {
+		t.Errorf("expected status %d, got %d", http.StatusForbidden, resp.StatusCode)
+	}
+
+	if h := resp.Header.Get("Access-Control-Allow-Origin"); h != "" {
+		t.Errorf("expected empty Access-Control-Allow-Origin, got %q", h)
 	}
 }
