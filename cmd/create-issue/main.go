@@ -146,8 +146,15 @@ var (
 	projectID     = strings.TrimSpace(os.Getenv("GITHUB_PROJECT_ID"))
 	allowedOrigin = strings.TrimSpace(os.Getenv("ALLOWED_ORIGIN"))
 
+	// buildDefaultAllowedOrigins permite definir, mediante flags de compilación,
+	// una lista base de dominios que deben aceptarse incluso si la variable
+	// ALLOWED_ORIGIN llega vacía o con valores erróneos. Al mantener el valor
+	// predeterminado del sitio público, evitamos errores humanos durante un
+	// despliegue apresurado.
+	buildDefaultAllowedOrigins = defaultAllowedOrigin
+
 	allowAnyOrigin       bool
-	allowedOriginEntries = configureAllowedOrigins(allowedOrigin, defaultAllowedOrigin)
+	allowedOriginEntries = configureAllowedOrigins(allowedOrigin, buildDefaultAllowedOrigins)
 )
 
 func main() {
@@ -273,13 +280,55 @@ func configureAllowedOrigins(current, fallback string) []originEntry {
 		seen[normalized] = struct{}{}
 	}
 
-	addOrigin(fallback, "predeterminado")
+	// Interpretamos la lista de orígenes de respaldo permitiendo separar por
+	// comas o saltos de línea. Así evitamos que un error de formato deje al
+	// servicio sin valores mínimos.
+	fallbackCandidates := splitOriginCandidates(fallback)
+	if len(fallbackCandidates) == 0 {
+		// Si el operador no definió una lista personalizada, recurrimos al
+		// dominio público por defecto para mantener la puerta abierta a la
+		// aplicación web existente.
+		fallbackCandidates = splitOriginCandidates(defaultAllowedOrigin)
+	}
 
+	for _, candidate := range fallbackCandidates {
+		addOrigin(candidate, "predeterminado")
+		if allowAnyOrigin {
+			break
+		}
+	}
+
+	if allowAnyOrigin {
+		allowedOrigin = "*"
+		return nil
+	}
+
+	// Procesamos las entradas suministradas en la variable de entorno, sabiendo que
+	// cualquier error humano quedará registrado en el log pero no eliminará los
+	// dominios seguros que ya añadimos.
 	candidates := splitOriginCandidates(current)
 	for _, candidate := range candidates {
 		addOrigin(candidate, "ALLOWED_ORIGIN")
 		if allowAnyOrigin {
 			break
+		}
+	}
+
+	if allowAnyOrigin {
+		allowedOrigin = "*"
+		return nil
+	}
+
+	if len(entries) == 0 {
+		// Como última defensa, añadimos explícitamente el dominio público
+		// conocido. Esto evita que un error al construir la lista de respaldo
+		// deje fuera al frontend que publica las peticiones.
+		forcedFallback := splitOriginCandidates(defaultAllowedOrigin)
+		for _, candidate := range forcedFallback {
+			addOrigin(candidate, "predeterminado forzado")
+			if allowAnyOrigin {
+				break
+			}
 		}
 	}
 
