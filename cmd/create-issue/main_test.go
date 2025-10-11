@@ -158,9 +158,9 @@ func TestBlankTemplateSendsExpectedLabels(t *testing.T) {
 // reduce la probabilidad de errores humanos al escribir estructuras completas.
 type roundTripperFunc func(*http.Request) (*http.Response, error)
 
-// RoundTrip delega la llamada al callback para cumplir con la interfaz sin
-// repetir lógica en cada prueba, siguiendo la filosofía poka-yoke al centralizar
-// el comportamiento.
+// RoundTrip delegates the call to the callback to fulfill the interface without
+// repeating logic in each test, following the poka-yoke philosophy by centralizing
+// the behavior.
 func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return f(req)
 }
