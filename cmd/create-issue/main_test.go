@@ -173,8 +173,8 @@ func TestCreateIssueEnviaEtiquetasDePlantillaEnBlanco(t *testing.T) {
 		http.DefaultTransport = previousTransport
 	})
 
-	// Definimos el token para prevenir que la función utilice una cadena vacía
-	// y nos aseguramos de cubrir la ruta que añade el encabezado.
+	// We define the token to prevent the function from using an empty string
+	// and ensure we cover the path that adds the header.
 	previousToken := githubToken
 	githubToken = "token-de-prueba"
 	t.Cleanup(func() {
