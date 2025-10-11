@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" data-issue-service-url="">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -63,11 +63,11 @@
             </div>
             <div id="issueFields" class="field-group"></div>
             <div class="form-actions">
-              <button id="submitIssue" type="submit" class="btn primary">Generar payload</button>
+              <button id="submitIssue" type="submit" class="btn primary">Crear issue</button>
             </div>
           </form>
           <div id="issueFormMessage" class="form-message" role="alert" aria-live="assertive"></div>
-          <pre id="payloadPreview" class="payload-preview hidden" tabindex="0" aria-label="Resultado del payload"></pre>
+          <pre id="payloadPreview" class="payload-preview hidden" tabindex="0" aria-label="Vista previa del cuerpo del issue"></pre>
         </section>
       </div>
     </div>
@@ -90,6 +90,9 @@
     const issueTitle = document.getElementById('issueTitle');
     const issueFormMessage = document.getElementById('issueFormMessage');
     const payloadPreview = document.getElementById('payloadPreview');
+    const submitIssueBtn = document.getElementById('submitIssue');
+
+    const issueServiceURL = (document.documentElement.dataset.issueServiceUrl || window.ISSUE_SERVICE_URL || '').trim();
 
     let modules = [];
     let currentTemplateId = null;
@@ -337,14 +340,33 @@
       });
     }
 
-    function showMessage(message, variant = 'info') {
-      issueFormMessage.textContent = message;
+    function showMessage(message, variant = 'info', link) {
+      issueFormMessage.textContent = '';
       issueFormMessage.className = `form-message ${variant}`;
+
+      if (message) {
+        issueFormMessage.append(document.createTextNode(message));
+      }
+
+      if (link && link.href && link.label) {
+        const anchor = document.createElement('a');
+        anchor.href = link.href;
+        anchor.target = '_blank';
+        anchor.rel = 'noreferrer noopener';
+        anchor.textContent = link.label;
+        anchor.classList.add('form-message-link');
+        issueFormMessage.append(document.createTextNode(' '));
+        issueFormMessage.append(anchor);
+      }
     }
 
     function clearMessage() {
       issueFormMessage.textContent = '';
       issueFormMessage.className = 'form-message';
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     function getFocusableElements() {
@@ -448,7 +470,9 @@
         return;
       }
 
+      const fieldValues = {};
       const sections = [];
+
       template.body.forEach(field => {
         if (field.type === 'markdown') {
           if (field.value) {
@@ -463,37 +487,95 @@
         }
         const control = wrapper.querySelector('input, textarea');
         const value = (control.value || '').trim();
-        const label = field.label || field.id;
-        sections.push(`### ${label}\n${value}`);
+        if (value || field.required) {
+          fieldValues[field.id] = value;
+        }
+        if (value) {
+          const label = field.label || field.id;
+          sections.push(`### ${label}\n${value}`);
+        }
       });
 
-      const payload = {
+      const previewBody = sections.join('\n\n').trim();
+      payloadPreview.textContent = previewBody || 'Sin contenido';
+      payloadPreview.classList.toggle('hidden', !previewBody);
+
+      if (!issueServiceURL) {
+        showMessage('Servicio de issues no configurado. Contacta al administrador.', 'error');
+        return;
+      }
+
+      const requestPayload = {
+        templateId: template.id,
         title: sanitizedTitle,
-        labels: template.labels,
-        body: sections.join('\n\n').trim()
+        fields: fieldValues
       };
 
-      payloadPreview.textContent = JSON.stringify(payload, null, 2);
-      payloadPreview.classList.remove('hidden');
+      const originalText = submitIssueBtn.textContent;
+      submitIssueBtn.disabled = true;
+      submitIssueBtn.textContent = 'Enviando…';
+      showMessage('Enviando issue…', 'info');
 
-      let copied = false;
-      if (navigator.clipboard && typeof window !== 'undefined' && window.isSecureContext) {
+      const maxAttempts = 2;
+      let responseData = null;
+      let lastError = null;
+
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
-          await navigator.clipboard.writeText(payloadPreview.textContent);
-          copied = true;
+          const response = await fetch(issueServiceURL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestPayload)
+          });
+
+          const data = await response.json().catch(() => ({}));
+          if (response.ok) {
+            responseData = data;
+            break;
+          }
+
+          lastError = (data && data.error && data.error.message) || `Solicitud rechazada (${response.status})`;
         } catch (error) {
-          copied = false;
+          lastError = error instanceof Error ? error.message : 'Error de red';
+        }
+
+        if (attempt < maxAttempts) {
+          showMessage('Reintentando el envío…', 'warning');
+          await sleep(750);
         }
       }
 
-      if (copied) {
-        showMessage('Payload generado y copiado al portapapeles.', 'success');
-      } else {
-        showMessage('Payload generado. Copia manualmente desde el panel si lo necesitas.', 'warning');
+      submitIssueBtn.disabled = false;
+      submitIssueBtn.textContent = originalText;
+
+      if (!responseData) {
+        showMessage(lastError || 'No se pudo crear el issue.', 'error');
+        return;
       }
 
-      issueForm.reset();
-      populateTemplateFields(template);
+      if (responseData.error && !responseData.issueUrl) {
+        showMessage(responseData.error.message || 'No se pudo crear el issue.', 'error');
+        return;
+      }
+
+      if (!responseData.issueUrl) {
+        showMessage('Respuesta del servicio incompleta.', 'error');
+        return;
+      }
+
+      if (responseData.error) {
+        showMessage(responseData.error.message || 'Issue creado con observaciones.', 'warning', {
+          href: responseData.issueUrl,
+          label: 'Abrir issue'
+        });
+      } else {
+        showMessage('Issue creado correctamente.', 'success', {
+          href: responseData.issueUrl,
+          label: 'Abrir issue'
+        });
+        issueForm.reset();
+        populateTemplateFields(template);
+      }
     }
 
     renderTemplateOptions();

@@ -78,6 +78,15 @@ textarea:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .form-message.error { color: var(--red); }
 .form-message.warning { color: var(--yellow); }
 .form-message.info { color: var(--blue); }
+.form-message a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+}
+.form-message a:hover,
+.form-message a:focus {
+  text-decoration: none;
+}
 .payload-preview { background: #090b10; border: 1px solid var(--border); border-radius: 12px; padding: 16px; max-height: 220px; overflow: auto; font-size: 13px; line-height: 1.45; }
 
 @media (max-width: 960px) {
