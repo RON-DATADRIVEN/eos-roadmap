@@ -27,12 +27,16 @@ El comando `cmd/create-issue` expone un endpoint HTTP pensado para Cloud Run/Fun
   añadirá automáticamente `https://ron-datadriven.github.io` (o la lista definida en `-ldflags "-X main.buildDefaultAllowedOrigins=..."`)
   para evitar bloqueos, pero se recomienda actualizarla siempre que cambie el dominio público.
 - `PORT`: opcional, puerto de escucha cuando se ejecuta localmente.
+- `LOGGING_PROJECT_ID`: proyecto de Google Cloud donde se registrarán las solicitudes (Cloud Logging debe estar habilitado).
+- `LOGGING_LOG_ID`: opcional, nombre del log dentro de Cloud Logging. Si no se define se usa `create-issue-requests`.
+- `GOOGLE_APPLICATION_CREDENTIALS`: ruta al archivo JSON del servicio con permisos `roles/logging.logWriter` para ejecuciones locales.
 
 ### Despliegue en Cloud Run
-1. Construye la imagen: `gcloud builds submit --tag gcr.io/<project-id>/create-issue cmd/create-issue`.
-2. Antes de desplegar, confirma que `ALLOWED_ORIGIN` coincida con el dominio público vigente (por ejemplo, `https://ron-datadriven.github.io`).
-3. Despliega: `gcloud run deploy create-issue --image gcr.io/<project-id>/create-issue --region <region> --allow-unauthenticated --set-env-vars ALLOWED_ORIGIN=https://ron-datadriven.github.io,GITHUB_PROJECT_ID=<project-id> --set-secrets GITHUB_TOKEN=github-token:latest`.
-4. Define el secreto `github-token` en Secret Manager (rotación automática recomendada) antes del despliegue.
+1. Habilita los servicios necesarios (solo la primera vez): `gcloud services enable logging.googleapis.com run.googleapis.com`.
+2. Construye la imagen: `gcloud builds submit --tag gcr.io/<project-id>/create-issue cmd/create-issue`.
+3. Antes de desplegar, confirma que `ALLOWED_ORIGIN` coincida con el dominio público vigente (por ejemplo, `https://ron-datadriven.github.io`).
+4. Despliega: `gcloud run deploy create-issue --image gcr.io/<project-id>/create-issue --region <region> --allow-unauthenticated --set-env-vars ALLOWED_ORIGIN=https://ron-datadriven.github.io,GITHUB_PROJECT_ID=<project-id>,LOGGING_PROJECT_ID=<gcp-project>,LOGGING_LOG_ID=create-issue-requests --set-secrets GITHUB_TOKEN=github-token:latest`.
+5. Define el secreto `github-token` en Secret Manager (rotación automática recomendada) antes del despliegue y asigna al servicio de Cloud Run una cuenta con el rol `roles/logging.logWriter` para permitir el envío a Cloud Logging.
 
 ### Integración con el modal
 - Define la URL del servicio en GitHub Pages usando el atributo `data-issue-service-url` del elemento `<html>` o asignando `window.ISSUE_SERVICE_URL` antes de cargar el script.

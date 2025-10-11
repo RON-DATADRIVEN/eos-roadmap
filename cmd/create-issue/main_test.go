@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"sort"
+	"strings"
 	"testing"
 )
 
@@ -20,6 +21,36 @@ func preserveOriginGlobals(t *testing.T) func() {
 		allowedOrigin = previousAllowed
 		allowedOriginEntries = previousEntries
 	}
+}
+
+func preserveRequestLogger(t *testing.T) func() {
+	t.Helper()
+	previousBackend := requestLogBackend
+	previousIssueCreator := issueCreator
+	previousProjectAdder := projectAdder
+
+	return func() {
+		requestLogBackend = previousBackend
+		issueCreator = previousIssueCreator
+		projectAdder = previousProjectAdder
+	}
+}
+
+type memoryLogBackend struct {
+	entries []logEntry
+}
+
+func (m *memoryLogBackend) Log(_ context.Context, entry logEntry) error {
+	m.entries = append(m.entries, entry)
+	return nil
+}
+
+func (m *memoryLogBackend) Close() error { return nil }
+
+func (m *memoryLogBackend) Entries() []logEntry {
+	out := make([]logEntry, len(m.entries))
+	copy(out, m.entries)
+	return out
 }
 
 func TestNormalizeOrigin(t *testing.T) {
@@ -259,7 +290,7 @@ func TestIsOriginAllowed(t *testing.T) {
 
 func TestDenyOrigin(t *testing.T) {
 	rr := httptest.NewRecorder()
-	denyOrigin(rr, "https://unauthorized.example.com")
+	denyOrigin(context.Background(), rr, "https://unauthorized.example.com")
 
 	resp := rr.Result()
 
@@ -293,12 +324,209 @@ func TestHandleCORSRejectsWhenNoOriginsConfigured(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "http://example.com", nil)
 	req.Header.Set("Origin", "https://ron-datadriven.github.io")
 
-	if handleCORS(rr, req) {
+	if handleCORS(context.Background(), rr, req) {
 		t.Fatalf("expected handleCORS to reject origin when configuration is empty")
 	}
 
 	resp := rr.Result()
 	if resp.StatusCode != http.StatusForbidden {
 		t.Fatalf("expected status %d, got %d", http.StatusForbidden, resp.StatusCode)
+	}
+}
+
+func TestRequestLoggerCapturesSuccessfulPost(t *testing.T) {
+	t.Helper()
+
+	restoreOrigins := preserveOriginGlobals(t)
+	defer restoreOrigins()
+
+	restoreLogger := preserveRequestLogger(t)
+	defer restoreLogger()
+
+	allowAnyOrigin = true
+	allowedOriginEntries = nil
+
+	fakeBackend := &memoryLogBackend{}
+	requestLogBackend = fakeBackend
+
+	issueCreator = func(context.Context, string, []string, string) (*githubIssueResponse, error) {
+		// Entregamos datos estáticos para que la prueba se enfoque en el logging
+		// y no dependa de GitHub.
+		return &githubIssueResponse{Number: 1, HTMLURL: "https://example.com/issue/1", NodeID: "node-1"}, nil
+	}
+	projectAdder = func(context.Context, string) error { return nil }
+
+	body := strings.NewReader("{\"templateId\":\"blank\",\"title\":\"Nuevo módulo\",\"fields\":{\"descripcion\":\"Detalle\"}}")
+	req := httptest.NewRequest(http.MethodPost, "http://service.local/", body)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Origin", "https://allowed.example")
+
+	rr := httptest.NewRecorder()
+	handleRequest(rr, req)
+
+	resp := rr.Result()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", resp.StatusCode)
+	}
+
+	var payload issueResponse
+	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		t.Fatalf("unexpected error decoding response: %v", err)
+	}
+	if payload.DebugID == "" {
+		t.Fatalf("expected debugId in response payload")
+	}
+
+	entries := fakeBackend.Entries()
+	if len(entries) < 2 {
+		t.Fatalf("expected at least two log entries, got %d", len(entries))
+	}
+
+	var finishEntry logEntry
+	var finishFound bool
+	var startEntry logEntry
+	var startFound bool
+	for _, entry := range entries {
+		switch entry.Stage {
+		case "start":
+			if !startFound {
+				startEntry = entry
+				startFound = true
+			}
+		case "finish":
+			if !finishFound {
+				finishEntry = entry
+				finishFound = true
+			}
+		}
+	}
+
+	if !startFound {
+		t.Fatalf("start entry not found in log entries: %+v", entries)
+	}
+	if startEntry.Timestamp.IsZero() {
+		t.Fatalf("start entry should include a timestamp")
+	}
+	if startEntry.Method != http.MethodPost {
+		t.Fatalf("start entry method = %s, want %s", startEntry.Method, http.MethodPost)
+	}
+	if startEntry.Path != "/" {
+		t.Fatalf("start entry path = %s, want /", startEntry.Path)
+	}
+	if startEntry.Origin != "https://allowed.example" {
+		t.Fatalf("start entry origin = %s, want https://allowed.example", startEntry.Origin)
+	}
+
+	if !finishFound {
+		t.Fatalf("finish entry not found in log entries: %+v", entries)
+	}
+	if finishEntry.Status != http.StatusOK {
+		t.Fatalf("finish status = %d, want %d", finishEntry.Status, http.StatusOK)
+	}
+	if finishEntry.ErrorCode != "" {
+		t.Fatalf("finish entry error code = %q, want empty", finishEntry.ErrorCode)
+	}
+	if finishEntry.TemplateID != "blank" {
+		t.Fatalf("finish entry template = %s, want blank", finishEntry.TemplateID)
+	}
+	if finishEntry.RequestID != payload.DebugID {
+		t.Fatalf("finish entry requestId = %s, want %s", finishEntry.RequestID, payload.DebugID)
+	}
+	if finishEntry.Timestamp.IsZero() {
+		t.Fatalf("finish entry should include timestamp")
+	}
+}
+
+func TestRequestLoggerCapturesCORSRejection(t *testing.T) {
+	t.Helper()
+
+	restoreOrigins := preserveOriginGlobals(t)
+	defer restoreOrigins()
+
+	restoreLogger := preserveRequestLogger(t)
+	defer restoreLogger()
+
+	allowAnyOrigin = false
+	allowedOriginEntries = nil
+	allowedOrigin = ""
+
+	fakeBackend := &memoryLogBackend{}
+	requestLogBackend = fakeBackend
+
+	body := strings.NewReader("{\"templateId\":\"blank\"}")
+	req := httptest.NewRequest(http.MethodPost, "http://service.local/", body)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Origin", "https://blocked.example")
+
+	rr := httptest.NewRecorder()
+	handleRequest(rr, req)
+
+	resp := rr.Result()
+	if resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("expected status 403, got %d", resp.StatusCode)
+	}
+
+	var payload issueResponse
+	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		t.Fatalf("unexpected error decoding response: %v", err)
+	}
+	if payload.DebugID == "" {
+		t.Fatalf("expected debugId in response payload")
+	}
+
+	entries := fakeBackend.Entries()
+	if len(entries) < 2 {
+		t.Fatalf("expected at least two log entries, got %d", len(entries))
+	}
+
+	var errorEntry logEntry
+	var errorFound bool
+	var finishEntry logEntry
+	var finishFound bool
+	for _, entry := range entries {
+		switch entry.Stage {
+		case "error":
+			if entry.ErrorCode == "forbidden_origin" && !errorFound {
+				errorEntry = entry
+				errorFound = true
+			}
+		case "finish":
+			if !finishFound {
+				finishEntry = entry
+				finishFound = true
+			}
+		}
+	}
+
+	if !errorFound {
+		t.Fatalf("error entry with code forbidden_origin not found: %+v", entries)
+	}
+	if errorEntry.Status != http.StatusForbidden {
+		t.Fatalf("error entry status = %d, want %d", errorEntry.Status, http.StatusForbidden)
+	}
+	if errorEntry.Origin != "https://blocked.example" {
+		t.Fatalf("error entry origin = %s, want https://blocked.example", errorEntry.Origin)
+	}
+	if errorEntry.Method != http.MethodPost {
+		t.Fatalf("error entry method = %s, want %s", errorEntry.Method, http.MethodPost)
+	}
+	if errorEntry.Timestamp.IsZero() {
+		t.Fatalf("error entry should include timestamp")
+	}
+
+	if !finishFound {
+		t.Fatalf("finish entry not found in log entries: %+v", entries)
+	}
+	if finishEntry.Status != http.StatusForbidden {
+		t.Fatalf("finish status = %d, want %d", finishEntry.Status, http.StatusForbidden)
+	}
+	if finishEntry.ErrorCode != "forbidden_origin" {
+		t.Fatalf("finish entry error code = %s, want forbidden_origin", finishEntry.ErrorCode)
+	}
+	if finishEntry.RequestID != payload.DebugID {
+		t.Fatalf("finish entry requestId = %s, want %s", finishEntry.RequestID, payload.DebugID)
+	}
+	if finishEntry.TemplateID != "" {
+		t.Fatalf("finish entry template = %s, want empty", finishEntry.TemplateID)
 	}
 }
