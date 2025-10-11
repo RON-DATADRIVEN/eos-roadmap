@@ -10,13 +10,17 @@
 <body>
   <div class="header">
     <div class="container">
-  <h1>EOS – Roadmap público</h1>
-  <p>Seguimiento de módulos y estado.</p>
-
-     => <a class="link" href="https://github.com/orgs/RON-DATADRIVEN/projects/3/views/1?layout=board" target="_blank" rel="noopener">Ver plan en completo en GitHub Projects</a>
-  </p>
-</div>
-
+      <div class="header-main">
+        <div>
+          <h1>EOS – Roadmap público</h1>
+          <p>
+            Seguimiento de módulos y estado.
+            <a class="link" href="https://github.com/orgs/RON-DATADRIVEN/projects/3/views/1?layout=board" target="_blank" rel="noopener">Ver plan en completo en GitHub Projects</a>
+          </p>
+        </div>
+        <button id="openIssueModal" class="btn" type="button" aria-haspopup="dialog" aria-controls="issueModal">Crear issue</button>
+      </div>
+    </div>
   </div>
 
   <main class="container">
@@ -35,13 +39,476 @@
     <div class="footer" id="footer"></div>
   </main>
 
+  <div id="issueModalOverlay" class="modal-overlay hidden" role="presentation">
+    <div id="issueModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="issueModalTitle" aria-describedby="issueModalDescription" tabindex="-1">
+      <button id="closeIssueModal" type="button" class="modal-close" aria-label="Cerrar">
+        ×
+      </button>
+      <h2 id="issueModalTitle">Crear issue</h2>
+      <p id="issueModalDescription" class="modal-description">Selecciona una plantilla para generar el contenido del issue.</p>
+      <div class="modal-body">
+        <aside class="template-selector" aria-label="Plantillas de issue">
+          <h3>Plantillas</h3>
+          <ul id="templateList" class="template-list" role="list"></ul>
+        </aside>
+        <section class="template-form" aria-live="polite">
+          <div class="template-meta">
+            <p id="templateSummary" class="template-summary"></p>
+            <div id="issueLabels" class="issue-labels" aria-label="Etiquetas aplicadas"></div>
+          </div>
+          <form id="issueForm" novalidate>
+            <div class="field">
+              <label for="issueTitle">Título</label>
+              <input id="issueTitle" name="issueTitle" type="text" required />
+            </div>
+            <div id="issueFields" class="field-group"></div>
+            <div class="form-actions">
+              <button id="submitIssue" type="submit" class="btn primary">Generar payload</button>
+            </div>
+          </form>
+          <div id="issueFormMessage" class="form-message" role="alert" aria-live="assertive"></div>
+          <pre id="payloadPreview" class="payload-preview hidden" tabindex="0" aria-label="Resultado del payload"></pre>
+        </section>
+      </div>
+    </div>
+  </div>
+
   <script>
     const grid = document.getElementById('grid');
     const statusFilter = document.getElementById('statusFilter');
     const search = document.getElementById('search');
     const footer = document.getElementById('footer');
+    const openIssueModalBtn = document.getElementById('openIssueModal');
+    const modalOverlay = document.getElementById('issueModalOverlay');
+    const issueModal = document.getElementById('issueModal');
+    const closeIssueModalBtn = document.getElementById('closeIssueModal');
+    const templateList = document.getElementById('templateList');
+    const templateSummary = document.getElementById('templateSummary');
+    const issueLabels = document.getElementById('issueLabels');
+    const issueForm = document.getElementById('issueForm');
+    const issueFields = document.getElementById('issueFields');
+    const issueTitle = document.getElementById('issueTitle');
+    const issueFormMessage = document.getElementById('issueFormMessage');
+    const payloadPreview = document.getElementById('payloadPreview');
 
     let modules = [];
+    let currentTemplateId = null;
+    let lastFocusedElement = null;
+
+    const issueTemplates = [
+      {
+        id: 'blank',
+        name: '🗿 Issue',
+        description: 'Issue libre con estructura mínima',
+        title: '[ISSUE] Título',
+        labels: ['Status: Ideas', 'Tipo :Blank Issue'],
+        body: [
+          {
+            type: 'textarea',
+            id: 'descripcion',
+            label: 'Descripción',
+            placeholder: 'Escribe aquí…',
+            value: '**Contexto**\n-\n\n**Detalles**\n-\n\n**Criterio de aceptación**\n-'
+          }
+        ]
+      },
+      {
+        id: 'bug',
+        name: '🐞 Bug',
+        description: 'Reportar un defecto',
+        title: 'fix: <resumen>',
+        labels: ['Tipo: Bug', 'Status :En planeación'],
+        body: [
+          {
+            type: 'input',
+            id: 'summary',
+            label: 'Resumen',
+            placeholder: 'Error 500 al crear programa',
+            required: true
+          },
+          {
+            type: 'textarea',
+            id: 'steps',
+            label: 'Pasos para reproducir',
+            placeholder: '1. Ir a /programas → 2. Click en crear → 3. ...',
+            required: true
+          },
+          {
+            type: 'textarea',
+            id: 'expected',
+            label: 'Comportamiento esperado',
+            required: true
+          },
+          {
+            type: 'textarea',
+            id: 'actual',
+            label: 'Comportamiento actual',
+            required: true
+          },
+          {
+            type: 'textarea',
+            id: 'env',
+            label: 'Entorno',
+            placeholder: 'Prod/Stg/Dev, navegador, versión'
+          },
+          {
+            type: 'textarea',
+            id: 'logs',
+            label: 'Logs/evidencia'
+          }
+        ]
+      },
+      {
+        id: 'change_request',
+        name: '📝 Solicitud de Cambio',
+        description: 'Solicitar un cambio de alcance/alcance técnico',
+        title: 'chore: change-request <resumen>',
+        labels: ['Tipo: Change Request', 'Status: Ideas'],
+        body: [
+          {
+            type: 'markdown',
+            id: 'intro',
+            value: 'Describe el cambio propuesto y el impacto (tiempo, costo, riesgo). Será evaluado.'
+          },
+          {
+            type: 'textarea',
+            id: 'description',
+            label: 'Descripción del cambio',
+            required: true
+          },
+          {
+            type: 'textarea',
+            id: 'impact',
+            label: 'Impacto (alcance/tiempo/costo/riesgo)',
+            required: true
+          },
+          {
+            type: 'input',
+            id: 'requester',
+            label: 'Solicitante',
+            placeholder: '@stakeholder',
+            required: true
+          }
+        ]
+      },
+      {
+        id: 'feature',
+        name: '⚙ Feature',
+        description: 'Nueva capacidad o mejora',
+        title: '[FEAT] Título de la feature',
+        labels: ['Tipo: Feature', 'Status: Ideas'],
+        body: [
+          {
+            type: 'textarea',
+            id: 'descripcion',
+            label: 'Descripción',
+            placeholder: 'Como [rol] quiero [función] para [beneficio]',
+            required: true
+          },
+          {
+            type: 'input',
+            id: 'criterio',
+            label: 'Criterio de aceptación (resumen)',
+            placeholder: 'Dado/Cuando/Entonces...',
+            required: true
+          }
+        ]
+      }
+    ];
+
+    function renderTemplateOptions() {
+      templateList.innerHTML = '';
+      issueTemplates.forEach(template => {
+        const item = document.createElement('li');
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'template-option';
+        button.dataset.templateId = template.id;
+
+        const name = document.createElement('span');
+        name.className = 'template-name';
+        name.textContent = template.name;
+
+        const description = document.createElement('span');
+        description.className = 'template-option-description';
+        description.textContent = template.description;
+
+        button.append(name, description);
+        button.addEventListener('click', () => selectTemplate(template.id));
+
+        item.appendChild(button);
+        templateList.appendChild(item);
+      });
+    }
+
+    function selectTemplate(templateId) {
+      const template = issueTemplates.find(t => t.id === templateId);
+      if (!template) {
+        return;
+      }
+
+      currentTemplateId = templateId;
+
+      templateList.querySelectorAll('.template-option').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.templateId === templateId);
+      });
+
+      templateSummary.textContent = template.description;
+      issueLabels.innerHTML = '';
+      template.labels.forEach(label => {
+        const badge = document.createElement('span');
+        badge.className = 'label-chip';
+        badge.textContent = label;
+        issueLabels.appendChild(badge);
+      });
+
+      payloadPreview.classList.add('hidden');
+      payloadPreview.textContent = '';
+      clearMessage();
+
+      populateTemplateFields(template);
+    }
+
+    function populateTemplateFields(template) {
+      issueTitle.value = template.title;
+      issueTitle.placeholder = template.title;
+
+      issueFields.innerHTML = '';
+      template.body.forEach(field => {
+        if (field.type === 'markdown') {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'field markdown';
+          wrapper.dataset.type = 'markdown';
+          wrapper.dataset.value = field.value || '';
+
+          const label = document.createElement('p');
+          label.className = 'markdown-hint';
+          label.textContent = field.value || '';
+          wrapper.appendChild(label);
+
+          issueFields.appendChild(wrapper);
+          return;
+        }
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'field';
+        wrapper.dataset.type = field.type;
+        wrapper.dataset.fieldId = field.id;
+        wrapper.dataset.label = field.label || field.id;
+
+        const label = document.createElement('label');
+        label.textContent = field.label || field.id;
+
+        const controlId = `issue-field-${template.id}-${field.id}`;
+
+        let control;
+        if (field.type === 'textarea') {
+          control = document.createElement('textarea');
+          control.rows = 4;
+        } else {
+          control = document.createElement('input');
+          control.type = 'text';
+        }
+
+        control.id = controlId;
+        control.name = field.id;
+        control.placeholder = field.placeholder || '';
+        if (field.required) {
+          control.required = true;
+          wrapper.classList.add('required');
+        }
+        if (field.value) {
+          control.value = field.value;
+        }
+
+        label.setAttribute('for', controlId);
+
+        control.addEventListener('input', () => {
+          wrapper.classList.remove('invalid');
+        });
+        control.addEventListener('blur', () => {
+          if (control.required && !control.value.trim()) {
+            wrapper.classList.add('invalid');
+          }
+        });
+
+        wrapper.append(label, control);
+        issueFields.appendChild(wrapper);
+      });
+    }
+
+    function showMessage(message, variant = 'info') {
+      issueFormMessage.textContent = message;
+      issueFormMessage.className = `form-message ${variant}`;
+    }
+
+    function clearMessage() {
+      issueFormMessage.textContent = '';
+      issueFormMessage.className = 'form-message';
+    }
+
+    function getFocusableElements() {
+      return Array.from(issueModal.querySelectorAll('a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'));
+    }
+
+    function trapFocus(event) {
+      if (event.key !== 'Tab') {
+        return;
+      }
+
+      const focusable = getFocusableElements();
+      if (!focusable.length) {
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    function handleKeydown(event) {
+      if (event.key === 'Escape') {
+        closeModal();
+        return;
+      }
+      trapFocus(event);
+    }
+
+    function openModal() {
+      if (modalOverlay.classList.contains('hidden')) {
+        lastFocusedElement = document.activeElement;
+        modalOverlay.classList.remove('hidden');
+        document.body.classList.add('modal-open');
+        document.addEventListener('keydown', handleKeydown);
+
+        clearMessage();
+        payloadPreview.classList.add('hidden');
+        payloadPreview.textContent = '';
+
+        if (!currentTemplateId && issueTemplates.length) {
+          selectTemplate(issueTemplates[0].id);
+        }
+
+        requestAnimationFrame(() => {
+          const focusable = getFocusableElements();
+          (focusable[0] || issueModal).focus();
+        });
+      }
+    }
+
+    function closeModal() {
+      if (!modalOverlay.classList.contains('hidden')) {
+        modalOverlay.classList.add('hidden');
+        document.body.classList.remove('modal-open');
+        document.removeEventListener('keydown', handleKeydown);
+        if (lastFocusedElement) {
+          lastFocusedElement.focus();
+        }
+      }
+    }
+
+    async function handleSubmit(event) {
+      event.preventDefault();
+      clearMessage();
+
+      if (!currentTemplateId) {
+        showMessage('Selecciona una plantilla para continuar.', 'error');
+        return;
+      }
+
+      if (!issueForm.reportValidity()) {
+        const invalid = issueForm.querySelector(':invalid');
+        if (invalid) {
+          const field = invalid.closest('.field');
+          if (field) {
+            field.classList.add('invalid');
+          }
+          invalid.focus();
+        }
+        return;
+      }
+
+      const template = issueTemplates.find(t => t.id === currentTemplateId);
+      if (!template) {
+        showMessage('Plantilla no disponible.', 'error');
+        return;
+      }
+
+      const sanitizedTitle = issueTitle.value.trim();
+      if (!sanitizedTitle) {
+        issueTitle.focus();
+        showMessage('El título es obligatorio.', 'error');
+        return;
+      }
+
+      const sections = [];
+      template.body.forEach(field => {
+        if (field.type === 'markdown') {
+          if (field.value) {
+            sections.push(field.value);
+          }
+          return;
+        }
+
+        const wrapper = issueFields.querySelector(`[data-field-id="${field.id}"]`);
+        if (!wrapper) {
+          return;
+        }
+        const control = wrapper.querySelector('input, textarea');
+        const value = (control.value || '').trim();
+        const label = field.label || field.id;
+        sections.push(`### ${label}\n${value}`);
+      });
+
+      const payload = {
+        title: sanitizedTitle,
+        labels: template.labels,
+        body: sections.join('\n\n').trim()
+      };
+
+      payloadPreview.textContent = JSON.stringify(payload, null, 2);
+      payloadPreview.classList.remove('hidden');
+
+      let copied = false;
+      if (navigator.clipboard && typeof window !== 'undefined' && window.isSecureContext) {
+        try {
+          await navigator.clipboard.writeText(payloadPreview.textContent);
+          copied = true;
+        } catch (error) {
+          copied = false;
+        }
+      }
+
+      if (copied) {
+        showMessage('Payload generado y copiado al portapapeles.', 'success');
+      } else {
+        showMessage('Payload generado. Copia manualmente desde el panel si lo necesitas.', 'warning');
+      }
+
+      issueForm.reset();
+      populateTemplateFields(template);
+    }
+
+    renderTemplateOptions();
+    if (issueTemplates.length) {
+      selectTemplate(issueTemplates[0].id);
+    }
+
+    openIssueModalBtn.addEventListener('click', openModal);
+    closeIssueModalBtn.addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', event => {
+      if (event.target === modalOverlay) {
+        closeModal();
+      }
+    });
+    issueForm.addEventListener('submit', handleSubmit);
 
     async function load() {
       try {
