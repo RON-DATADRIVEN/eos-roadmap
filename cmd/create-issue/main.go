@@ -134,10 +134,19 @@ const (
 	userAgent       = "eos-roadmap-create-issue/1.0"
 )
 
+const defaultAllowedOrigin = "https://ron-datadriven.github.io"
+
+type originEntry struct {
+	raw        string
+	normalized string
+}
+
 var (
 	githubToken   = strings.TrimSpace(os.Getenv("GITHUB_TOKEN"))
 	projectID     = strings.TrimSpace(os.Getenv("GITHUB_PROJECT_ID"))
 	allowedOrigin = strings.TrimSpace(os.Getenv("ALLOWED_ORIGIN"))
+
+	allowedOriginEntries = configureAllowedOrigins(allowedOrigin, defaultAllowedOrigin)
 )
 
 func main() {
@@ -147,8 +156,10 @@ func main() {
 	if projectID == "" {
 		log.Fatal("GITHUB_PROJECT_ID no configurado")
 	}
-	if allowedOrigin == "" {
-		log.Print("ADVERTENCIA: ALLOWED_ORIGIN vacío, se rechazarán solicitudes con origen")
+	if len(allowedOriginEntries) == 0 {
+		log.Print("ADVERTENCIA: ALLOWED_ORIGIN vacío o sin valores válidos, se rechazarán solicitudes con origen")
+	} else {
+		log.Printf("Orígenes permitidos: %s", allowedOrigin)
 	}
 
 	http.HandleFunc("/", handleRequest)
@@ -199,33 +210,81 @@ func handleCORS(w http.ResponseWriter, r *http.Request) bool {
 }
 
 func isOriginAllowed(origin string) bool {
-	if allowedOrigin == "" {
+	if len(allowedOriginEntries) == 0 {
 		return false
 	}
 
-	reqURL, err := url.Parse(origin)
-	if err != nil || reqURL.Scheme == "" || reqURL.Host == "" {
+	normalizedOrigin, err := normalizeOrigin(origin)
+	if err != nil {
 		return false
 	}
 
-	for _, candidate := range strings.Split(allowedOrigin, ",") {
-		candidate = strings.TrimSpace(candidate)
-		if candidate == "" {
-			continue
-		}
-
-		allowedURL, err := url.Parse(candidate)
-		if err != nil || allowedURL.Scheme == "" || allowedURL.Host == "" {
-			log.Printf("origen permitido inválido ignorado: %q", candidate)
-			continue
-		}
-
-		if strings.EqualFold(allowedURL.Scheme, reqURL.Scheme) && strings.EqualFold(allowedURL.Host, reqURL.Host) {
+	for _, entry := range allowedOriginEntries {
+		if entry.normalized == normalizedOrigin {
 			return true
 		}
 	}
 
 	return false
+}
+
+func configureAllowedOrigins(current, fallback string) []originEntry {
+	seen := map[string]struct{}{}
+	var entries []originEntry
+
+	addOrigin := func(value string, source string) {
+		value = strings.TrimSpace(value)
+		if value == "" {
+			return
+		}
+
+		normalized, err := normalizeOrigin(value)
+		if err != nil {
+			log.Printf("origen permitido inválido ignorado (%s): %q", source, value)
+			return
+		}
+
+		if _, ok := seen[normalized]; ok {
+			return
+		}
+
+		entries = append(entries, originEntry{raw: value, normalized: normalized})
+		seen[normalized] = struct{}{}
+	}
+
+	for _, candidate := range strings.Split(current, ",") {
+		addOrigin(candidate, "ALLOWED_ORIGIN")
+	}
+
+	addOrigin(fallback, "predeterminado")
+
+	if len(entries) == 0 {
+		allowedOrigin = ""
+		return nil
+	}
+
+	values := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		values = append(values, entry.raw)
+	}
+	allowedOrigin = strings.Join(values, ",")
+
+	return entries
+}
+
+func normalizeOrigin(value string) (string, error) {
+	parsed, err := url.Parse(strings.TrimSpace(value))
+	if err != nil {
+		return "", err
+	}
+	if parsed.Scheme == "" || parsed.Host == "" {
+		return "", fmt.Errorf("origen %q incompleto", value)
+	}
+
+	scheme := strings.ToLower(parsed.Scheme)
+	host := strings.ToLower(parsed.Host)
+
+	return fmt.Sprintf("%s://%s", scheme, host), nil
 }
 
 func handlePost(w http.ResponseWriter, r *http.Request) {
