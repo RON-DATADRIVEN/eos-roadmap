@@ -46,3 +46,5 @@ El comando `cmd/create-issue` expone un endpoint HTTP pensado para Cloud Run/Fun
 ### Operación sin servicios de Google
 Si prefieres mantener toda la infraestructura dentro del ecosistema de GitHub, consulta `docs/operacion-solo-github.md`. Allí se detalla cómo ejecutar el backend en Actions, Codespaces o servidores propios usando únicamente GitHub Pages y Projects para la gestión del roadmap.
 
+Para planificar un despliegue permanente y reproducible del servicio, revisa `docs/plan-servicio-permanente.md`, donde se documentan las fases operativas, la gestión de secretos y los motivos por los que Google Apps Script no cubre los requisitos del modal.
+
