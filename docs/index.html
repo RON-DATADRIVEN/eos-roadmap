@@ -121,6 +121,13 @@
     let currentTemplateId = null;
     let lastFocusedElement = null;
 
+    // Referencias reutilizables al formulario e iframe ocultos para evitar
+    // recrearlos en cada envío. Esta preparación poka-yoke garantiza que el
+    // fallback siempre exista cuando sendBeacon falle o no esté disponible.
+    let hiddenSubmissionForm = null;
+    let hiddenSubmissionInput = null;
+    let hiddenSubmissionSink = null;
+
     const issueTemplates = [
       {
         id: 'blank',
