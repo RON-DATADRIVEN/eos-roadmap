@@ -99,7 +99,6 @@
     const issueTitle = document.getElementById('issueTitle');
     const issueFormMessage = document.getElementById('issueFormMessage');
     const payloadPreview = document.getElementById('payloadPreview');
-    const submitIssueBtn = document.getElementById('submitIssue');
 
     function getBeaconUrl() {
       // Poka-yoke: Primero revisamos el atributo data-issue-beacon-url del modal para reutilizar la configuración declarativa del HTML.
@@ -364,6 +363,73 @@
       });
     }
 
+    function toIssuePayload(formData) {
+      // Identificamos la plantilla vigente para evitar enviar datos sin estructura.
+      const template = issueTemplates.find(t => t.id === currentTemplateId);
+      if (!template) {
+        // Si no encontramos la plantilla devolvemos null para que la llamada se detenga.
+        return null;
+      }
+
+      // Creamos un diccionario con los valores capturados para prevenir omisiones.
+      const fieldValues = {};
+      // Acumulamos secciones en Markdown para que el equipo reciba un resumen legible.
+      const sections = [];
+      // Usamos un Set para eliminar etiquetas duplicadas sin dejar la responsabilidad al backend.
+      const labels = new Set(Array.isArray(template.labels) ? template.labels : []);
+
+      template.body.forEach(field => {
+        if (field.type === 'markdown') {
+          // Respetamos los bloques fijos de la plantilla para no perder contexto.
+          if (field.value) {
+            sections.push(field.value);
+          }
+          return;
+        }
+
+        const rawValue = formData.get(field.id);
+        const value = (rawValue || '').trim();
+
+        if (value || field.required) {
+          // Guardamos el valor aun vacío si es obligatorio para facilitar validaciones posteriores.
+          fieldValues[field.id] = value;
+        }
+
+        if (value) {
+          const label = field.label || field.id;
+          // Construimos una sección Markdown con título H3 para que sea fácil de leer.
+          sections.push(`### ${label}\n${value}`);
+        }
+      });
+
+      const markdownBody = sections.join('\n\n').trim();
+
+      return {
+        // Adjuntamos la plantilla para que Apps Script conozca el contexto.
+        templateId: template.id,
+        // Título limpio para evitar errores por espacios extras.
+        title: (formData.get('issueTitle') || '').trim(),
+        // Cuerpo listo para pegar en GitHub.
+        body: markdownBody,
+        // Etiquetas deduplicadas en un arreglo.
+        labels: Array.from(labels),
+        // Valores crudos por si se requieren integraciones adicionales.
+        fields: fieldValues
+      };
+    }
+
+    function fallbackSubmit(url, payload) {
+      // Utilizamos fetch como red de seguridad para que el reporte no se pierda.
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(error => {
+        // Registramos el problema en consola; el usuario ya fue informado del envío.
+        console.error('No se pudo entregar el issue mediante el fallback.', error);
+      });
+    }
+
     function showMessage(message, variant = 'info', options = {}) {
       issueFormMessage.textContent = '';
       issueFormMessage.className = `form-message ${variant}`;
@@ -397,27 +463,6 @@
     function clearMessage() {
       issueFormMessage.textContent = '';
       issueFormMessage.className = 'form-message';
-    }
-
-    function sleep(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    function normalizeServiceError(message) {
-      if (!message) {
-        return '';
-      }
-
-      const normalized = message.toLowerCase();
-      if (normalized.includes('failed to fetch') || normalized.includes('networkerror')) {
-        return 'No se pudo contactar al servicio de issues. Verifica la configuración de CORS o la disponibilidad del servicio.';
-      }
-
-      if (normalized.includes('origen no permitido')) {
-        return 'El origen de la petición no está autorizado en el servicio de issues. Revisa la variable ALLOWED_ORIGIN en el backend.';
-      }
-
-      return message;
     }
 
     function getFocusableElements() {
@@ -487,7 +532,7 @@
       }
     }
 
-    async function handleSubmit(event) {
+    function handleSubmit(event) {
       event.preventDefault();
       clearMessage();
 
@@ -507,13 +552,6 @@
         }
         return;
       }
-
-      const template = issueTemplates.find(t => t.id === currentTemplateId);
-      if (!template) {
-        showMessage('Plantilla no disponible.', 'error');
-        return;
-      }
-
       const sanitizedTitle = issueTitle.value.trim();
       if (!sanitizedTitle) {
         issueTitle.focus();
@@ -521,33 +559,18 @@
         return;
       }
 
-      const fieldValues = {};
-      const sections = [];
+      const formData = new FormData(issueForm);
+      // Reemplazamos el título en el formulario para evitar enviar espacios innecesarios.
+      formData.set('issueTitle', sanitizedTitle);
 
-      template.body.forEach(field => {
-        if (field.type === 'markdown') {
-          if (field.value) {
-            sections.push(field.value);
-          }
-          return;
-        }
+      // Generamos el JSON final reutilizando una sola fuente de verdad para prevenir discrepancias.
+      const requestPayload = toIssuePayload(formData);
+      if (!requestPayload) {
+        showMessage('Plantilla no disponible.', 'error');
+        return;
+      }
 
-        const wrapper = issueFields.querySelector(`[data-field-id="${field.id}"]`);
-        if (!wrapper) {
-          return;
-        }
-        const control = wrapper.querySelector('input, textarea');
-        const value = (control.value || '').trim();
-        if (value || field.required) {
-          fieldValues[field.id] = value;
-        }
-        if (value) {
-          const label = field.label || field.id;
-          sections.push(`### ${label}\n${value}`);
-        }
-      });
-
-      const previewBody = sections.join('\n\n').trim();
+      const previewBody = requestPayload.body;
       payloadPreview.textContent = previewBody || 'Sin contenido';
       payloadPreview.classList.toggle('hidden', !previewBody);
 
@@ -609,44 +632,22 @@
       // en cualquier mensaje que se muestre al usuario.
       const debugOptions = responseData && responseData.debugId ? { debugId: responseData.debugId } : {};
 
-      if (!responseData) {
-        showMessage(friendlyError || 'No se pudo crear el issue.', 'error');
-        return;
+      const payloadBlob = new Blob([JSON.stringify(requestPayload)], { type: 'application/json' });
+      // sendBeacon no garantiza la entrega inmediata, pero permite transmitir datos aunque la página se cierre.
+      const beaconAccepted = typeof navigator.sendBeacon === 'function' && navigator.sendBeacon(issueServiceURL, payloadBlob);
+
+      if (!beaconAccepted) {
+        // Si sendBeacon falla usamos el fallback para reducir el riesgo de pérdida del reporte.
+        fallbackSubmit(issueServiceURL, requestPayload);
       }
 
-      if (responseData.error && !responseData.issueUrl) {
-        showMessage(
-          normalizeServiceError(responseData.error.message) || 'No se pudo crear el issue.',
-          'error',
-          debugOptions
-        );
-        return;
-      }
+      closeModal();
+      // Limpiamos el formulario para evitar que quede información sensible visible tras cerrar el modal.
+      issueForm.reset();
 
-      if (!responseData.issueUrl) {
-        showMessage('Respuesta del servicio incompleta.', 'error', debugOptions);
-        return;
-      }
-
-      if (responseData.error) {
-        const warningMessage =
-          normalizeServiceError(responseData.error.message) || 'Issue creado con observaciones.';
-        showMessage(warningMessage, 'warning', {
-          ...debugOptions,
-          link: {
-            href: responseData.issueUrl,
-            label: 'Abrir issue'
-          }
-        });
-      } else {
-        showMessage('Issue creado correctamente.', 'success', {
-          ...debugOptions,
-          link: {
-            href: responseData.issueUrl,
-            label: 'Abrir issue'
-          }
-        });
-        issueForm.reset();
+      const template = issueTemplates.find(t => t.id === currentTemplateId);
+      if (template) {
+        // Repoblamos los campos para que la plantilla quede lista si la persona reabre el formulario.
         populateTemplateFields(template);
       }
     }
