@@ -1012,5 +1012,33 @@
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/71"
       }
     ]
+  },
+  {
+    "id": "106",
+    "nombre": "Smoke test desde Codespaces",
+    "descripcion": "### Descripción Validación manual del flujo.",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "Sin asignar",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/106"
+      }
+    ]
+  },
+  {
+    "id": "107",
+    "nombre": "Smoke test desde Codespaces",
+    "descripcion": "### Descripción Validación manual del flujo.",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "Sin asignar",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/107"
+      }
+    ]
   }
 ]
