@@ -40,7 +40,16 @@
   </main>
 
   <div id="issueModalOverlay" class="modal-overlay hidden" role="presentation">
-    <div id="issueModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="issueModalTitle" aria-describedby="issueModalDescription" tabindex="-1">
+    <div
+      id="issueModal"
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="issueModalTitle"
+      aria-describedby="issueModalDescription"
+      tabindex="-1"
+      data-issue-beacon-url="https://script.google.com/macros/s/AKfycbxc4mOzsOjx-r0ROx2VNlrP_9g2-02tG7Q1Uc_JVyUgtbr3nzi4f39Kyw5VQ_OcZkADFg/exec"
+    >
       <button id="closeIssueModal" type="button" class="modal-close" aria-label="Cerrar">
         ×
       </button>
@@ -91,7 +100,22 @@
     const issueFormMessage = document.getElementById('issueFormMessage');
     const payloadPreview = document.getElementById('payloadPreview');
 
-    const issueServiceURL = (document.documentElement.dataset.issueServiceUrl || window.ISSUE_SERVICE_URL || '').trim();
+    function getBeaconUrl() {
+      // Poka-yoke: Primero revisamos el atributo data-issue-beacon-url del modal para reutilizar la configuración declarativa del HTML.
+      const domValue = (issueModal && issueModal.dataset.issueBeaconUrl ? issueModal.dataset.issueBeaconUrl : '').trim();
+      if (domValue) {
+        return domValue;
+      }
+
+      // Poka-yoke: Si el HTML no trae el valor, usamos la variable global window.ISSUE_BEACON_URL para mantener compatibilidad con configuraciones anteriores.
+      const windowValue = (window.ISSUE_BEACON_URL || '').trim();
+      if (windowValue) {
+        return windowValue;
+      }
+
+      // Poka-yoke: Cuando no se encuentra ningún valor lanzamos un error explícito para evitar que el formulario se envíe sin destino.
+      throw new Error('Servicio de issues no configurado. Contacta al administrador.');
+    }
 
     let modules = [];
     let currentTemplateId = null;
@@ -550,13 +574,63 @@
       payloadPreview.textContent = previewBody || 'Sin contenido';
       payloadPreview.classList.toggle('hidden', !previewBody);
 
-      if (!issueServiceURL) {
-        showMessage('Servicio de issues no configurado. Contacta al administrador.', 'error');
+      let beaconUrl;
+      try {
+        // Poka-yoke: Resolvemos la URL a través de la función centralizada para garantizar que todos los caminos usen la misma validación.
+        beaconUrl = getBeaconUrl();
+      } catch (error) {
+        // Poka-yoke: Si la resolución falla detenemos el flujo y mostramos el mensaje resultante para guiar al usuario.
+        showMessage(error instanceof Error ? error.message : 'Servicio de issues no configurado. Contacta al administrador.', 'error');
         return;
       }
 
-      // Informamos al usuario que el envío sucede en segundo plano antes de cerrar el modal.
-      showMessage('Estamos enviando tu solicitud en segundo plano. Cerraremos esta ventana enseguida.', 'info');
+      const requestPayload = {
+        templateId: template.id,
+        title: sanitizedTitle,
+        fields: fieldValues
+      };
+
+      const originalText = submitIssueBtn.textContent;
+      submitIssueBtn.disabled = true;
+      submitIssueBtn.textContent = 'Enviando…';
+      showMessage('Enviando issue…', 'info');
+
+      const maxAttempts = 2;
+      let responseData = null;
+      let lastError = null;
+
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          const response = await fetch(beaconUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestPayload)
+          });
+
+          const data = await response.json().catch(() => ({}));
+          if (response.ok) {
+            responseData = data;
+            break;
+          }
+
+          lastError = (data && data.error && data.error.message) || `Solicitud rechazada (${response.status})`;
+        } catch (error) {
+          lastError = error instanceof Error ? error.message : 'Error de red';
+        }
+
+        if (attempt < maxAttempts) {
+          showMessage('Reintentando el envío…', 'warning');
+          await sleep(750);
+        }
+      }
+
+      submitIssueBtn.disabled = false;
+      submitIssueBtn.textContent = originalText;
+
+      const friendlyError = normalizeServiceError(lastError);
+      // Guardamos el identificador proporcionado por el backend para adjuntarlo
+      // en cualquier mensaje que se muestre al usuario.
+      const debugOptions = responseData && responseData.debugId ? { debugId: responseData.debugId } : {};
 
       const payloadBlob = new Blob([JSON.stringify(requestPayload)], { type: 'application/json' });
       // sendBeacon no garantiza la entrega inmediata, pero permite transmitir datos aunque la página se cierre.
