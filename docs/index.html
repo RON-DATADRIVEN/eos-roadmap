@@ -98,6 +98,13 @@
     let currentTemplateId = null;
     let lastFocusedElement = null;
 
+    // Referencias reutilizables al formulario e iframe ocultos para evitar
+    // recrearlos en cada envío. Esta preparación poka-yoke garantiza que el
+    // fallback siempre exista cuando sendBeacon falle o no esté disponible.
+    let hiddenSubmissionForm = null;
+    let hiddenSubmissionInput = null;
+    let hiddenSubmissionSink = null;
+
     const issueTemplates = [
       {
         id: 'blank',
@@ -375,6 +382,62 @@
       issueFormMessage.className = 'form-message';
     }
 
+    function submitViaHiddenForm(url, payload) {
+      if (!url) {
+        return;
+      }
+
+      if (!hiddenSubmissionForm) {
+        // Creamos el iframe "sumidero" solo una vez para recibir la
+        // respuesta. Al mantenerlo oculto evitamos parpadeos o cambios en el
+        // modal, y nos aseguramos (poka-yoke) de que la página no navegue a
+        // otra ubicación cuando debamos usar el fallback.
+        hiddenSubmissionSink = document.createElement('iframe');
+        hiddenSubmissionSink.name = 'issueFallbackSink';
+        hiddenSubmissionSink.title = 'Canal oculto para envíos de respaldo';
+        hiddenSubmissionSink.setAttribute('aria-hidden', 'true');
+        hiddenSubmissionSink.tabIndex = -1;
+        hiddenSubmissionSink.style.position = 'absolute';
+        hiddenSubmissionSink.style.width = '1px';
+        hiddenSubmissionSink.style.height = '1px';
+        hiddenSubmissionSink.style.left = '-9999px';
+        hiddenSubmissionSink.style.top = 'auto';
+        hiddenSubmissionSink.style.opacity = '0';
+
+        // Armamos el formulario oculto una sola vez. Lo dejamos fuera de
+        // pantalla para que el usuario no note cambios visuales cuando se
+        // cierre el modal, pero garantizando (poka-yoke) que exista un medio
+        // alterno si navigator.sendBeacon devuelve false.
+        hiddenSubmissionForm = document.createElement('form');
+        hiddenSubmissionForm.method = 'post';
+        hiddenSubmissionForm.acceptCharset = 'utf-8';
+        hiddenSubmissionForm.target = hiddenSubmissionSink.name;
+        hiddenSubmissionForm.style.position = 'absolute';
+        hiddenSubmissionForm.style.left = '-9999px';
+        hiddenSubmissionForm.style.top = 'auto';
+        hiddenSubmissionForm.style.width = '1px';
+        hiddenSubmissionForm.style.height = '1px';
+        hiddenSubmissionForm.style.overflow = 'hidden';
+        hiddenSubmissionForm.style.opacity = '0';
+        hiddenSubmissionForm.noValidate = true;
+        hiddenSubmissionForm.setAttribute('aria-hidden', 'true');
+
+        // Único campo oculto con el JSON serializado. La simplicidad del
+        // campo evita errores de sincronización o nombres inconsistentes
+        // (poka-yoke) cuando replicamos el payload hacia el backend.
+        hiddenSubmissionInput = document.createElement('input');
+        hiddenSubmissionInput.type = 'hidden';
+        hiddenSubmissionInput.name = 'payload';
+
+        hiddenSubmissionForm.append(hiddenSubmissionInput);
+        document.body.append(hiddenSubmissionForm, hiddenSubmissionSink);
+      }
+
+      hiddenSubmissionForm.action = url;
+      hiddenSubmissionInput.value = payload;
+      hiddenSubmissionForm.submit();
+    }
+
     function sleep(ms) {
       return new Promise(resolve => setTimeout(resolve, ms));
     }
@@ -581,6 +644,26 @@
       const debugOptions = responseData && responseData.debugId ? { debugId: responseData.debugId } : {};
 
       if (!responseData) {
+        const serializedPayload = JSON.stringify(requestPayload);
+        const beaconAvailable = typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function';
+        let beaconAccepted = false;
+
+        if (beaconAvailable) {
+          // Intentamos usar sendBeacon porque permite que el navegador envíe
+          // la solicitud aun cuando la pestaña se cierre. Controlamos el
+          // booleano de retorno para confirmar (poka-yoke) si realmente fue
+          // aceptada por el navegador.
+          beaconAccepted = navigator.sendBeacon(issueServiceURL, serializedPayload);
+        }
+
+        if (!beaconAvailable || beaconAccepted === false) {
+          // Si el navegador no soporta sendBeacon o lo rechaza, usamos el
+          // formulario oculto como respaldo sin modificar el modal porque el
+          // envío ocurre en segundo plano y el modal puede cerrarse de
+          // inmediato tras el intento del usuario.
+          submitViaHiddenForm(issueServiceURL, serializedPayload);
+        }
+
         showMessage(friendlyError || 'No se pudo crear el issue.', 'error');
         return;
       }
