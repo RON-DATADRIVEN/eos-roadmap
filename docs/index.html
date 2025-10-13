@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es" data-issue-service-url="https://create-issue-rondatadriven.uc.r.appspot.com">
+<html lang="es">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -31,6 +31,10 @@
         <option value="En curso">En curso</option>
         <option value="Hecho">Hecho</option>
       </select>
+      <select id="typeFilter" aria-label="Filtrar por tipo de módulo">
+        <option value="epic" selected>Solo épicas</option>
+        <option value="bug">Solo bugs</option>
+      </select>
       <input id="search" type="search" placeholder="Buscar módulo..." />
     </section>
 
@@ -41,7 +45,7 @@
 
   <div
     id="issue-modal-root"
-    data-issue-beacon-url="https://script.google.com/macros/s/AKfycbzWjd8Q6sIUjI_H_vlglkq3ma4mn2fbtEga66qCswHuAUsYmLjXS-wRdZAyi2rsWhl2tg/exec"
+    data-issue-beacon-url="https://eos-issue-proxy.arturo-pr.workers.dev/"
   >
     <div id="issueModalOverlay" class="modal-overlay hidden" role="presentation">
       <div
@@ -89,6 +93,8 @@
   <script>
     const grid = document.getElementById('grid');
     const statusFilter = document.getElementById('statusFilter');
+    // Poka-yoke: localizamos el selector de tipo para recordar que la vista inicia en épicas, pero permite cambiar a bugs sin tocar otras piezas.
+    const typeFilter = document.getElementById('typeFilter');
     const search = document.getElementById('search');
     const footer = document.getElementById('footer');
     const openIssueModalBtn = document.getElementById('openIssueModal');
@@ -118,8 +124,8 @@
         return windowValue;
       }
 
-      // Poka-yoke: al no encontrar ninguna configuración devolvemos un error explícito para guiar a la persona usuaria a solicitar soporte.
-      throw new Error('ISSUE_BEACON_URL no configurado. Contacta al administrador para continuar.');
+      // Poka-yoke: en ausencia total de configuración retornamos null para que la llamada superior decida qué hacer sin provocar errores en consola.
+      return null;
     }
 
     let modules = [];
@@ -446,6 +452,41 @@
       return payload;
     }
 
+    function generateClientNonce() {
+      // Poka-yoke: usamos una cadena única por solicitud para que el Worker y Apps Script puedan identificar duplicados.
+      if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+      }
+
+      // Poka-yoke: si randomUUID no existe, combinamos la hora y un número aleatorio para conservar unicidad razonable.
+      return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    }
+
+    async function postIssuePayload(url, payload) {
+      // Poka-yoke: si llega sin URL devolvemos enseguida para que la persona usuaria reciba la advertencia controlada.
+      if (!url) {
+        return null;
+      }
+
+      // Poka-yoke: normalizamos el cuerpo a texto JSON para que todos los transportes compartan exactamente el mismo mensaje.
+      const body = typeof payload === 'string' ? payload : JSON.stringify(payload);
+
+      if (typeof fetch !== 'function') {
+        // Poka-yoke: delegamos en el formulario oculto cuando el navegador no soporta fetch.
+        return null;
+      }
+
+      // Poka-yoke: fetch con keepalive permite terminar el POST aunque la pestaña se cierre tras enviar el formulario.
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        keepalive: true
+      });
+
+      return response;
+    }
+
     function submitViaHiddenForm(url, payload) {
       // Poka-yoke: intentamos reutilizar un formulario oculto existente para no crear duplicados innecesarios.
       let form = document.getElementById('beacon-fallback-form');
@@ -595,7 +636,7 @@
     // Poka-yoke: exponemos explícitamente la función en window como puente poka-yoke de compatibilidad para integraciones que buscan closeIssueModal.
     window.closeIssueModal = window.closeIssueModal || closeIssueModal;
     // Poka-yoke: creamos el alias closeModal en window como puente poka-yoke para evitar errores cuando scripts externos invoquen esa firma histórica.
-    window.closeModal = window.closeModal || closeIssueModal;
+    window.closeModal = window.closeModal || window.closeIssueModal;
 
     async function handleSubmit(event) {
       event.preventDefault();
@@ -636,30 +677,61 @@
         return;
       }
 
+      // Poka-yoke: anexamos un nonce legible para que el Worker y Apps Script puedan descartar duplicados si el navegador reintenta.
+      const clientNonce = generateClientNonce();
+      payload.clientNonce = clientNonce;
+      if (!payload.extra || typeof payload.extra !== 'object') {
+        payload.extra = {};
+      }
+      payload.extra.clientNonce = clientNonce;
+
       payloadPreview.textContent = payload.body || 'Sin contenido';
       payloadPreview.classList.toggle('hidden', !payload.body);
 
-      let beaconUrl;
+      // Poka-yoke: usamos esta bandera para evitar envíos cuando falte configuración y aun así limpiar el modal de forma segura.
+      let shouldAttemptSend = true;
+      let beaconUrl = null;
+      // Poka-yoke: conservamos el JSON serializado para reutilizarlo en los distintos mecanismos de envío sin recalcularlo.
+      let serializedPayload = '';
+
       try {
         // Poka-yoke: resolvemos la URL mediante la función centralizada para evitar discrepancias entre ambientes.
         beaconUrl = getBeaconUrl();
-      } catch (error) {
-        showMessage(error instanceof Error ? error.message : 'ISSUE_BEACON_URL no configurado.', 'error');
-        return;
-      }
-
-      const serializedPayload = JSON.stringify(payload);
-
-      // Poka-yoke: activamos de inmediato el formulario oculto para asegurar un POST simple incluso si el beacon es bloqueado.
-      submitViaHiddenForm(beaconUrl, payload);
-
-      try {
-        // Poka-yoke: usamos sendBeacon de forma complementaria cuando existe porque permite mandar la información aunque la pestaña se cierre.
-        if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
-          navigator.sendBeacon(beaconUrl, serializedPayload);
+        if (!beaconUrl) {
+          shouldAttemptSend = false;
+          showMessage('No se configuró la URL del servicio de issues. Solicita soporte.', 'error');
         }
-      } catch (error) {
-        // Poka-yoke: ignoramos cualquier error de sendBeacon porque el formulario oculto ya aseguró un envío tradicional.
+
+        if (shouldAttemptSend) {
+          serializedPayload = JSON.stringify(payload);
+          let mustFallback = false;
+
+          try {
+            // Poka-yoke: enviamos primero mediante fetch al Worker para obtener confirmación inmediata.
+            const response = await postIssuePayload(beaconUrl, serializedPayload);
+            if (!response || !response.ok) {
+              mustFallback = true;
+              console.error('No se recibió confirmación del Worker. Se intentará con el formulario oculto.', response);
+            }
+          } catch (error) {
+            mustFallback = true;
+            console.error('Ocurrió un error al contactar el Worker. Se usará el formulario oculto como respaldo.', error);
+          }
+
+          if (mustFallback) {
+            // Poka-yoke: reintentamos con el formulario oculto para conservar compatibilidad con navegadores estrictos.
+            submitViaHiddenForm(beaconUrl, serializedPayload);
+          }
+
+          try {
+            // Poka-yoke: usamos sendBeacon como esfuerzo adicional para cubrir cierres abruptos de pestaña.
+            if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+              navigator.sendBeacon(beaconUrl, serializedPayload);
+            }
+          } catch (error) {
+            // Poka-yoke: ignoramos cualquier error de sendBeacon porque ya se intentó por POST y formulario de respaldo.
+          }
+        }
       } finally {
         // Poka-yoke: cerramos y limpiamos el modal para que no queden datos sensibles expuestos aunque el envío falle.
         closeModal();
@@ -706,11 +778,14 @@
     function render() {
       const term = search.value.trim().toLowerCase();
       const st = statusFilter.value;
+      // Poka-yoke: leemos el filtro de tipo en minúsculas para comparar sin depender de mayúsculas o valores ausentes.
+      const selectedType = typeFilter ? (typeFilter.value || '').toLowerCase() : '';
       const filtered = modules.filter(m => {
         const matchStatus = !st || m.estado === st;
         const matchText = !term || (m.nombre + ' ' + (m.descripcion||'')).toLowerCase().includes(term);
-        const isEpic = m.tipo === 'epic';
-        return matchStatus && matchText && isEpic;
+        const normalizedType = (m.tipo || '').toLowerCase();
+        const matchType = !selectedType || normalizedType === selectedType;
+        return matchStatus && matchText && matchType;
       });
 
       grid.innerHTML = filtered.map(m => `
@@ -732,12 +807,16 @@
       `).join('');
 
       if (!filtered.length) {
-        grid.innerHTML = '<p>No hay módulos con  ese filtro/búsqueda.</p>';
+        grid.innerHTML = '<p>No hay módulos con ese filtro/búsqueda.</p>';
       }
     }
 
     statusFilter.addEventListener('change', render);
     search.addEventListener('input', render);
+    if (typeFilter) {
+      // Poka-yoke: escuchamos cambios en el selector de tipo para alternar rápidamente entre épicas y bugs.
+      typeFilter.addEventListener('change', render);
+    }
 
     load();
   </script>
