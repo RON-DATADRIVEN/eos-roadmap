@@ -591,6 +591,11 @@
       }
     }
 
+    // Poka-yoke: exponemos explícitamente la función en window como puente de compatibilidad para integraciones que buscan closeIssueModal.
+    window.closeIssueModal = window.closeIssueModal || closeIssueModal;
+    // Poka-yoke: creamos el alias closeModal en window para evitar errores cuando scripts externos invoquen esa firma histórica.
+    window.closeModal = window.closeModal || closeIssueModal;
+
     async function handleSubmit(event) {
       event.preventDefault();
       clearMessage();
