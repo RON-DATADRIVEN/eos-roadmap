@@ -39,7 +39,6 @@
     <div class="footer" id="footer"></div>
   </main>
 
-  <!-- Poka-yoke: dejamos un único contenedor raíz con la URL del beacon para evitar contradicciones en la lectura de configuración. -->
   <div
     id="issue-modal-root"
     data-issue-beacon-url="https://script.google.com/macros/s/AKfycbzWjd8Q6sIUjI_H_vlglkq3ma4mn2fbtEga66qCswHuAUsYmLjXS-wRdZAyi2rsWhl2tg/exec"
@@ -106,24 +105,20 @@
     const payloadPreview = document.getElementById('payloadPreview');
 
     function getBeaconUrl() {
-      // Poka-yoke: identificamos el único nodo con data-issue-beacon-url para impedir lecturas contradictorias cuando alguien actualice la URL.
-      const attributeSource = document.querySelector('[data-issue-beacon-url]');
-      if (attributeSource) {
-        const attributeValue = (attributeSource.getAttribute('data-issue-beacon-url') || '').trim();
-        if (attributeValue) {
-          return attributeValue;
-        }
+      // Poka-yoke: buscamos un elemento con el atributo data-issue-beacon-url para que la URL quede documentada directamente en el HTML y cualquiera pueda ubicarla.
+      const dataElement = document.querySelector('[data-issue-beacon-url]');
+      const domValue = dataElement ? (dataElement.getAttribute('data-issue-beacon-url') || '').trim() : '';
+      if (domValue) {
+        return domValue;
       }
 
-      // Poka-yoke: si la página fue incrustada en otro contexto, permitimos configurar la URL mediante una variable global como respaldo controlado.
-      if (typeof window !== 'undefined' && window.ISSUE_BEACON_URL) {
-        const globalValue = String(window.ISSUE_BEACON_URL).trim();
-        if (globalValue) {
-          return globalValue;
-        }
+      // Poka-yoke: si el HTML no define la ruta, consultamos una variable global opcional para conservar compatibilidad con despliegues anteriores.
+      const windowValue = typeof window !== 'undefined' && window.ISSUE_BEACON_URL ? String(window.ISSUE_BEACON_URL).trim() : '';
+      if (windowValue) {
+        return windowValue;
       }
 
-      // Poka-yoke: al no detectar configuración enviamos un error comprensible para que la persona usuaria pueda pedir ayuda sin revisar el código.
+      // Poka-yoke: al no encontrar ninguna configuración devolvemos un error explícito para guiar a la persona usuaria a solicitar soporte.
       throw new Error('ISSUE_BEACON_URL no configurado. Contacta al administrador para continuar.');
     }
 
@@ -666,7 +661,7 @@
       }
 
       // Poka-yoke: cerramos y limpiamos el modal para que no queden datos sensibles expuestos.
-      closeIssueModal();
+      closeModal();
       issueForm.reset();
       payloadPreview.classList.add('hidden');
       payloadPreview.textContent = '';
