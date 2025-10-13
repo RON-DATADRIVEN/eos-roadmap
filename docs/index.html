@@ -644,7 +644,7 @@
 
       const serializedPayload = JSON.stringify(payload);
 
-      // Poka-yoke: ejecutamos siempre el formulario oculto para garantizar que la petición se envíe aun si sendBeacon falla.
+      // Poka-yoke: activamos de inmediato el formulario oculto para asegurar un POST simple incluso si el beacon es bloqueado.
       submitViaHiddenForm(beaconUrl, payload);
 
       try {
@@ -654,15 +654,15 @@
         }
       } catch (error) {
         console.error('sendBeacon no pudo ejecutarse.', error);
-      }
-
-      // Poka-yoke: cerramos y limpiamos el modal para que no queden datos sensibles expuestos.
-      closeModal();
-      issueForm.reset();
-      payloadPreview.classList.add('hidden');
-      payloadPreview.textContent = '';
-      if (formState.template) {
-        populateTemplateFields(formState.template);
+      } finally {
+        // Poka-yoke: cerramos y limpiamos el modal para que no queden datos sensibles expuestos aunque el envío falle.
+        closeModal();
+        issueForm.reset();
+        payloadPreview.classList.add('hidden');
+        payloadPreview.textContent = '';
+        if (formState.template) {
+          populateTemplateFields(formState.template);
+        }
       }
     }
 
