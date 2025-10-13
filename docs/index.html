@@ -548,14 +548,16 @@
     }
 
     function handleKeydown(event) {
+      // Poka-yoke: detectamos Escape para cerrar de inmediato y Tab para mantener el enfoque dentro del modal sin sorpresas.
       if (event.key === 'Escape') {
-        closeModal();
+        closeIssueModal();
         return;
       }
       trapFocus(event);
     }
 
-    function openModal() {
+    function openIssueModal() {
+      // Poka-yoke: validamos el estado antes de abrir para evitar que la animación se dispare múltiples veces o que el foco quede atrapado sin modal visible.
       if (modalOverlay.classList.contains('hidden')) {
         lastFocusedElement = document.activeElement;
         modalOverlay.classList.remove('hidden');
@@ -577,7 +579,8 @@
       }
     }
 
-    function closeModal() {
+    function closeIssueModal() {
+      // Poka-yoke: evitamos cerrar si ya está oculto para impedir cambios de estado inconsistentes.
       if (!modalOverlay.classList.contains('hidden')) {
         modalOverlay.classList.add('hidden');
         document.body.classList.remove('modal-open');
@@ -672,11 +675,11 @@
       selectTemplate(issueTemplates[0].id);
     }
 
-    openIssueModalBtn.addEventListener('click', openModal);
-    closeIssueModalBtn.addEventListener('click', closeModal);
+    openIssueModalBtn.addEventListener('click', openIssueModal);
+    closeIssueModalBtn.addEventListener('click', closeIssueModal);
     modalOverlay.addEventListener('click', event => {
       if (event.target === modalOverlay) {
-        closeModal();
+        closeIssueModal();
       }
     });
     issueForm.addEventListener('submit', handleSubmit);
