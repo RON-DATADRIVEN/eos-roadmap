@@ -643,21 +643,17 @@
       }
 
       const serializedPayload = JSON.stringify(payload);
-      let sent = false;
+
+      // Poka-yoke: ejecutamos siempre el formulario oculto para garantizar que la petición se envíe aun si sendBeacon falla.
+      submitViaHiddenForm(beaconUrl, payload);
 
       try {
-        // Poka-yoke: usamos sendBeacon cuando existe porque permite mandar la información aunque la pestaña se cierre.
+        // Poka-yoke: usamos sendBeacon de forma complementaria cuando existe porque permite mandar la información aunque la pestaña se cierre.
         if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
-          sent = navigator.sendBeacon(beaconUrl, serializedPayload);
+          navigator.sendBeacon(beaconUrl, serializedPayload);
         }
       } catch (error) {
         console.error('sendBeacon no pudo ejecutarse.', error);
-        sent = false;
-      }
-
-      if (!sent) {
-        // Poka-yoke: recurrimos al formulario oculto como red de seguridad para no perder el reporte.
-        submitViaHiddenForm(beaconUrl, payload);
       }
 
       // Poka-yoke: cerramos y limpiamos el modal para que no queden datos sensibles expuestos.
