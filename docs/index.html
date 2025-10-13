@@ -39,17 +39,20 @@
     <div class="footer" id="footer"></div>
   </main>
 
-  <div id="issueModalOverlay" class="modal-overlay hidden" role="presentation">
-    <div
-      id="issueModal"
-      class="modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="issueModalTitle"
-      aria-describedby="issueModalDescription"
-      tabindex="-1"
-      data-issue-beacon-url="https://script.google.com/macros/s/AKfycbxc4mOzsOjx-r0ROx2VNlrP_9g2-02tG7Q1Uc_JVyUgtbr3nzi4f39Kyw5VQ_OcZkADFg/exec"
-    >
+  <div
+    id="issue-modal-root"
+    data-issue-beacon-url="https://script.google.com/macros/s/AKfycbzWjd8Q6sIUjI_H_vlglkq3ma4mn2fbtEga66qCswHuAUsYmLjXS-wRdZAyi2rsWhl2tg/exec"
+  >
+    <div id="issueModalOverlay" class="modal-overlay hidden" role="presentation">
+      <div
+        id="issueModal"
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="issueModalTitle"
+        aria-describedby="issueModalDescription"
+        tabindex="-1"
+      >
       <button id="closeIssueModal" type="button" class="modal-close" aria-label="Cerrar">
         ×
       </button>
@@ -79,6 +82,7 @@
           <pre id="payloadPreview" class="payload-preview hidden" tabindex="0" aria-label="Vista previa del cuerpo del issue"></pre>
         </section>
       </div>
+      </div>
     </div>
   </div>
 
@@ -101,32 +105,26 @@
     const payloadPreview = document.getElementById('payloadPreview');
 
     function getBeaconUrl() {
-      // Poka-yoke: Primero revisamos el atributo data-issue-beacon-url del modal para reutilizar la configuración declarativa del HTML.
-      const domValue = (issueModal && issueModal.dataset.issueBeaconUrl ? issueModal.dataset.issueBeaconUrl : '').trim();
+      // Poka-yoke: buscamos un elemento con el atributo data-issue-beacon-url para que la URL quede documentada directamente en el HTML y cualquiera pueda ubicarla.
+      const dataElement = document.querySelector('[data-issue-beacon-url]');
+      const domValue = dataElement ? (dataElement.getAttribute('data-issue-beacon-url') || '').trim() : '';
       if (domValue) {
         return domValue;
       }
 
-      // Poka-yoke: Si el HTML no trae el valor, usamos la variable global window.ISSUE_BEACON_URL para mantener compatibilidad con configuraciones anteriores.
-      const windowValue = (window.ISSUE_BEACON_URL || '').trim();
+      // Poka-yoke: si el HTML no define la ruta, consultamos una variable global opcional para conservar compatibilidad con despliegues anteriores.
+      const windowValue = typeof window !== 'undefined' && window.ISSUE_BEACON_URL ? String(window.ISSUE_BEACON_URL).trim() : '';
       if (windowValue) {
         return windowValue;
       }
 
-      // Poka-yoke: Cuando no se encuentra ningún valor lanzamos un error explícito para evitar que el formulario se envíe sin destino.
-      throw new Error('Servicio de issues no configurado. Contacta al administrador.');
+      // Poka-yoke: al no encontrar ninguna configuración devolvemos un error explícito para guiar a la persona usuaria a solicitar soporte.
+      throw new Error('ISSUE_BEACON_URL no configurado. Contacta al administrador para continuar.');
     }
 
     let modules = [];
     let currentTemplateId = null;
     let lastFocusedElement = null;
-
-    // Referencias reutilizables al formulario e iframe ocultos para evitar
-    // recrearlos en cada envío. Esta preparación poka-yoke garantiza que el
-    // fallback siempre exista cuando sendBeacon falle o no esté disponible.
-    let hiddenSubmissionForm = null;
-    let hiddenSubmissionInput = null;
-    let hiddenSubmissionSink = null;
 
     const issueTemplates = [
       {
@@ -370,24 +368,25 @@
       });
     }
 
-    function toIssuePayload(formData) {
-      // Identificamos la plantilla vigente para evitar enviar datos sin estructura.
+    function readIssueForm() {
+      // Poka-yoke: localizamos la plantilla activa para garantizar que los datos sigan la estructura acordada.
       const template = issueTemplates.find(t => t.id === currentTemplateId);
       if (!template) {
-        // Si no encontramos la plantilla devolvemos null para que la llamada se detenga.
         return null;
       }
 
-      // Creamos un diccionario con los valores capturados para prevenir omisiones.
+      // Poka-yoke: usamos FormData para leer todos los campos sin depender de nombres hardcodeados.
+      const formData = new FormData(issueForm);
+      const sanitizedTitle = (formData.get('issueTitle') || '').trim();
+
+      // Poka-yoke: preparamos recipientes claros para cada tipo de información que espera Apps Script.
       const fieldValues = {};
-      // Acumulamos secciones en Markdown para que el equipo reciba un resumen legible.
       const sections = [];
-      // Usamos un Set para eliminar etiquetas duplicadas sin dejar la responsabilidad al backend.
       const labels = new Set(Array.isArray(template.labels) ? template.labels : []);
 
       template.body.forEach(field => {
         if (field.type === 'markdown') {
-          // Respetamos los bloques fijos de la plantilla para no perder contexto.
+          // Poka-yoke: respetamos el contenido fijo de la plantilla para que nunca se pierda contexto al enviar el issue.
           if (field.value) {
             sections.push(field.value);
           }
@@ -398,13 +397,13 @@
         const value = (rawValue || '').trim();
 
         if (value || field.required) {
-          // Guardamos el valor aun vacío si es obligatorio para facilitar validaciones posteriores.
+          // Poka-yoke: almacenamos el valor incluso vacío cuando es obligatorio para detectar omisiones en integraciones futuras.
           fieldValues[field.id] = value;
         }
 
         if (value) {
           const label = field.label || field.id;
-          // Construimos una sección Markdown con título H3 para que sea fácil de leer.
+          // Poka-yoke: generamos bloques Markdown ordenados para que quien reciba el reporte lo lea sin ambigüedades.
           sections.push(`### ${label}\n${value}`);
         }
       });
@@ -412,29 +411,79 @@
       const markdownBody = sections.join('\n\n').trim();
 
       return {
-        // Adjuntamos la plantilla para que Apps Script conozca el contexto.
-        templateId: template.id,
-        // Título limpio para evitar errores por espacios extras.
-        title: (formData.get('issueTitle') || '').trim(),
-        // Cuerpo listo para pegar en GitHub.
+        template,
+        title: sanitizedTitle,
         body: markdownBody,
-        // Etiquetas deduplicadas en un arreglo.
         labels: Array.from(labels),
-        // Valores crudos por si se requieren integraciones adicionales.
         fields: fieldValues
       };
     }
 
-    function fallbackSubmit(url, payload) {
-      // Utilizamos fetch como red de seguridad para que el reporte no se pierda.
-      fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).catch(error => {
-        // Registramos el problema en consola; el usuario ya fue informado del envío.
-        console.error('No se pudo entregar el issue mediante el fallback.', error);
-      });
+    function toIssuePayload(formState) {
+      if (!formState) {
+        return null;
+      }
+
+      const templateId = formState.template && typeof formState.template === 'object' ? formState.template.id : formState.template;
+
+      const payload = {
+        // Poka-yoke: normalizamos título y cuerpo para evitar que lleguen espacios o valores nulos al Apps Script.
+        title: (formState.title || '').trim(),
+        body: formState.body || '',
+        labels: Array.isArray(formState.labels) ? formState.labels : [],
+        template: templateId || 'blank',
+        extra: {
+          // Poka-yoke: agrupamos los campos originales para poder reconstruir el formulario en caso de auditorías.
+          fields: formState.fields || {}
+        }
+      };
+
+      if (formState.template && formState.template.name) {
+        // Poka-yoke: adjuntamos el nombre humano de la plantilla para facilitar las revisiones manuales en el documento.
+        payload.extra.templateName = formState.template.name;
+      }
+
+      return payload;
+    }
+
+    function submitViaHiddenForm(url, payload) {
+      // Poka-yoke: intentamos reutilizar un formulario oculto existente para no crear duplicados innecesarios.
+      let form = document.getElementById('beacon-fallback-form');
+      let sink = document.getElementById('beacon-fallback-sink');
+
+      if (!form) {
+        // Poka-yoke: creamos un formulario mínimo sin estilos visibles para asegurar el envío aún sin sendBeacon.
+        form = document.createElement('form');
+        form.id = 'beacon-fallback-form';
+        form.method = 'POST';
+        form.action = url;
+        form.target = 'beacon-fallback-sink';
+        form.style.display = 'none';
+
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'payload';
+        input.id = 'beacon-fallback-payload';
+        form.appendChild(input);
+
+        document.body.appendChild(form);
+      }
+
+      if (!sink) {
+        // Poka-yoke: añadimos un iframe invisible que recibirá la respuesta y evitará recargas accidentales.
+        sink = document.createElement('iframe');
+        sink.name = 'beacon-fallback-sink';
+        sink.id = 'beacon-fallback-sink';
+        sink.style.display = 'none';
+        document.body.appendChild(sink);
+      }
+
+      const payloadInput = document.getElementById('beacon-fallback-payload');
+      if (payloadInput) {
+        // Poka-yoke: convertimos el JSON a texto para que Apps Script lo reciba igual que sendBeacon.
+        payloadInput.value = JSON.stringify(payload);
+        form.submit();
+      }
     }
 
     function showMessage(message, variant = 'info', options = {}) {
@@ -539,7 +588,7 @@
       }
     }
 
-    function handleSubmit(event) {
+    async function handleSubmit(event) {
       event.preventDefault();
       clearMessage();
 
@@ -559,103 +608,62 @@
         }
         return;
       }
-      const sanitizedTitle = issueTitle.value.trim();
-      if (!sanitizedTitle) {
+
+      const formState = readIssueForm();
+      if (!formState) {
+        showMessage('Plantilla no disponible.', 'error');
+        return;
+      }
+
+      if (!formState.title) {
         issueTitle.focus();
         showMessage('El título es obligatorio.', 'error');
         return;
       }
 
-      const formData = new FormData(issueForm);
-      // Reemplazamos el título en el formulario para evitar enviar espacios innecesarios.
-      formData.set('issueTitle', sanitizedTitle);
-
-      // Generamos el JSON final reutilizando una sola fuente de verdad para prevenir discrepancias.
-      const requestPayload = toIssuePayload(formData);
-      if (!requestPayload) {
-        showMessage('Plantilla no disponible.', 'error');
+      const payload = toIssuePayload(formState);
+      if (!payload) {
+        showMessage('No fue posible preparar el issue.', 'error');
         return;
       }
 
-      const previewBody = requestPayload.body;
-      payloadPreview.textContent = previewBody || 'Sin contenido';
-      payloadPreview.classList.toggle('hidden', !previewBody);
+      payloadPreview.textContent = payload.body || 'Sin contenido';
+      payloadPreview.classList.toggle('hidden', !payload.body);
 
       let beaconUrl;
       try {
-        // Poka-yoke: Resolvemos la URL a través de la función centralizada para garantizar que todos los caminos usen la misma validación.
+        // Poka-yoke: resolvemos la URL mediante la función centralizada para evitar discrepancias entre ambientes.
         beaconUrl = getBeaconUrl();
       } catch (error) {
-        // Poka-yoke: Si la resolución falla detenemos el flujo y mostramos el mensaje resultante para guiar al usuario.
-        showMessage(error instanceof Error ? error.message : 'Servicio de issues no configurado. Contacta al administrador.', 'error');
+        showMessage(error instanceof Error ? error.message : 'ISSUE_BEACON_URL no configurado.', 'error');
         return;
       }
 
-      const requestPayload = {
-        templateId: template.id,
-        title: sanitizedTitle,
-        fields: fieldValues
-      };
+      const serializedPayload = JSON.stringify(payload);
+      let sent = false;
 
-      const originalText = submitIssueBtn.textContent;
-      submitIssueBtn.disabled = true;
-      submitIssueBtn.textContent = 'Enviando…';
-      showMessage('Enviando issue…', 'info');
-
-      const maxAttempts = 2;
-      let responseData = null;
-      let lastError = null;
-
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        try {
-          const response = await fetch(beaconUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestPayload)
-          });
-
-          const data = await response.json().catch(() => ({}));
-          if (response.ok) {
-            responseData = data;
-            break;
-          }
-
-          lastError = (data && data.error && data.error.message) || `Solicitud rechazada (${response.status})`;
-        } catch (error) {
-          lastError = error instanceof Error ? error.message : 'Error de red';
+      try {
+        // Poka-yoke: usamos sendBeacon cuando existe porque permite mandar la información aunque la pestaña se cierre.
+        if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+          sent = navigator.sendBeacon(beaconUrl, serializedPayload);
         }
-
-        if (attempt < maxAttempts) {
-          showMessage('Reintentando el envío…', 'warning');
-          await sleep(750);
-        }
+      } catch (error) {
+        console.error('sendBeacon no pudo ejecutarse.', error);
+        sent = false;
       }
 
-      submitIssueBtn.disabled = false;
-      submitIssueBtn.textContent = originalText;
-
-      const friendlyError = normalizeServiceError(lastError);
-      // Guardamos el identificador proporcionado por el backend para adjuntarlo
-      // en cualquier mensaje que se muestre al usuario.
-      const debugOptions = responseData && responseData.debugId ? { debugId: responseData.debugId } : {};
-
-      const payloadBlob = new Blob([JSON.stringify(requestPayload)], { type: 'application/json' });
-      // sendBeacon no garantiza la entrega inmediata, pero permite transmitir datos aunque la página se cierre.
-      const beaconAccepted = typeof navigator.sendBeacon === 'function' && navigator.sendBeacon(issueServiceURL, payloadBlob);
-
-      if (!beaconAccepted) {
-        // Si sendBeacon falla usamos el fallback para reducir el riesgo de pérdida del reporte.
-        fallbackSubmit(issueServiceURL, requestPayload);
+      if (!sent) {
+        // Poka-yoke: recurrimos al formulario oculto como red de seguridad para no perder el reporte.
+        submitViaHiddenForm(beaconUrl, payload);
       }
 
+      // Poka-yoke: cerramos y limpiamos el modal para que no queden datos sensibles expuestos.
       closeModal();
-      // Limpiamos el formulario para evitar que quede información sensible visible tras cerrar el modal.
       issueForm.reset();
-
-      const template = issueTemplates.find(t => t.id === currentTemplateId);
-      if (template) {
-        // Repoblamos los campos para que la plantilla quede lista si la persona reabre el formulario.
-        populateTemplateFields(template);
+      payloadPreview.classList.add('hidden');
+      payloadPreview.textContent = '';
+      if (formState.template) {
+        populateTemplateFields(formState.template);
       }
     }
 
