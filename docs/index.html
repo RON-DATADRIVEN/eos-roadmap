@@ -480,8 +480,9 @@
 
       const payloadInput = document.getElementById('beacon-fallback-payload');
       if (payloadInput) {
-        // Poka-yoke: convertimos el JSON a texto para que Apps Script lo reciba igual que sendBeacon.
-        payloadInput.value = JSON.stringify(payload);
+        // Poka-yoke: convertimos el contenido a texto y evitamos serializar dos veces si alguien ya entregó la versión lista para enviar.
+        const normalizedPayload = typeof payload === 'string' ? payload : JSON.stringify(payload);
+        payloadInput.value = normalizedPayload;
         form.submit();
       }
     }
@@ -658,7 +659,7 @@
           navigator.sendBeacon(beaconUrl, serializedPayload);
         }
       } catch (error) {
-        console.error('sendBeacon no pudo ejecutarse.', error);
+        // Poka-yoke: ignoramos cualquier error de sendBeacon porque el formulario oculto ya aseguró un envío tradicional.
       } finally {
         // Poka-yoke: cerramos y limpiamos el modal para que no queden datos sensibles expuestos aunque el envío falle.
         closeModal();
