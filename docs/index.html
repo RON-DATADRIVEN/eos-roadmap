@@ -781,7 +781,10 @@
       // Poka-yoke: leemos el filtro de tipo en minúsculas para comparar sin depender de mayúsculas o valores ausentes.
       const selectedType = typeFilter ? (typeFilter.value || '').toLowerCase() : '';
       const filtered = modules.filter(m => {
-        const matchStatus = !st || m.estado === st;
+        // Poka-yoke: cuando el selector "Solo bugs" está activo ignoramos cualquier estado elegido,
+        // porque la intención del usuario es revisar todos los bugs sin importar si están planificados o terminados.
+        const ignoreStatusByBugFilter = selectedType === 'bug';
+        const matchStatus = ignoreStatusByBugFilter || !st || m.estado === st;
         const matchText = !term || (m.nombre + ' ' + (m.descripcion||'')).toLowerCase().includes(term);
         const normalizedType = (m.tipo || '').toLowerCase();
         const matchType = !selectedType || normalizedType === selectedType;
