@@ -7,6 +7,12 @@ Repositorio para **planificación visible** del proyecto EOS y su **página púb
 2. Commit a `main`. GitHub Pages publica automáticamente.
 3. Comparte el enlace con stakeholders.
 
+### Tipos de módulo permitidos
+- `epic`: iniciativas grandes que agrupan varias tareas o bugs relacionados.
+- `bug`: incidencias detectadas en producción o QA que requieren seguimiento específico.
+
+Mantén estos valores al agregar o actualizar el campo `tipo` en `docs/modules.json` para que el generador de datos y la vista pública permanezcan sincronizados.
+
 ## Plantillas
 - Issues: Feature, Bug, Change Request.
 - Pull Request template + CODEOWNERS.
