@@ -77,6 +77,7 @@ type Item struct {
 			Title  string
 			URL    githubv4.URI
 			Body   string
+			State  githubv4.IssueState // Poka-yoke: capturamos el estado real del issue para evitar inconsistencias con el tablero.
 			Labels struct {
 				Nodes []labelNode
 			} `graphql:"labels(first: 20)"`
@@ -430,6 +431,11 @@ func main() {
 			}
 			rawStatus := singleName(it.Status.Typename, it.Status.Single.Name)
 			estado, porcentaje := normalizeStatus(rawStatus)
+			// Poka-yoke: si GitHub marca el issue como cerrado imponemos "Hecho" para no depender de campos humanos.
+			if iss.State == githubv4.IssueStateClosed {
+				estado = "Hecho"
+				porcentaje = 100
+			}
 			labels := labelNames(iss.Labels.Nodes)
 			projectProps := collectProjectProps(it)
 			m := ModuleOut{
