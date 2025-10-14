@@ -306,16 +306,27 @@ func projectValueToString(typename githubv4.String, single string, text string) 
 }
 
 func detectTipo(title string, labels []string, projectFields map[string]string) string {
+	// Poka-yoke: evaluamos primero los campos del proyecto porque suelen ser la fuente de verdad más confiable y así evitamos inferencias erróneas.
 	if projectFields != nil {
-		if v, ok := projectFields["Tipo"]; ok && isEpicValue(v) {
-			return "epic"
+		if v, ok := projectFields["Tipo"]; ok {
+			if isEpicValue(v) {
+				return "epic"
+			}
+			if isBugValue(v) {
+				return "bug"
+			}
 		}
 	}
+	// Poka-yoke: revisamos las etiquetas del issue para capturar tanto épicas como bugs declarados directamente en GitHub.
 	for _, l := range labels {
 		if isEpicValue(l) {
 			return "epic"
 		}
+		if isBugValue(l) {
+			return "bug"
+		}
 	}
+	// Poka-yoke: si las pistas anteriores fallan, inspeccionamos el título para detectar prefijos convencionales.
 	t := strings.TrimSpace(title)
 	if t == "" {
 		return ""
@@ -324,6 +335,10 @@ func detectTipo(title string, labels []string, projectFields map[string]string) 
 	if strings.HasPrefix(up, "[ÉPICA]") || strings.HasPrefix(up, "[EPICA]") || strings.HasPrefix(up, "[EPIC]") {
 		return "epic"
 	}
+	if strings.HasPrefix(up, "[BUG]") {
+		return "bug"
+	}
+	// Poka-yoke: al no encontrar indicadores devolvemos cadena vacía para que el consumidor interprete el valor como “sin tipo”.
 	return ""
 }
 
@@ -337,6 +352,24 @@ func isEpicValue(raw string) bool {
 	}
 	upper := strings.ToUpper(trimmed)
 	if strings.HasPrefix(upper, "ÉPICA") || strings.HasPrefix(upper, "EPICA") || strings.HasPrefix(upper, "EPIC") {
+		return true
+	}
+	return false
+}
+
+func isBugValue(raw string) bool {
+	// Poka-yoke: normalizamos entradas vacías para evitar falsos positivos desde campos incompletos.
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return false
+	}
+	// Poka-yoke: usamos comparación sin distinción entre mayúsculas y minúsculas para cubrir variantes de escritura.
+	if strings.EqualFold(trimmed, "bug") {
+		return true
+	}
+	upper := strings.ToUpper(trimmed)
+	// Poka-yoke: aceptamos prefijos tipo "BUG" o "[BUG]" para cubrir estilos comunes de etiquetas.
+	if strings.HasPrefix(upper, "BUG") || strings.HasPrefix(upper, "[BUG]") {
 		return true
 	}
 	return false
