@@ -195,14 +195,15 @@ func normalizeStatus(raw string) (string, int) {
 		return "Planificado", 0
 	}
 	switch s {
-	case "hecho", "done", "completado", "completo", "finalizado", "cerrado", "closed":
+	case "hecho", "done", "completado", "completo", "finalizado", "cerrado", "closed", "deploy", "deployment", "desplegado", "desplegada":
 		return "Hecho", 100
 	case "en curso", "curso", "en ejecución", "en ejecucion", "desarrollo", "en desarrollo", "in progress", "progress", "bloqueado", "bloqueada":
 		return "En curso", 50
 	case "planificado", "planificada", "planificación", "planificacion", "en planeación", "en planeacion", "planeado", "planeada", "por hacer", "pendiente", "backlog":
 		return "Planificado", 0
 	}
-	if strings.Contains(s, "hech") || strings.Contains(s, "done") || strings.Contains(s, "final") {
+	// Poka-yoke: detectamos raíces comunes como "deploy" y "despleg" para cubrir estados como "deployment" o "desplegado" aun cuando no coincidan exactamente con los valores anteriores.
+	if strings.Contains(s, "hech") || strings.Contains(s, "done") || strings.Contains(s, "final") || strings.Contains(s, "deploy") || strings.Contains(s, "despleg") {
 		return "Hecho", 100
 	}
 	if strings.Contains(s, "curso") || strings.Contains(s, "desarr") || strings.Contains(s, "progres") || strings.Contains(s, "bloq") {
