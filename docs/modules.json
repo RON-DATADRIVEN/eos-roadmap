@@ -608,6 +608,21 @@
     "tipo": "epic"
   },
   {
+    "id": "137",
+    "nombre": "fix: BLABLA",
+    "descripcion": "### Resumen ASDFASDF",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "Sin asignar",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/137"
+      }
+    ],
+    "tipo": "bug"
+  },
+  {
     "id": "42",
     "nombre": "svc-authz (IAM ligero): bootstrap + contratos",
     "descripcion": "- Handlers base + contratos (OpenAPI/Protobuf). - Reglas de autorización mínimas.",
@@ -1052,21 +1067,6 @@
       {
         "label": "GitHub",
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/136"
-      }
-    ],
-    "tipo": "bug"
-  },
-  {
-    "id": "137",
-    "nombre": "fix: BLABLA",
-    "descripcion": "### Resumen ASDFASDF",
-    "estado": "Planificado",
-    "porcentaje": 0,
-    "propietario": "Sin asignar",
-    "enlaces": [
-      {
-        "label": "GitHub",
-        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/137"
       }
     ],
     "tipo": "bug"
