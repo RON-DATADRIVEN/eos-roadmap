@@ -1040,5 +1040,47 @@
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/71"
       }
     ]
+  },
+  {
+    "id": "136",
+    "nombre": "fix: BLABLA",
+    "descripcion": "### Resumen ASDFASDF",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "Sin asignar",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/136"
+      }
+    ]
+  },
+  {
+    "id": "137",
+    "nombre": "fix: BLABLA",
+    "descripcion": "### Resumen ASDFASDF",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "Sin asignar",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/137"
+      }
+    ]
+  },
+  {
+    "id": "135",
+    "nombre": "Idea: adjuntar al Project eos 2.0 (Status=Ideas)",
+    "descripcion": "Prueba directa CF → GAS",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "Sin asignar",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/135"
+      }
+    ]
   }
 ]
