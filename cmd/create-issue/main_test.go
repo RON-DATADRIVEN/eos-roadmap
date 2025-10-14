@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -412,6 +413,44 @@ func TestHandleCORSRejectsWhenNoOriginsConfigured(t *testing.T) {
 	resp := rr.Result()
 	if resp.StatusCode != http.StatusForbidden {
 		t.Fatalf("expected status %d, got %d", http.StatusForbidden, resp.StatusCode)
+	}
+}
+
+func TestHandlePostRechazaCuerposGigantes(t *testing.T) {
+	t.Helper()
+
+	restore := preserveRequestLogger(t)
+	defer restore()
+
+	rr := httptest.NewRecorder()
+
+	// Construimos un JSON válido con un campo enorme para simular un ataque
+	// de carga masiva. Así evitamos sorpresas porque la prueba describe el
+	// escenario exacto que queremos bloquear.
+	enorme := strings.Repeat("a", int(maxRequestBodyBytes))
+	body := fmt.Sprintf(`{"templateId":"blank","title":"%s","fields":{}}`, enorme)
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
+
+	handlePost(context.Background(), rr, req)
+
+	resp := rr.Result()
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusRequestEntityTooLarge {
+		t.Fatalf("se esperaba estado %d y llegó %d", http.StatusRequestEntityTooLarge, resp.StatusCode)
+	}
+
+	var respuesta issueResponse
+	if err := json.NewDecoder(resp.Body).Decode(&respuesta); err != nil {
+		t.Fatalf("no se pudo interpretar la respuesta JSON: %v", err)
+	}
+
+	if respuesta.Error == nil {
+		t.Fatal("se esperaba un objeto de error en la respuesta")
+	}
+
+	if respuesta.Error.Code != "payload_too_large" {
+		t.Fatalf("se esperaba el código payload_too_large y llegó %q", respuesta.Error.Code)
 	}
 }
 
