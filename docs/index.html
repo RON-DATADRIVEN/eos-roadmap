@@ -109,6 +109,8 @@
     const issueTitle = document.getElementById('issueTitle');
     const issueFormMessage = document.getElementById('issueFormMessage');
     const payloadPreview = document.getElementById('payloadPreview');
+    // Poka-yoke: referenciamos el botón para desactivarlo durante el envío y así impedir clics repetidos accidentales.
+    const submitIssueButton = document.getElementById('submitIssue');
 
     function getBeaconUrl() {
       // Poka-yoke: buscamos un elemento con el atributo data-issue-beacon-url para que la URL quede documentada directamente en el HTML y cualquiera pueda ubicarla.
@@ -671,9 +673,19 @@
         return;
       }
 
+      showMessage('Enviando…', 'info');
+      if (submitIssueButton) {
+        // Poka-yoke: bloqueamos el botón apenas validamos para impedir solicitudes duplicadas por clics rápidos.
+        submitIssueButton.disabled = true;
+      }
+
       const payload = toIssuePayload(formState);
       if (!payload) {
         showMessage('No fue posible preparar el issue.', 'error');
+        if (submitIssueButton) {
+          // Poka-yoke: devolvemos el control al usuario cuando la preparación falla para que corrija sin recargar la página.
+          submitIssueButton.disabled = false;
+        }
         return;
       }
 
@@ -688,58 +700,76 @@
       payloadPreview.textContent = payload.body || 'Sin contenido';
       payloadPreview.classList.toggle('hidden', !payload.body);
 
-      // Poka-yoke: usamos esta bandera para evitar envíos cuando falte configuración y aun así limpiar el modal de forma segura.
-      let shouldAttemptSend = true;
       let beaconUrl = null;
       // Poka-yoke: conservamos el JSON serializado para reutilizarlo en los distintos mecanismos de envío sin recalcularlo.
       let serializedPayload = '';
+      // Poka-yoke: definimos una rutina de limpieza única para asegurar que todos los caminos cierren y restablezcan el formulario por igual.
+      let cleanupExecuted = false;
+      const templateDefinition = formState.template;
+      const cleanup = () => {
+        if (cleanupExecuted) {
+          return;
+        }
+        cleanupExecuted = true;
+        closeModal();
+        issueForm.reset();
+        payloadPreview.classList.add('hidden');
+        payloadPreview.textContent = '';
+        if (templateDefinition) {
+          populateTemplateFields(templateDefinition);
+        }
+      };
 
       try {
         // Poka-yoke: resolvemos la URL mediante la función centralizada para evitar discrepancias entre ambientes.
         beaconUrl = getBeaconUrl();
         if (!beaconUrl) {
-          shouldAttemptSend = false;
           showMessage('No se configuró la URL del servicio de issues. Solicita soporte.', 'error');
+          cleanup();
+          return;
         }
 
-        if (shouldAttemptSend) {
-          serializedPayload = JSON.stringify(payload);
-          let mustFallback = false;
+        serializedPayload = JSON.stringify(payload);
+        let mustFallback = false;
 
-          try {
-            // Poka-yoke: enviamos primero mediante fetch al Worker para obtener confirmación inmediata.
-            const response = await postIssuePayload(beaconUrl, serializedPayload);
-            if (!response || !response.ok) {
-              mustFallback = true;
-              console.error('No se recibió confirmación del Worker. Se intentará con el formulario oculto.', response);
-            }
-          } catch (error) {
+        try {
+          // Poka-yoke: enviamos primero mediante fetch al Worker para obtener confirmación inmediata.
+          const response = await postIssuePayload(beaconUrl, serializedPayload);
+          if (!response || !response.ok) {
             mustFallback = true;
-            console.error('Ocurrió un error al contactar el Worker. Se usará el formulario oculto como respaldo.', error);
+            console.error('No se recibió confirmación del Worker. Se intentará con el formulario oculto.', response);
           }
-
-          if (mustFallback) {
-            // Poka-yoke: reintentamos con el formulario oculto para conservar compatibilidad con navegadores estrictos.
-            submitViaHiddenForm(beaconUrl, serializedPayload);
-          }
-
-          try {
-            // Poka-yoke: usamos sendBeacon como esfuerzo adicional para cubrir cierres abruptos de pestaña.
-            if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
-              navigator.sendBeacon(beaconUrl, serializedPayload);
-            }
-          } catch (error) {
-            // Poka-yoke: ignoramos cualquier error de sendBeacon porque ya se intentó por POST y formulario de respaldo.
-          }
+        } catch (error) {
+          mustFallback = true;
+          console.error('Ocurrió un error al contactar el Worker. Se usará el formulario oculto como respaldo.', error);
         }
+
+        if (mustFallback) {
+          // Poka-yoke: reintentamos con el formulario oculto para conservar compatibilidad con navegadores estrictos.
+          submitViaHiddenForm(beaconUrl, serializedPayload);
+        }
+
+        try {
+          // Poka-yoke: usamos sendBeacon como esfuerzo adicional para cubrir cierres abruptos de pestaña.
+          if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+            navigator.sendBeacon(beaconUrl, serializedPayload);
+          }
+        } catch (error) {
+          // Poka-yoke: ignoramos cualquier error de sendBeacon porque ya se intentó por POST y formulario de respaldo.
+        }
+
+        showMessage('Enviado', 'success');
+        // Poka-yoke: retenemos el modal un instante para que la persona confirme visualmente que el envío finalizó.
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        cleanup();
+      } catch (error) {
+        console.error('Ocurrió un error general al preparar el envío del issue.', error);
+        showMessage('Ocurrió un error al enviar el issue. Intenta nuevamente.', 'error');
+        cleanup();
       } finally {
-        // Poka-yoke: cerramos y limpiamos el modal para que no queden datos sensibles expuestos aunque el envío falle.
-        closeModal();
-        issueForm.reset();
-        payloadPreview.classList.add('hidden');
-        payloadPreview.textContent = '';
-        if (formState.template) {
-          populateTemplateFields(formState.template);
+        if (submitIssueButton) {
+          // Poka-yoke: sin importar el resultado, devolvemos la interacción para permitir un nuevo intento consciente.
+          submitIssueButton.disabled = false;
         }
       }
     }
