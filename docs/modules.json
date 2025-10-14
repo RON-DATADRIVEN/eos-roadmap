@@ -3,8 +3,8 @@
     "id": "106",
     "nombre": "Smoke test desde Codespaces",
     "descripcion": "### Descripción Validación manual del flujo.",
-    "estado": "Planificado",
-    "porcentaje": 0,
+    "estado": "Hecho",
+    "porcentaje": 100,
     "propietario": "Sin asignar",
     "enlaces": [
       {
@@ -17,8 +17,8 @@
     "id": "107",
     "nombre": "Smoke test desde Codespaces",
     "descripcion": "### Descripción Validación manual del flujo.",
-    "estado": "Planificado",
-    "porcentaje": 0,
+    "estado": "Hecho",
+    "porcentaje": 100,
     "propietario": "Sin asignar",
     "enlaces": [
       {
@@ -611,8 +611,8 @@
     "id": "137",
     "nombre": "fix: BLABLA",
     "descripcion": "### Resumen ASDFASDF",
-    "estado": "Planificado",
-    "porcentaje": 0,
+    "estado": "Hecho",
+    "porcentaje": 100,
     "propietario": "Sin asignar",
     "enlaces": [
       {
@@ -1060,8 +1060,8 @@
     "id": "136",
     "nombre": "fix: BLABLA",
     "descripcion": "### Resumen ASDFASDF",
-    "estado": "Planificado",
-    "porcentaje": 0,
+    "estado": "Hecho",
+    "porcentaje": 100,
     "propietario": "Sin asignar",
     "enlaces": [
       {
@@ -1075,8 +1075,8 @@
     "id": "135",
     "nombre": "Idea: adjuntar al Project eos 2.0 (Status=Ideas)",
     "descripcion": "Prueba directa CF → GAS",
-    "estado": "Planificado",
-    "porcentaje": 0,
+    "estado": "Hecho",
+    "porcentaje": 100,
     "propietario": "Sin asignar",
     "enlaces": [
       {
