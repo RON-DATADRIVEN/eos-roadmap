@@ -151,6 +151,12 @@ const (
 
 const defaultAllowedOrigin = "https://ron-datadriven.github.io"
 
+// maxRequestBodyBytes limita el tamaño del JSON recibido para evitar que un
+// cuerpo gigante agote la memoria del servidor. De esta manera aplicamos
+// poka-yoke, ya que prevenimos la falla antes de que ocurra al rechazar datos
+// sospechosos.
+const maxRequestBodyBytes = 1 << 20
+
 // defaultLogID define un nombre reconocible para el stream de Cloud Logging
 // cuando no se especifica uno mediante variables de entorno. El nombre deja
 // claro qué servicio genera los eventos para facilitar búsquedas en la
@@ -1021,8 +1027,17 @@ func splitOriginCandidates(raw string) []string {
 }
 
 func handlePost(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	limitedBody := http.MaxBytesReader(w, r.Body, maxRequestBodyBytes)
+	defer limitedBody.Close()
+
 	var req issueRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(limitedBody).Decode(&req); err != nil {
+		var maxErr *http.MaxBytesError
+		if errors.As(err, &maxErr) {
+			message := fmt.Sprintf("El cuerpo de la solicitud supera el límite de %d bytes", maxRequestBodyBytes)
+			writeError(ctx, w, http.StatusRequestEntityTooLarge, "payload_too_large", message, err)
+			return
+		}
 		writeError(ctx, w, http.StatusBadRequest, "invalid_request", "JSON inválido", err)
 		return
 	}
