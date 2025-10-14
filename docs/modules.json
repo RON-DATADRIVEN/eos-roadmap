@@ -1043,8 +1043,8 @@
   },
   {
     "id": "148",
-    "nombre": "fix: Prueba",
-    "descripcion": "### Resumen Prueba",
+    "nombre": "fix: Asignar tipo correcto a cada Issuecreado automaticamente",
+    "descripcion": "### Resumen Se requiere que al crear un Issue, este tenga el tipo correcto en projects de GitHUb",
     "estado": "Planificado",
     "porcentaje": 0,
     "propietario": "Sin asignar",
@@ -1055,5 +1055,33 @@
       }
     ],
     "tipo": "bug"
+  },
+  {
+    "id": "149",
+    "nombre": "[#148] Modificar app script para que marque al Issue creado con el tipo correcto",
+    "descripcion": "### Descripción",
+    "estado": "En curso",
+    "porcentaje": 50,
+    "propietario": "ArturoPlascenciaRodriguez, Copilot",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/149"
+      }
+    ]
+  },
+  {
+    "id": "150",
+    "nombre": "[#148] Modificar URL en Worker de Cloudfare",
+    "descripcion": "### Descripción",
+    "estado": "En curso",
+    "porcentaje": 50,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/150"
+      }
+    ]
   }
 ]
