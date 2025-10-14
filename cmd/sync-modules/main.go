@@ -189,24 +189,85 @@ func singleName(typename githubv4.String, name githubv4.String) string {
 	return ""
 }
 
+// Poka-yoke: agrupamos aquí todas las palabras que indican de manera inequívoca que un
+// estado debe considerarse "Hecho". Incluir "deploy" explícito garantiza que etiquetas
+// en inglés como "Deploy" queden normalizadas correctamente sin depender de traducciones.
+var estadosHechoExactos = map[string]struct{}{
+	"hecho":      {},
+	"done":       {},
+	"completado": {},
+	"completo":   {},
+	"finalizado": {},
+	"cerrado":    {},
+	"closed":     {},
+	"deploy":     {},
+	"deployment": {},
+	"deployed":   {},
+	"desplegado": {},
+	"desplegada": {},
+	"despliegue": {},
+}
+
+// Poka-yoke: raíces que, si aparecen en el texto, nos dejan claro que el trabajo terminó.
+// Al incluir "deploy" cubrimos variaciones humanas como "deploy 🚀", "deployment" o
+// "deploy listo".
+var estadosHechoRaices = []string{"hech", "done", "final", "deploy", "despleg", "desplieg"}
+
+// Poka-yoke: equivalentes exactos de estados que indican trabajo en curso.
+var estadosCursoExactos = map[string]struct{}{
+	"en curso":      {},
+	"curso":         {},
+	"en ejecución":  {},
+	"en ejecucion":  {},
+	"desarrollo":    {},
+	"en desarrollo": {},
+	"in progress":   {},
+	"progress":      {},
+	"bloqueado":     {},
+	"bloqueada":     {},
+}
+
+// Poka-yoke: raíces que denotan claramente avance parcial.
+var estadosCursoRaices = []string{"curso", "desarr", "progres", "bloq"}
+
+// Poka-yoke: equivalentes exactos para planificaciones pendientes.
+var estadosPlanExactos = map[string]struct{}{
+	"planificado":   {},
+	"planificada":   {},
+	"planificación": {},
+	"planificacion": {},
+	"en planeación": {},
+	"en planeacion": {},
+	"planeado":      {},
+	"planeada":      {},
+	"por hacer":     {},
+	"pendiente":     {},
+	"backlog":       {},
+}
+
 func normalizeStatus(raw string) (string, int) {
 	s := strings.TrimSpace(strings.ToLower(raw))
 	if s == "" {
 		return "Planificado", 0
 	}
-	switch s {
-	case "hecho", "done", "completado", "completo", "finalizado", "cerrado", "closed":
+	if _, ok := estadosHechoExactos[s]; ok {
 		return "Hecho", 100
-	case "en curso", "curso", "en ejecución", "en ejecucion", "desarrollo", "en desarrollo", "in progress", "progress", "bloqueado", "bloqueada":
+	}
+	if _, ok := estadosCursoExactos[s]; ok {
 		return "En curso", 50
-	case "planificado", "planificada", "planificación", "planificacion", "en planeación", "en planeacion", "planeado", "planeada", "por hacer", "pendiente", "backlog":
+	}
+	if _, ok := estadosPlanExactos[s]; ok {
 		return "Planificado", 0
 	}
-	if strings.Contains(s, "hech") || strings.Contains(s, "done") || strings.Contains(s, "final") {
-		return "Hecho", 100
+	for _, raiz := range estadosHechoRaices {
+		if strings.Contains(s, raiz) {
+			return "Hecho", 100
+		}
 	}
-	if strings.Contains(s, "curso") || strings.Contains(s, "desarr") || strings.Contains(s, "progres") || strings.Contains(s, "bloq") {
-		return "En curso", 50
+	for _, raiz := range estadosCursoRaices {
+		if strings.Contains(s, raiz) {
+			return "En curso", 50
+		}
 	}
 	return "Planificado", 0
 }
