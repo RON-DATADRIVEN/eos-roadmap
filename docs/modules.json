@@ -1043,7 +1043,7 @@
   },
   {
     "id": "148",
-    "nombre": "fix: Asignar tipo correcto a cada Issuecreado automaticamente",
+    "nombre": "fix: Asignar tipo correcto a cada Issue creado automaticamente",
     "descripcion": "### Resumen Se requiere que al crear un Issue, este tenga el tipo correcto en projects de GitHUb",
     "estado": "Planificado",
     "porcentaje": 0,
@@ -1083,5 +1083,20 @@
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/150"
       }
     ]
+  },
+  {
+    "id": "152",
+    "nombre": "prueba",
+    "descripcion": "pregunta.. como va el proceso de milestones? abajo de humano fila 188? \u003c@U063TSA108K\u003e",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/152"
+      }
+    ],
+    "tipo": "bug"
   }
 ]
