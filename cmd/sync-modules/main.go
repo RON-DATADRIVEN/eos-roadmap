@@ -250,7 +250,8 @@ func normalizeStatus(raw string) (string, int) {
 	if s == "" {
 		return "Planificado", 0
 	}
-	if _, ok := estadosHechoExactos[s]; ok {
+	switch s {
+	case "hecho", "done", "completado", "completo", "finalizado", "cerrado", "closed", "deploy", "deployment", "desplegado", "desplegada":
 		return "Hecho", 100
 	}
 	if _, ok := estadosCursoExactos[s]; ok {
@@ -259,10 +260,9 @@ func normalizeStatus(raw string) (string, int) {
 	if _, ok := estadosPlanExactos[s]; ok {
 		return "Planificado", 0
 	}
-	for _, raiz := range estadosHechoRaices {
-		if strings.Contains(s, raiz) {
-			return "Hecho", 100
-		}
+	// Poka-yoke: detectamos raíces comunes como "deploy" y "despleg" para cubrir estados como "deployment" o "desplegado" aun cuando no coincidan exactamente con los valores anteriores.
+	if strings.Contains(s, "hech") || strings.Contains(s, "done") || strings.Contains(s, "final") || strings.Contains(s, "deploy") || strings.Contains(s, "despleg") {
+		return "Hecho", 100
 	}
 	for _, raiz := range estadosCursoRaices {
 		if strings.Contains(s, raiz) {
