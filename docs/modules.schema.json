@@ -16,7 +16,7 @@
       "tipo": {
         "type": "string",
         "description": "Clasificación funcional del módulo",
-        "enum": ["epic"]
+        "enum": ["epic", "bug"]
       },
       "enlaces": {
         "type": "array",
