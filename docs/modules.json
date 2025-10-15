@@ -1060,8 +1060,8 @@
     "id": "149",
     "nombre": "[#148] Modificar app script para que marque al Issue creado con el tipo correcto",
     "descripcion": "### Descripción",
-    "estado": "En curso",
-    "porcentaje": 50,
+    "estado": "Hecho",
+    "porcentaje": 100,
     "propietario": "ArturoPlascenciaRodriguez, Copilot",
     "enlaces": [
       {
