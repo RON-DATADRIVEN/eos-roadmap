@@ -476,7 +476,7 @@ func TestHandleRequestCORSPreflightAndPost(t *testing.T) {
 		postCalled = true
 		return &githubIssueResponse{Number: 7, HTMLURL: "https://example.com/issues/7", NodeID: "node-7"}, nil
 	}
-	projectAdder = func(context.Context, string, string) error {
+	projectAdder = func(context.Context, string, string, []string) error {
 		projectCalled = true
 		return nil
 	}
@@ -593,7 +593,7 @@ func TestHandleRequestCORSForbiddenOrigin(t *testing.T) {
 		postCalled = true
 		return nil, nil
 	}
-	projectAdder = func(context.Context, string, string) error { return nil }
+	projectAdder = func(context.Context, string, string, []string) error { return nil }
 
 	server := httptest.NewServer(http.HandlerFunc(handleRequest))
 	defer server.Close()
@@ -665,7 +665,7 @@ func TestRequestLoggerCapturesSuccessfulPost(t *testing.T) {
 		// y no dependa de GitHub.
 		return &githubIssueResponse{Number: 1, HTMLURL: "https://example.com/issue/1", NodeID: "node-1"}, nil
 	}
-	projectAdder = func(context.Context, string, string) error { return nil }
+	projectAdder = func(context.Context, string, string, []string) error { return nil }
 
 	body := strings.NewReader("{\"templateId\":\"blank\",\"title\":\"Nuevo módulo\",\"fields\":{\"descripcion\":\"Detalle\"}}")
 	req := httptest.NewRequest(http.MethodPost, "http://service.local/", body)
@@ -866,6 +866,22 @@ func TestTemplateTypeToFieldValue(t *testing.T) {
 	}
 }
 
+func TestDetermineProjectTipoValuePriorizaEtiqueta(t *testing.T) {
+	t.Helper()
+
+	labels := []string{"Status: Ideas", "Tipo: Bug"}
+
+	// Enviamos un template desconocido para comprobar que, aunque no exista
+	// mapeo, la etiqueta define el valor final. Así evitamos inconsistencias
+	// si se agregan nuevas plantillas sin actualizar el código (poka-yoke para
+	// atrapar omisiones).
+	got := determineProjectTipoValue("template-desconocido", labels)
+
+	if got != "Bug" {
+		t.Fatalf("se esperaba que la etiqueta forzara el valor 'Bug' y se obtuvo %q", got)
+	}
+}
+
 func TestAddToProjectAndSetTypeIsCalledWithTemplateID(t *testing.T) {
 	t.Helper()
 
@@ -883,9 +899,15 @@ func TestAddToProjectAndSetTypeIsCalledWithTemplateID(t *testing.T) {
 	issueCreator = func(context.Context, string, []string, string) (*githubIssueResponse, error) {
 		return &githubIssueResponse{Number: 1, HTMLURL: "https://example.com/issues/1", NodeID: "test-node-id"}, nil
 	}
-	projectAdder = func(_ context.Context, nodeID string, templateID string) error {
+	projectAdder = func(_ context.Context, nodeID string, templateID string, labels []string) error {
 		capturedNodeID = nodeID
 		capturedTemplateID = templateID
+		if len(labels) == 0 {
+			t.Fatalf("se esperaban etiquetas para validar el tipo y llegó una lista vacía")
+		}
+		if determineProjectTipoValue("desconocido", labels) != "Bug" {
+			t.Fatalf("el cálculo del tipo usando etiquetas no devolvió 'Bug': %v", labels)
+		}
 		return nil
 	}
 
