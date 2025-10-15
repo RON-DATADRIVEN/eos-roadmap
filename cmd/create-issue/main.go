@@ -1267,13 +1267,18 @@ func addToProjectAndSetType(ctx context.Context, nodeID string, templateID strin
 
 	tipoFieldID := projectQuery.Node.ProjectV2.Field.ProjectV2SingleSelectField.ID
 	if tipoFieldID == "" {
-		return errors.New("no se encontró el campo Tipo en el proyecto")
+		return errors.New("project_tipo_field_missing: no se encontró el campo Tipo en el proyecto o no es de tipo SingleSelect")
 	}
 
 	// Obtenemos el valor del campo según el template
 	tipoValue := templateTypeToFieldValue(templateID)
 	if tipoValue == "" {
-		// Si el template no tiene un tipo definido, no configuramos el campo
+		// Si el template no tiene un tipo definido, no configuramos el campo.
+		// Esto es normal para templates personalizados o futuros que aún no
+		// tienen mapeo explícito.
+		if templateID != "" {
+			log.Printf("Template %q sin mapeo de tipo, campo Tipo no será actualizado", templateID)
+		}
 		return nil
 	}
 
@@ -1287,7 +1292,7 @@ func addToProjectAndSetType(ctx context.Context, nodeID string, templateID strin
 	}
 
 	if optionID == "" {
-		return fmt.Errorf("no se encontró la opción %q en el campo Tipo", tipoValue)
+		return fmt.Errorf("project_tipo_option_missing: no se encontró la opción %q en el campo Tipo del proyecto", tipoValue)
 	}
 
 	// Finalmente, actualizamos el campo "Tipo" del project item
