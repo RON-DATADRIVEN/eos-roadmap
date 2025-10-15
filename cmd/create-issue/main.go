@@ -1078,7 +1078,7 @@ func handlePost(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = projectAdder(ctx, issue.NodeID, req.TemplateID)
+	err = projectAdder(ctx, issue.NodeID, req.TemplateID, tmpl.Labels)
 	if err != nil {
 		if logger := loggerFromContext(ctx); logger != nil {
 			logger.LogError(ctx, "github_project_error", fmt.Sprintf("issue #%d creado pero no se pudo agregar al proyecto", issue.Number), err)
@@ -1208,7 +1208,7 @@ func templateTypeToFieldValue(templateID string) string {
 // con el valor correspondiente a la plantilla utilizada. De esta manera el issue
 // queda correctamente categorizado desde su creación, evitando trabajo manual
 // posterior.
-func addToProjectAndSetType(ctx context.Context, nodeID string, templateID string) error {
+func addToProjectAndSetType(ctx context.Context, nodeID string, templateID string, labels []string) error {
 	if strings.TrimSpace(nodeID) == "" {
 		return errors.New("node_id vacío")
 	}
@@ -1270,8 +1270,11 @@ func addToProjectAndSetType(ctx context.Context, nodeID string, templateID strin
 		return errors.New("project_tipo_field_missing: no se encontró el campo Tipo en el proyecto o no es de tipo SingleSelect")
 	}
 
-	// Obtenemos el valor del campo según el template
-	tipoValue := templateTypeToFieldValue(templateID)
+	// Obtenemos el valor del campo priorizando la etiqueta "Tipo" que acompaña al
+	// issue. Esta verificación nos ayuda a prevenir errores humanos
+	// (poka-yoke), ya que el tipo elegido en la interfaz queda reflejado en el
+	// proyecto aunque cambie el mapeo interno de plantillas.
+	tipoValue := determineProjectTipoValue(templateID, labels)
 	if tipoValue == "" {
 		// Si el template no tiene un tipo definido, no configuramos el campo.
 		// Esto es normal para templates personalizados o futuros que aún no
@@ -1324,7 +1327,34 @@ func addToProjectAndSetType(ctx context.Context, nodeID string, templateID strin
 // no necesitan configurar el tipo. Esta función simplemente delega a
 // addToProjectAndSetType con un templateID vacío.
 func addToProject(ctx context.Context, nodeID string) error {
-	return addToProjectAndSetType(ctx, nodeID, "")
+	return addToProjectAndSetType(ctx, nodeID, "", nil)
+}
+
+// determineProjectTipoValue revisa primero las etiquetas buscando aquella que
+// indique el tipo del issue (por ejemplo, "Tipo: Bug"). Al permitir que el
+// valor se derive directamente de la etiqueta, evitamos inconsistencias entre
+// lo que ve la persona usuaria y lo que se registra en el proyecto (poka-yoke
+// para impedir discrepancias). Si ninguna etiqueta define el tipo, recurrimos
+// al mapeo por plantilla como respaldo seguro.
+func determineProjectTipoValue(templateID string, labels []string) string {
+	for _, label := range labels {
+		parts := strings.SplitN(label, ":", 2)
+		if len(parts) != 2 {
+			continue
+		}
+
+		prefix := strings.TrimSpace(parts[0])
+		if !strings.EqualFold(prefix, "tipo") {
+			continue
+		}
+
+		value := strings.TrimSpace(parts[1])
+		if value != "" {
+			return value
+		}
+	}
+
+	return templateTypeToFieldValue(templateID)
 }
 
 func writeError(ctx context.Context, w http.ResponseWriter, status int, code, message string, cause error) {
