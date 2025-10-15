@@ -77,6 +77,11 @@
               <label for="issueTitle">Título</label>
               <input id="issueTitle" name="issueTitle" type="text" required />
             </div>
+            <!-- Poka-yoke: este campo solicita el correo para que el equipo pueda responder incluso si la persona no domina GitHub, evitando que el seguimiento se pierda. -->
+            <div class="field">
+              <label for="issueEmail">Correo de contacto</label>
+              <input id="issueEmail" name="issueEmail" type="text" />
+            </div>
             <div id="issueFields" class="field-group"></div>
             <div class="form-actions">
               <button id="submitIssue" type="submit" class="btn primary">Crear issue</button>
@@ -107,6 +112,8 @@
     const issueForm = document.getElementById('issueForm');
     const issueFields = document.getElementById('issueFields');
     const issueTitle = document.getElementById('issueTitle');
+    // Poka-yoke: registramos el correo para recordar que siempre debemos ofrecer un canal de respuesta accesible.
+    const issueEmail = document.getElementById('issueEmail');
     const issueFormMessage = document.getElementById('issueFormMessage');
     const payloadPreview = document.getElementById('payloadPreview');
     // Poka-yoke: referenciamos el botón para desactivarlo durante el envío y así impedir clics repetidos accidentales.
@@ -386,11 +393,19 @@
       // Poka-yoke: usamos FormData para leer todos los campos sin depender de nombres hardcodeados.
       const formData = new FormData(issueForm);
       const sanitizedTitle = (formData.get('issueTitle') || '').trim();
+      const rawEmail = formData.get('issueEmail');
+      const sanitizedEmail = rawEmail ? String(rawEmail).trim().toLowerCase() : '';
 
       // Poka-yoke: preparamos recipientes claros para cada tipo de información que espera Apps Script.
       const fieldValues = {};
       const sections = [];
       const labels = new Set(Array.isArray(template.labels) ? template.labels : []);
+
+      // Poka-yoke: adelantamos el correo para que la persona asignada encuentre rápido cómo comunicarse.
+      fieldValues.issueEmail = sanitizedEmail;
+      if (sanitizedEmail) {
+        sections.push(`### Correo de contacto\n${sanitizedEmail}`);
+      }
 
       template.body.forEach(field => {
         if (field.type === 'markdown') {
@@ -715,6 +730,10 @@
         issueForm.reset();
         payloadPreview.classList.add('hidden');
         payloadPreview.textContent = '';
+        if (issueEmail) {
+          // Poka-yoke: dejamos el correo en blanco para evitar que se envíe el de una persona anterior por descuido.
+          issueEmail.value = '';
+        }
         if (templateDefinition) {
           populateTemplateFields(templateDefinition);
         }
