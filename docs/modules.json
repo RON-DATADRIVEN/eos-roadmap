@@ -1069,33 +1069,5 @@
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/150"
       }
     ]
-  },
-  {
-    "id": "157",
-    "nombre": "PRUEBA",
-    "descripcion": "### Resumen ASDGA",
-    "estado": "Planificado",
-    "porcentaje": 0,
-    "propietario": "Sin asignar",
-    "enlaces": [
-      {
-        "label": "GitHub",
-        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/157"
-      }
-    ]
-  },
-  {
-    "id": "158",
-    "nombre": "PRUEBA",
-    "descripcion": "### Resumen ASDGA",
-    "estado": "Planificado",
-    "porcentaje": 0,
-    "propietario": "Sin asignar",
-    "enlaces": [
-      {
-        "label": "GitHub",
-        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/158"
-      }
-    ]
   }
 ]
