@@ -1057,20 +1057,6 @@
     "tipo": "bug"
   },
   {
-    "id": "149",
-    "nombre": "[#148] Modificar app script para que marque al Issue creado con el tipo correcto",
-    "descripcion": "### Descripción",
-    "estado": "Hecho",
-    "porcentaje": 100,
-    "propietario": "ArturoPlascenciaRodriguez, Copilot",
-    "enlaces": [
-      {
-        "label": "GitHub",
-        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/149"
-      }
-    ]
-  },
-  {
     "id": "150",
     "nombre": "[#148] Modificar URL en Worker de Cloudfare",
     "descripcion": "### Descripción",
