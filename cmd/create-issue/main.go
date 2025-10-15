@@ -192,7 +192,7 @@ var (
 // depender de la red, evitando sorpresas durante la automatización.
 var (
 	issueCreator = createIssue
-	projectAdder = addToProject
+	projectAdder = addToProjectAndSetType
 )
 
 // logBackend describe el sistema externo al que enviamos cada registro. Nos
@@ -1078,7 +1078,7 @@ func handlePost(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = projectAdder(ctx, issue.NodeID)
+	err = projectAdder(ctx, issue.NodeID, req.TemplateID)
 	if err != nil {
 		if logger := loggerFromContext(ctx); logger != nil {
 			logger.LogError(ctx, "github_project_error", fmt.Sprintf("issue #%d creado pero no se pudo agregar al proyecto", issue.Number), err)
@@ -1185,7 +1185,30 @@ func buildIssuePayload(title string, labels []string, body string) ([]byte, erro
 	return json.Marshal(payload)
 }
 
-func addToProject(ctx context.Context, nodeID string) error {
+// templateTypeToFieldValue mapea el ID de la plantilla al valor esperado en el
+// campo "Tipo" del proyecto. Esto mantiene la coherencia entre las etiquetas del
+// issue y los campos del proyecto, aplicando poka-yoke al evitar discrepancias
+// manuales en los valores.
+func templateTypeToFieldValue(templateID string) string {
+	switch templateID {
+	case "bug":
+		return "Bug"
+	case "blank":
+		return "Blank Issue"
+	case "change_request":
+		return "Change Request"
+	case "feature":
+		return "Feature"
+	default:
+		return ""
+	}
+}
+
+// addToProjectAndSetType agrega el issue al proyecto y configura el campo "Tipo"
+// con el valor correspondiente a la plantilla utilizada. De esta manera el issue
+// queda correctamente categorizado desde su creación, evitando trabajo manual
+// posterior.
+func addToProjectAndSetType(ctx context.Context, nodeID string, templateID string) error {
 	if strings.TrimSpace(nodeID) == "" {
 		return errors.New("node_id vacío")
 	}
@@ -1194,12 +1217,13 @@ func addToProject(ctx context.Context, nodeID string) error {
 	httpClient := oauth2.NewClient(ctx, src)
 	gqlClient := githubv4.NewClient(httpClient)
 
-	input := githubv4.AddProjectV2ItemByIdInput{
+	// Primero agregamos el issue al proyecto para obtener el project item ID
+	addInput := githubv4.AddProjectV2ItemByIdInput{
 		ProjectID: githubv4.ID(projectID),
 		ContentID: githubv4.ID(nodeID),
 	}
 
-	var mutation struct {
+	var addMutation struct {
 		AddProjectV2ItemByID struct {
 			Item struct {
 				ID githubv4.ID
@@ -1207,7 +1231,100 @@ func addToProject(ctx context.Context, nodeID string) error {
 		} `graphql:"addProjectV2ItemById(input: $input)"`
 	}
 
-	return gqlClient.Mutate(ctx, &mutation, input, nil)
+	if err := gqlClient.Mutate(ctx, &addMutation, addInput, nil); err != nil {
+		return fmt.Errorf("error al agregar issue al proyecto: %w", err)
+	}
+
+	projectItemID := addMutation.AddProjectV2ItemByID.Item.ID
+	if projectItemID == "" {
+		return errors.New("no se obtuvo project item ID tras agregar al proyecto")
+	}
+
+	// Ahora consultamos el proyecto para obtener el ID del campo "Tipo"
+	var projectQuery struct {
+		Node struct {
+			ProjectV2 struct {
+				Field struct {
+					ProjectV2SingleSelectField struct {
+						ID      githubv4.ID
+						Options []struct {
+							ID   githubv4.String
+							Name githubv4.String
+						}
+					} `graphql:"... on ProjectV2SingleSelectField"`
+				} `graphql:"field(name: \"Tipo\")"`
+			} `graphql:"... on ProjectV2"`
+		} `graphql:"node(id: $projectId)"`
+	}
+
+	projectQueryVars := map[string]interface{}{
+		"projectId": githubv4.ID(projectID),
+	}
+
+	if err := gqlClient.Query(ctx, &projectQuery, projectQueryVars); err != nil {
+		return fmt.Errorf("error al consultar campo Tipo del proyecto: %w", err)
+	}
+
+	tipoFieldID := projectQuery.Node.ProjectV2.Field.ProjectV2SingleSelectField.ID
+	if tipoFieldID == "" {
+		return errors.New("project_tipo_field_missing: no se encontró el campo Tipo en el proyecto o no es de tipo SingleSelect")
+	}
+
+	// Obtenemos el valor del campo según el template
+	tipoValue := templateTypeToFieldValue(templateID)
+	if tipoValue == "" {
+		// Si el template no tiene un tipo definido, no configuramos el campo.
+		// Esto es normal para templates personalizados o futuros que aún no
+		// tienen mapeo explícito.
+		if templateID != "" {
+			log.Printf("Template %q sin mapeo de tipo, campo Tipo no será actualizado", templateID)
+		}
+		return nil
+	}
+
+	// Buscamos el ID de la opción que coincida con el valor deseado
+	var optionID githubv4.String
+	for _, opt := range projectQuery.Node.ProjectV2.Field.ProjectV2SingleSelectField.Options {
+		if string(opt.Name) == tipoValue {
+			optionID = opt.ID
+			break
+		}
+	}
+
+	if optionID == "" {
+		return fmt.Errorf("project_tipo_option_missing: no se encontró la opción %q en el campo Tipo del proyecto", tipoValue)
+	}
+
+	// Finalmente, actualizamos el campo "Tipo" del project item
+	updateInput := githubv4.UpdateProjectV2ItemFieldValueInput{
+		ProjectID: githubv4.ID(projectID),
+		ItemID:    projectItemID,
+		FieldID:   tipoFieldID,
+		Value: githubv4.ProjectV2FieldValue{
+			SingleSelectOptionID: (*githubv4.String)(&optionID),
+		},
+	}
+
+	var updateMutation struct {
+		UpdateProjectV2ItemFieldValue struct {
+			ProjectV2Item struct {
+				ID githubv4.ID
+			}
+		} `graphql:"updateProjectV2ItemFieldValue(input: $input)"`
+	}
+
+	if err := gqlClient.Mutate(ctx, &updateMutation, updateInput, nil); err != nil {
+		return fmt.Errorf("error al actualizar campo Tipo: %w", err)
+	}
+
+	return nil
+}
+
+// addToProject mantiene la función original para compatibilidad con tests que
+// no necesitan configurar el tipo. Esta función simplemente delega a
+// addToProjectAndSetType con un templateID vacío.
+func addToProject(ctx context.Context, nodeID string) error {
+	return addToProjectAndSetType(ctx, nodeID, "")
 }
 
 func writeError(ctx context.Context, w http.ResponseWriter, status int, code, message string, cause error) {

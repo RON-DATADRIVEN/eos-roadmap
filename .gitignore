@@ -1,6 +1,8 @@
 # binarios y logs locales
 sync-modules
 sync-modules.exe
+create-issue
+create-issue.exe
 run.log
 run-failed.log
 labels_from_project.csv

@@ -476,7 +476,7 @@ func TestHandleRequestCORSPreflightAndPost(t *testing.T) {
 		postCalled = true
 		return &githubIssueResponse{Number: 7, HTMLURL: "https://example.com/issues/7", NodeID: "node-7"}, nil
 	}
-	projectAdder = func(context.Context, string) error {
+	projectAdder = func(context.Context, string, string) error {
 		projectCalled = true
 		return nil
 	}
@@ -593,7 +593,7 @@ func TestHandleRequestCORSForbiddenOrigin(t *testing.T) {
 		postCalled = true
 		return nil, nil
 	}
-	projectAdder = func(context.Context, string) error { return nil }
+	projectAdder = func(context.Context, string, string) error { return nil }
 
 	server := httptest.NewServer(http.HandlerFunc(handleRequest))
 	defer server.Close()
@@ -665,7 +665,7 @@ func TestRequestLoggerCapturesSuccessfulPost(t *testing.T) {
 		// y no dependa de GitHub.
 		return &githubIssueResponse{Number: 1, HTMLURL: "https://example.com/issue/1", NodeID: "node-1"}, nil
 	}
-	projectAdder = func(context.Context, string) error { return nil }
+	projectAdder = func(context.Context, string, string) error { return nil }
 
 	body := strings.NewReader("{\"templateId\":\"blank\",\"title\":\"Nuevo módulo\",\"fields\":{\"descripcion\":\"Detalle\"}}")
 	req := httptest.NewRequest(http.MethodPost, "http://service.local/", body)
@@ -839,5 +839,73 @@ func TestRequestLoggerCapturesCORSRejection(t *testing.T) {
 	}
 	if finishEntry.TemplateID != "" {
 		t.Fatalf("finish entry template = %s, want empty", finishEntry.TemplateID)
+	}
+}
+
+func TestTemplateTypeToFieldValue(t *testing.T) {
+	tests := []struct {
+		name       string
+		templateID string
+		want       string
+	}{
+		{name: "bug template", templateID: "bug", want: "Bug"},
+		{name: "blank template", templateID: "blank", want: "Blank Issue"},
+		{name: "change_request template", templateID: "change_request", want: "Change Request"},
+		{name: "feature template", templateID: "feature", want: "Feature"},
+		{name: "unknown template", templateID: "unknown", want: ""},
+		{name: "empty template", templateID: "", want: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := templateTypeToFieldValue(tt.templateID)
+			if got != tt.want {
+				t.Fatalf("templateTypeToFieldValue(%q) = %q, want %q", tt.templateID, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestAddToProjectAndSetTypeIsCalledWithTemplateID(t *testing.T) {
+	t.Helper()
+
+	restoreOrigins := preserveOriginGlobals(t)
+	defer restoreOrigins()
+
+	restoreLogger := preserveRequestLogger(t)
+	defer restoreLogger()
+
+	allowAnyOrigin = true
+
+	var capturedNodeID string
+	var capturedTemplateID string
+
+	issueCreator = func(context.Context, string, []string, string) (*githubIssueResponse, error) {
+		return &githubIssueResponse{Number: 1, HTMLURL: "https://example.com/issues/1", NodeID: "test-node-id"}, nil
+	}
+	projectAdder = func(_ context.Context, nodeID string, templateID string) error {
+		capturedNodeID = nodeID
+		capturedTemplateID = templateID
+		return nil
+	}
+
+	body := strings.NewReader("{\"templateId\":\"bug\",\"title\":\"Test bug\",\"fields\":{\"summary\":\"Test\",\"steps\":\"1. Step\",\"expected\":\"Expected\",\"actual\":\"Actual\"}}")
+	req := httptest.NewRequest(http.MethodPost, "http://service.local/", body)
+	req.Header.Set("Content-Type", "application/json")
+
+	rr := httptest.NewRecorder()
+	handleRequest(rr, req)
+
+	resp := rr.Result()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", resp.StatusCode)
+	}
+
+	if capturedNodeID != "test-node-id" {
+		t.Fatalf("expected nodeID to be %q, got %q", "test-node-id", capturedNodeID)
+	}
+
+	if capturedTemplateID != "bug" {
+		t.Fatalf("expected templateID to be %q, got %q", "bug", capturedTemplateID)
 	}
 }
