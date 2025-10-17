@@ -1074,8 +1074,8 @@
     "id": "160",
     "nombre": "PRUEBA SLACK",
     "descripcion": "holi de nuevoo, no te pregunté para cuando podría estar? Para ppnerlo en mi calendario de pendientes porfa",
-    "estado": "Planificado",
-    "porcentaje": 0,
+    "estado": "Hecho",
+    "porcentaje": 100,
     "propietario": "ArturoPlascenciaRodriguez",
     "enlaces": [
       {
