@@ -1069,5 +1069,20 @@
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/150"
       }
     ]
+  },
+  {
+    "id": "160",
+    "nombre": "PRUEBA SLACK",
+    "descripcion": "holi de nuevoo, no te pregunté para cuando podría estar? Para ppnerlo en mi calendario de pendientes porfa",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/160"
+      }
+    ],
+    "tipo": "bug"
   }
 ]
