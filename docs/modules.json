@@ -1099,5 +1099,20 @@
       }
     ],
     "tipo": "bug"
+  },
+  {
+    "id": "162",
+    "nombre": "Reporte Roto",
+    "descripcion": "[Slack Message](https://emprendemostec.slack.com/archives/D09EUCP5QLW/p1761938488983449)",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/162"
+      }
+    ],
+    "tipo": "bug"
   }
 ]
