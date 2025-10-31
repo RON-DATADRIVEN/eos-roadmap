@@ -1084,5 +1084,20 @@
       }
     ],
     "tipo": "bug"
+  },
+  {
+    "id": "161",
+    "nombre": "Agenda Rota",
+    "descripcion": "Me comentan los emprendedores y los mentores, que no han podido agendar la mentoria, cuando lo intentan les sale este error",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/161"
+      }
+    ],
+    "tipo": "bug"
   }
 ]
