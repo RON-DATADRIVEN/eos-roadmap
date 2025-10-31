@@ -1114,5 +1114,20 @@
       }
     ],
     "tipo": "bug"
+  },
+  {
+    "id": "163",
+    "nombre": "Loguin roto",
+    "descripcion": "Luis Antonio Palacios de la empresa Inmuebles Bamboo me dice que al entrar a la página web después de crear mi cuenta, me aparece en blanco.",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/163"
+      }
+    ],
+    "tipo": "bug"
   }
 ]
