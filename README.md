@@ -3,8 +3,9 @@
 Repositorio para **planificación visible** del proyecto EOS y su **página pública** (GitHub Pages) con módulos, estado y próximos hitos.
 
 ## ¿Cómo actualizar el roadmap visible?
-1. Edita `docs/modules.json` (agrega/actualiza módulos, estado y progreso).
-2. Commit a `main`. GitHub Pages publica automáticamente.
+1. Edita `docs/modules.json` (agrega/actualiza módulos, estado y progreso) o utiliza el flujo de GitHub Projects. El workflow `.github/workflows/sync-modules.yml` sincroniza el archivo automáticamente cada 5 minutos usando el secreto `PROJECTS_TOKEN`.
+  - **Atención (Rotación de Token):** `PROJECTS_TOKEN` es un Personal Access Token. Debido a las políticas de seguridad, tiene fecha de caducidad. Debe configurarse una alarma en calendario para rotarlo antes de que expire, de lo contrario, la sincronización fallará silenciosamente.
+2. Commit manual a `main` si no usas Projects. GitHub Pages publica automáticamente.
 3. Comparte el enlace con stakeholders.
 
 ### Tipos de módulo permitidos

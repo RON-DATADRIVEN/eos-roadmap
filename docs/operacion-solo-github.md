@@ -61,8 +61,9 @@ al mecanismo preferido (por ejemplo, archivos en disco, Loki, Fluent Bit, etc.).
 - Crea un workflow `ci.yml` que compile y ejecute pruebas (`go test ./...`).
 - Agrega un job opcional que construya la imagen de contenedor y la publique en
   GHCR. Desde allí puedes desplegarla en tu infraestructura privada.
-- Usa secretos del repositorio para almacenar `GITHUB_TOKEN` (fine-grained) y el
-  ID del proyecto (`GITHUB_PROJECT_ID`).
+- Usa secretos del repositorio para almacenar `PROJECTS_TOKEN` (Personal Access Token clásico o fine-grained con alcance a `repo` y `project`). Este token es vital para la sincronización automática de `sync-modules`.
+  - **Expiración y Rotación:** Los PATs suelen configurarse con vencimiento de 90 a 365 días por seguridad. Si el token expira o sus permisos se revocan, el roadmap dejará de actualizarse silenciosamente. Es indispensable registrar un recordatorio en calendario corporativo para rotar `PROJECTS_TOKEN` en la configuración de Secretos del repositorio antes de su vencimiento.
+- Usa secretos del repositorio para almacenar también el ID del proyecto (`GITHUB_PROJECT_ID`) si se requieren otros flujos.
 
 ### 3.4 Gestión del roadmap
 - Los Issues creados por el servicio se agregan automáticamente al Project v2.
