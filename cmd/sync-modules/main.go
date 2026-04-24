@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -272,6 +273,37 @@ func normalizeStatus(raw string) (string, int) {
 	return "Planificado", 0
 }
 
+var progressRegex = regexp.MustCompile(`(?i)Progress:\s*(-?\d+)%`)
+var checklistEmptyRegex = regexp.MustCompile(`(?i)-\s*\[\s*\]`)
+var checklistDoneRegex = regexp.MustCompile(`(?i)-\s*\[\s*[xX]\s*\]`)
+
+func calculatePercentage(body string, baseline int) int {
+	// Poka-yoke: directiva manual explícita sobreescribe todo.
+	if match := progressRegex.FindStringSubmatch(body); match != nil {
+		if p, err := strconv.Atoi(match[1]); err == nil {
+			if p < 0 {
+				return 0
+			}
+			if p > 100 {
+				return 100
+			}
+			return p
+		}
+	}
+
+	// Poka-yoke: si no hay directiva manual, calculamos en base a los checklists.
+	empty := len(checklistEmptyRegex.FindAllStringIndex(body, -1))
+	done := len(checklistDoneRegex.FindAllStringIndex(body, -1))
+	total := empty + done
+
+	if total > 0 {
+		return (done * 100) / total
+	}
+
+	// Si no hay checklists ni directiva, regresamos el porcentaje base del estado.
+	return baseline
+}
+
 func buildDescription(body, title string) string {
 	cleaned := strings.ReplaceAll(body, "\r", "\n")
 	cleaned = strings.TrimSpace(cleaned)
@@ -409,29 +441,36 @@ func isEpicValue(raw string) bool {
 	if trimmed == "" {
 		return false
 	}
-	if strings.EqualFold(trimmed, "epic") {
+	// Poka-yoke: remove type prefixes if any
+	lower := strings.ToLower(trimmed)
+	lower = strings.TrimPrefix(lower, "tipo:")
+	lower = strings.TrimPrefix(lower, "type:")
+	lower = strings.TrimSpace(lower)
+
+	if lower == "epic" {
 		return true
 	}
-	upper := strings.ToUpper(trimmed)
-	if strings.HasPrefix(upper, "ÉPICA") || strings.HasPrefix(upper, "EPICA") || strings.HasPrefix(upper, "EPIC") {
+	if strings.HasPrefix(lower, "épica") || strings.HasPrefix(lower, "epica") || strings.HasPrefix(lower, "epic") {
 		return true
 	}
 	return false
 }
 
 func isBugValue(raw string) bool {
-	// Poka-yoke: normalizamos entradas vacías para evitar falsos positivos desde campos incompletos.
 	trimmed := strings.TrimSpace(raw)
 	if trimmed == "" {
 		return false
 	}
-	// Poka-yoke: usamos comparación sin distinción entre mayúsculas y minúsculas para cubrir variantes de escritura.
-	if strings.EqualFold(trimmed, "bug") {
+	
+	lower := strings.ToLower(trimmed)
+	lower = strings.TrimPrefix(lower, "tipo:")
+	lower = strings.TrimPrefix(lower, "type:")
+	lower = strings.TrimSpace(lower)
+
+	if lower == "bug" {
 		return true
 	}
-	upper := strings.ToUpper(trimmed)
-	// Poka-yoke: aceptamos prefijos tipo "BUG" o "[BUG]" para cubrir estilos comunes de etiquetas.
-	if strings.HasPrefix(upper, "BUG") || strings.HasPrefix(upper, "[BUG]") {
+	if strings.HasPrefix(lower, "bug") || strings.HasPrefix(lower, "[bug]") {
 		return true
 	}
 	return false
@@ -497,6 +536,10 @@ func main() {
 				estado = "Hecho"
 				porcentaje = 100
 			}
+			
+			// Calcular porcentaje combinando el baseline y el contenido del issue
+			porcentaje = calculatePercentage(iss.Body, porcentaje)
+			
 			labels := labelNames(iss.Labels.Nodes)
 			projectProps := collectProjectProps(it)
 			m := ModuleOut{
