@@ -34,11 +34,13 @@ stdout en formato JSON. Esto permite recopilar eventos desde:
 ## 3. Estrategia recomendada usando solo GitHub
 
 ### 3.1 Frontend en GitHub Pages
+
 1. Edita `docs/modules.json` para reflejar el estado del roadmap.
 2. Ejecuta `npm run build` (si existiera) o simplemente realiza el commit.
 3. Empuja los cambios a `main`; GitHub Pages publicará automáticamente el sitio.
 
 ### 3.2 Backend en infraestructura propia o auto-gestionada
+
 Aunque GitHub no ofrece un servicio HTTP permanente, existen alternativas que se
 mantienen dentro del ecosistema sin recurrir a Google:
 
@@ -51,13 +53,15 @@ mantienen dentro del ecosistema sin recurrir a Google:
   - Arranca el servicio con `./create-issue` y utiliza un proxy como Nginx o
     Caddy para exponer HTTPS.
 - **Contenedor en GitHub Container Registry:**
-  - Crea una imagen con `docker build -t ghcr.io/<org>/create-issue:latest cmd/create-issue`.
+  > **Nota sobre el empaquetado:** Actualmente el repositorio no cuenta con un `Dockerfile`. Para despliegues en Google Cloud, el comando `gcloud builds submit` utiliza *Cloud Buildpacks* de forma transparente. Si se requiere construir la imagen localmente o en GitHub Packages, se recomienda instalar [pack](https://buildpacks.io/) y ejecutar `pack build ghcr.io/<org>/create-issue:latest --builder gcr.io/buildpacks/builder:v1`, o en su defecto, crear un `Dockerfile` estándar para Go.
+  - Crea una imagen proporcionando un `Dockerfile` (a `docker build`) o usando `pack build`.
   - Publica la imagen en GHCR y ejecútala en la infraestructura de tu elección.
 
 En todos los casos los logs quedarán disponibles en stdout y podrán redirigirse
 al mecanismo preferido (por ejemplo, archivos en disco, Loki, Fluent Bit, etc.).
 
 ### 3.3 Automatización con GitHub Actions
+
 - Crea un workflow `ci.yml` que compile y ejecute pruebas (`go test ./...`).
 - Agrega un job opcional que construya la imagen de contenedor y la publique en
   GHCR. Desde allí puedes desplegarla en tu infraestructura privada.
@@ -66,6 +70,7 @@ al mecanismo preferido (por ejemplo, archivos en disco, Loki, Fluent Bit, etc.).
 - Usa secretos del repositorio para almacenar también el ID del proyecto (`GITHUB_PROJECT_ID`) si se requieren otros flujos.
 
 ### 3.4 Gestión del roadmap
+
 - Los Issues creados por el servicio se agregan automáticamente al Project v2.
 - Usa Vistas personalizadas en Projects para priorizar, agrupar y comunicar.
 - Publica enlaces desde GitHub Pages hacia vistas específicas del Project para
