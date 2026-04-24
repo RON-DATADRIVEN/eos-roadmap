@@ -69,14 +69,18 @@ func TestDetectTipo(t *testing.T) {
 		projectFields map[string]string
 		want          string
 	}{
-		{"por project field epic", "algo", nil, map[string]string{"Tipo": "epic"}, "epic"},
-		{"por project field bug", "algo", nil, map[string]string{"Tipo": "bug"}, "bug"},
-		{"por label epic", "algo", []string{"tipo:epic"}, nil, "epic"},
-		{"por label bug", "algo", []string{"tipo:bug"}, nil, "bug"},
-		{"por titulo epic", "[ÉPICA] Gran feature", nil, nil, "epic"},
-		{"por titulo epic ingles", "[EPIC] Huge feature", nil, nil, "epic"},
-		{"por titulo bug", "[BUG] Error 500", nil, nil, "bug"},
-		{"nada", "Tarea normal", []string{"enhancement"}, nil, ""},
+		{"Project Field Tipo = epic", "", nil, map[string]string{"Tipo": "epic"}, "epic"},
+		{"Project Field Tipo = epica", "", nil, map[string]string{"Tipo": "epica"}, "epic"},
+		{"Project Field Tipo = épica", "", nil, map[string]string{"Tipo": "épica"}, "epic"},
+		{"Label bug", "", []string{"bug"}, nil, "bug"},
+		{"Label type:bug", "", []string{"type:bug"}, nil, "bug"},
+		{"Label tipo:bug", "", []string{"tipo:bug"}, nil, "bug"},
+		{"Título [EPIC] sin field epic", "[EPIC] Gran feature", nil, nil, ""},
+		{"Label epically hard", "", []string{"epically hard"}, nil, ""},
+		{"Label buggy feature", "", []string{"buggy feature"}, nil, ""},
+		{"Conflicto field epic + label bug", "", []string{"bug"}, map[string]string{"Tipo": "epic"}, "epic"},
+		{"Conflicto field bug + label epic", "", []string{"epic", "bug"}, map[string]string{"Tipo": "bug"}, "bug"},
+		{"Sin coincidencia", "Tarea normal", []string{"enhancement"}, nil, ""},
 	}
 
 	for _, tc := range cases {
