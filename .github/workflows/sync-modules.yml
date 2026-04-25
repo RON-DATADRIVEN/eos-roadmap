@@ -101,12 +101,12 @@ jobs:
       - name: Open PR if modules.json changed
         uses: peter-evans/create-pull-request@v7
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.SYNC_PR_TOKEN }}
           add-paths: ${{ env.OUTPUT }}
           commit-message: "ci(sync): update modules.json [skip ci]"
           branch: ci/sync-modules-update
           delete-branch: true
-          title: "ci(sync): update modules.json"
+          title: "ci(automation): update modules json"
           body: |
             Actualización automática de `docs/modules.json` generada por el workflow `sync-modules`.
 
