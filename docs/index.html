@@ -32,6 +32,7 @@
         <option value="Hecho">Hecho</option>
       </select>
       <select id="typeFilter" aria-label="Filtrar por tipo de módulo">
+        <option value="">Todos los tipos</option>
         <option value="epic" selected>Solo épicas</option>
         <option value="bug">Solo bugs</option>
       </select>
@@ -831,16 +832,7 @@
       const selectedType = typeFilter ? (typeFilter.value || '').toLowerCase() : '';
       const filtered = modules.filter(m => {
         const normalizedType = (m.tipo || '').toLowerCase();
-        const normalizedStatus = (m.estado || '').toLowerCase();
-        const isBug = normalizedType === 'bug';
-        if (isBug && normalizedStatus === 'hecho') {
-          // Poka-yoke: descartamos bugs cerrados para que nadie interprete que siguen abiertos y evitemos reprocesar tareas resueltas.
-          return false;
-        }
-        // Poka-yoke: cuando el selector "Solo bugs" está activo ignoramos el filtro de estado manual,
-        // porque el objetivo es listar rápidamente los bugs abiertos sin depender de que la persona ajuste otro control.
-        const ignoreStatusByBugFilter = selectedType === 'bug';
-        const matchStatus = ignoreStatusByBugFilter || !st || m.estado === st;
+        const matchStatus = !st || m.estado === st;
         const matchText = !term || (m.nombre + ' ' + (m.descripcion||'')).toLowerCase().includes(term);
         const matchType = !selectedType || normalizedType === selectedType;
         return matchStatus && matchText && matchType;
