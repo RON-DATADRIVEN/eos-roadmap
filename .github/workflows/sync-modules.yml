@@ -103,7 +103,7 @@ jobs:
         with:
           token: ${{ secrets.SYNC_PR_TOKEN }}
           add-paths: ${{ env.OUTPUT }}
-          commit-message: "ci(sync): update modules.json [skip ci]"
+          commit-message: "ci(automation): update modules json"
           branch: ci/sync-modules-update
           delete-branch: true
           title: "ci(automation): update modules json"
