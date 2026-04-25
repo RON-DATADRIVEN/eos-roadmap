@@ -1889,7 +1889,8 @@
         "label": "GitHub",
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/238"
       }
-    ]
+    ],
+    "tipo": "bug"
   },
   {
     "id": "239",
@@ -1921,7 +1922,8 @@
         "label": "GitHub",
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/240"
       }
-    ]
+    ],
+    "tipo": "bug"
   },
   {
     "id": "241",
@@ -1937,7 +1939,8 @@
         "label": "GitHub",
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/241"
       }
-    ]
+    ],
+    "tipo": "bug"
   },
   {
     "id": "242",
@@ -2065,7 +2068,8 @@
         "label": "GitHub",
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/250"
       }
-    ]
+    ],
+    "tipo": "bug"
   },
   {
     "id": "251",
@@ -2081,7 +2085,8 @@
         "label": "GitHub",
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/251"
       }
-    ]
+    ],
+    "tipo": "bug"
   },
   {
     "id": "252",
