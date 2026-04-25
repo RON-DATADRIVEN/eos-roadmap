@@ -399,81 +399,50 @@ func projectValueToString(typename githubv4.String, single string, text string) 
 	}
 }
 
+func normalizeForType(raw string) string {
+	val := strings.TrimSpace(strings.ToLower(raw))
+	val = strings.TrimPrefix(val, "tipo:")
+	val = strings.TrimPrefix(val, "type:")
+	val = strings.TrimSpace(val)
+
+	// Remover corchetes solo si envuelven todo el valor
+	if strings.HasPrefix(val, "[") && strings.HasSuffix(val, "]") {
+		val = val[1 : len(val)-1]
+		val = strings.TrimSpace(val)
+	}
+	return val
+}
+
+func isStrictEpic(raw string) bool {
+	val := normalizeForType(raw)
+	return val == "epic" || val == "épica" || val == "epica"
+}
+
+func isStrictBug(raw string) bool {
+	val := normalizeForType(raw)
+	return val == "bug"
+}
+
 func detectTipo(title string, labels []string, projectFields map[string]string) string {
-	// Poka-yoke: evaluamos primero los campos del proyecto porque suelen ser la fuente de verdad más confiable y así evitamos inferencias erróneas.
+	// 1. Las épicas SOLO deben detectarse desde el campo personalizado "Tipo".
 	if projectFields != nil {
 		if v, ok := projectFields["Tipo"]; ok {
-			if isEpicValue(v) {
+			if isStrictEpic(v) {
 				return "epic"
-			}
-			if isBugValue(v) {
-				return "bug"
 			}
 		}
 	}
-	// Poka-yoke: revisamos las etiquetas del issue para capturar tanto épicas como bugs declarados directamente en GitHub.
+
+	// 2. Si no es epic, los bugs deben detectarse desde labels.
 	for _, l := range labels {
-		if isEpicValue(l) {
-			return "epic"
-		}
-		if isBugValue(l) {
+		if isStrictBug(l) {
 			return "bug"
 		}
 	}
-	// Poka-yoke: si las pistas anteriores fallan, inspeccionamos el título para detectar prefijos convencionales.
-	t := strings.TrimSpace(title)
-	if t == "" {
-		return ""
-	}
-	up := strings.ToUpper(t)
-	if strings.HasPrefix(up, "[ÉPICA]") || strings.HasPrefix(up, "[EPICA]") || strings.HasPrefix(up, "[EPIC]") {
-		return "epic"
-	}
-	if strings.HasPrefix(up, "[BUG]") {
-		return "bug"
-	}
-	// Poka-yoke: al no encontrar indicadores devolvemos cadena vacía para que el consumidor interprete el valor como “sin tipo”.
+
+	// 3. El título del issue NO debe usarse para clasificar.
+	// 4. Si no hay coincidencia válida, devolver cadena vacía.
 	return ""
-}
-
-func isEpicValue(raw string) bool {
-	trimmed := strings.TrimSpace(raw)
-	if trimmed == "" {
-		return false
-	}
-	// Poka-yoke: remove type prefixes if any
-	lower := strings.ToLower(trimmed)
-	lower = strings.TrimPrefix(lower, "tipo:")
-	lower = strings.TrimPrefix(lower, "type:")
-	lower = strings.TrimSpace(lower)
-
-	if lower == "epic" {
-		return true
-	}
-	if strings.HasPrefix(lower, "épica") || strings.HasPrefix(lower, "epica") || strings.HasPrefix(lower, "epic") {
-		return true
-	}
-	return false
-}
-
-func isBugValue(raw string) bool {
-	trimmed := strings.TrimSpace(raw)
-	if trimmed == "" {
-		return false
-	}
-	
-	lower := strings.ToLower(trimmed)
-	lower = strings.TrimPrefix(lower, "tipo:")
-	lower = strings.TrimPrefix(lower, "type:")
-	lower = strings.TrimSpace(lower)
-
-	if lower == "bug" {
-		return true
-	}
-	if strings.HasPrefix(lower, "bug") || strings.HasPrefix(lower, "[bug]") {
-		return true
-	}
-	return false
 }
 
 // ---------- Main ----------
