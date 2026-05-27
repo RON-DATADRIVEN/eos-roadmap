@@ -2381,5 +2381,19 @@
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/267"
       }
     ]
+  },
+  {
+    "id": "277",
+    "nombre": "Migrar Cassandra staging desde servicio instalado en el host hacia Docker Compose",
+    "descripcion": "## Objetivo",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/277"
+      }
+    ]
   }
 ]
