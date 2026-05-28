@@ -2385,7 +2385,7 @@
   {
     "id": "277",
     "nombre": "Migrar Cassandra staging desde servicio instalado en el host hacia Docker Compose",
-    "descripcion": "## Objetivo Migrar Cassandra en staging desde una instalación directa en el host hacia una configuración gestionada con Docker Compose, para estandarizar el despliegue, simplificar la operación y facilitar su mantenimiento.",
+    "descripcion": "## Objetivo",
     "estado": "Planificado",
     "porcentaje": 0,
     "propietario": "ArturoPlascenciaRodriguez",
