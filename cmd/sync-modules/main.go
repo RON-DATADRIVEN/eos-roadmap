@@ -15,7 +15,6 @@ import (
 	"github.com/shurcooL/githubv4"
 )
 
-// ---------- Flex date that accepts "YYYY-MM-DD" or RFC3339 ----------
 type GHFlexDate struct {
 	time.Time
 	Raw string
@@ -36,7 +35,6 @@ func (fd *GHFlexDate) UnmarshalJSON(b []byte) error {
 		fd.Time = time.Time{}
 		return nil
 	}
-	// DateTime (RFC3339 / RFC3339Nano)
 	if t, err := time.Parse(time.RFC3339, s); err == nil {
 		fd.Time = t
 		return nil
@@ -45,7 +43,6 @@ func (fd *GHFlexDate) UnmarshalJSON(b []byte) error {
 		fd.Time = t
 		return nil
 	}
-	// Date only (YYYY-MM-DD) -> parse in UTC
 	if t, err := time.ParseInLocation("2006-01-02", s, time.UTC); err == nil {
 		fd.Time = t
 		return nil
@@ -60,17 +57,8 @@ func (fd GHFlexDate) ISODate() string {
 	}
 	return fd.Time.UTC().Format("2006-01-02")
 }
-func (fd GHFlexDate) ISODateTime() string {
-	if fd.IsZero() {
-		return ""
-	}
-	return fd.Time.UTC().Format(time.RFC3339)
-}
-
-// Helper para imprimir YYYY-MM-DD
 func toISO(d GHFlexDate) string { return d.ISODate() }
 
-// ---------- GraphQL types ----------
 type Item struct {
 	Content struct {
 		Issue struct {
@@ -78,7 +66,7 @@ type Item struct {
 			Title  string
 			URL    githubv4.URI
 			Body   string
-			State  githubv4.IssueState // Poka-yoke: capturamos el estado real del issue para evitar inconsistencias con el tablero.
+			State  githubv4.IssueState
 			Labels struct {
 				Nodes []labelNode
 			} `graphql:"labels(first: 20)"`
@@ -88,34 +76,15 @@ type Item struct {
 		} `graphql:"... on Issue"`
 	} `graphql:"content"`
 
-	Area struct {
-		Typename githubv4.String                `graphql:"__typename"`
-		Single   struct{ Name githubv4.String } `graphql:"... on ProjectV2ItemFieldSingleSelectValue"`
-	} `graphql:"area: fieldValueByName(name:\"Area\")"`
-
 	Status struct {
 		Typename githubv4.String                `graphql:"__typename"`
 		Single   struct{ Name githubv4.String } `graphql:"... on ProjectV2ItemFieldSingleSelectValue"`
 	} `graphql:"status: fieldValueByName(name:\"Status\")"`
 
-	Prioridad struct {
+	CheckLuis struct {
 		Typename githubv4.String                `graphql:"__typename"`
 		Single   struct{ Name githubv4.String } `graphql:"... on ProjectV2ItemFieldSingleSelectValue"`
-	} `graphql:"prioridad: fieldValueByName(name:\"Prioridad\")"`
-
-	Size struct {
-		Typename githubv4.String                `graphql:"__typename"`
-		Single   struct{ Name githubv4.String } `graphql:"... on ProjectV2ItemFieldSingleSelectValue"`
-	} `graphql:"size: fieldValueByName(name:\"Size\")"`
-
-	Iter struct {
-		Typename  githubv4.String `graphql:"__typename"`
-		Iteration struct {
-			Title     githubv4.String
-			StartDate GHFlexDate // <- acepta Date o DateTime
-			Duration  int
-		} `graphql:"... on ProjectV2ItemFieldIterationValue"`
-	} `graphql:"iter: fieldValueByName(name:\"Iteration\")"`
+	} `graphql:"checkLuis: fieldValueByName(name:\"Check Luis\")"`
 
 	Tipo struct {
 		Typename githubv4.String                `graphql:"__typename"`
@@ -128,14 +97,14 @@ type Item struct {
 	Start struct {
 		Typename githubv4.String `graphql:"__typename"`
 		DateVal  struct {
-			Date GHFlexDate // <- acepta Date o DateTime
+			Date GHFlexDate
 		} `graphql:"... on ProjectV2ItemFieldDateValue"`
 	} `graphql:"start: fieldValueByName(name:\"Start date\")"`
 
 	ETA struct {
 		Typename githubv4.String `graphql:"__typename"`
 		DateVal  struct {
-			Date GHFlexDate // <- acepta Date o DateTime
+			Date GHFlexDate
 		} `graphql:"... on ProjectV2ItemFieldDateValue"`
 	} `graphql:"eta: fieldValueByName(name:\"ETA\")"`
 }
@@ -156,14 +125,8 @@ type Query struct {
 	} `graphql:"organization(login: $org)"`
 }
 
-// ---------- Output JSON ----------
-type assigneeNode struct {
-	Login string
-}
-
-type labelNode struct {
-	Name string
-}
+type assigneeNode struct{ Login string }
+type labelNode struct{ Name string }
 
 type ModuleOut struct {
 	ID          string    `json:"id"`
@@ -171,11 +134,11 @@ type ModuleOut struct {
 	Descripcion string    `json:"descripcion"`
 	Estado      string    `json:"estado"`
 	Porcentaje  int       `json:"porcentaje"`
-	Propietario string    `json:"propietario"`
+	Propietario string    `json:"propietario,omitempty"`
 	Inicio      string    `json:"inicio,omitempty"`
 	ETA         string    `json:"eta,omitempty"`
 	Enlaces     []LinkOut `json:"enlaces,omitempty"`
-	Tipo        string    `json:"tipo,omitempty"`
+	Tipo        string    `json:"tipo"`
 }
 
 type LinkOut struct {
@@ -190,87 +153,78 @@ func singleName(typename githubv4.String, name githubv4.String) string {
 	return ""
 }
 
-// Poka-yoke: agrupamos aquí todas las palabras que indican de manera inequívoca que un
-// estado debe considerarse "Hecho". Incluir "deploy" explícito garantiza que etiquetas
-// en inglés como "Deploy" queden normalizadas correctamente sin depender de traducciones.
-var estadosHechoExactos = map[string]struct{}{
-	"hecho":      {},
-	"done":       {},
-	"completado": {},
-	"completo":   {},
-	"finalizado": {},
-	"cerrado":    {},
-	"closed":     {},
-	"deploy":     {},
-	"deployment": {},
-	"deployed":   {},
-	"desplegado": {},
-	"desplegada": {},
-	"despliegue": {},
+func normalizeText(raw string) string {
+	val := strings.TrimSpace(strings.ToLower(raw))
+	replacer := strings.NewReplacer("á", "a", "é", "e", "í", "i", "ó", "o", "ú", "u")
+	return replacer.Replace(val)
 }
 
-// Poka-yoke: raíces que, si aparecen en el texto, nos dejan claro que el trabajo terminó.
-// Al incluir "deploy" cubrimos variaciones humanas como "deploy 🚀", "deployment" o
-// "deploy listo".
-var estadosHechoRaices = []string{"hech", "done", "final", "deploy", "despleg", "desplieg"}
-
-// Poka-yoke: equivalentes exactos de estados que indican trabajo en curso.
-var estadosCursoExactos = map[string]struct{}{
-	"en curso":      {},
-	"curso":         {},
-	"en ejecución":  {},
-	"en ejecucion":  {},
-	"desarrollo":    {},
-	"en desarrollo": {},
-	"in progress":   {},
-	"progress":      {},
-	"bloqueado":     {},
-	"bloqueada":     {},
+func normalizeForType(raw string) string {
+	val := normalizeText(raw)
+	for _, prefix := range []string{"tipo :", "tipo:", "type:"} {
+		val = strings.TrimPrefix(val, prefix)
+	}
+	val = strings.TrimSpace(val)
+	if strings.HasPrefix(val, "[") && strings.HasSuffix(val, "]") {
+		val = strings.TrimSpace(val[1 : len(val)-1])
+	}
+	return val
 }
 
-// Poka-yoke: raíces que denotan claramente avance parcial.
-var estadosCursoRaices = []string{"curso", "desarr", "progres", "bloq"}
-
-// Poka-yoke: equivalentes exactos para planificaciones pendientes.
-var estadosPlanExactos = map[string]struct{}{
-	"planificado":   {},
-	"planificada":   {},
-	"planificación": {},
-	"planificacion": {},
-	"en planeación": {},
-	"en planeacion": {},
-	"planeado":      {},
-	"planeada":      {},
-	"por hacer":     {},
-	"pendiente":     {},
-	"backlog":       {},
+func projectValueToString(typename githubv4.String, single string, text string) string {
+	switch string(typename) {
+	case "ProjectV2ItemFieldSingleSelectValue":
+		return strings.TrimSpace(single)
+	case "ProjectV2ItemFieldTextValue":
+		return strings.TrimSpace(text)
+	default:
+		return ""
+	}
 }
 
-func normalizeStatus(raw string) (string, int) {
-	s := strings.TrimSpace(strings.ToLower(raw))
-	if s == "" {
-		return "Planificado", 0
+func isBug(labels []string, projectTipo string) bool {
+	if normalizeForType(projectTipo) == "bug" {
+		return true
 	}
-	switch s {
-	case "hecho", "done", "completado", "completo", "finalizado", "cerrado", "closed", "deploy", "deployment", "desplegado", "desplegada":
-		return "Hecho", 100
-	}
-	if _, ok := estadosCursoExactos[s]; ok {
-		return "En curso", 50
-	}
-	if _, ok := estadosPlanExactos[s]; ok {
-		return "Planificado", 0
-	}
-	// Poka-yoke: detectamos raíces comunes como "deploy" y "despleg" para cubrir estados como "deployment" o "desplegado" aun cuando no coincidan exactamente con los valores anteriores.
-	if strings.Contains(s, "hech") || strings.Contains(s, "done") || strings.Contains(s, "final") || strings.Contains(s, "deploy") || strings.Contains(s, "despleg") {
-		return "Hecho", 100
-	}
-	for _, raiz := range estadosCursoRaices {
-		if strings.Contains(s, raiz) {
-			return "En curso", 50
+	for _, label := range labels {
+		if normalizeForType(label) == "bug" {
+			return true
 		}
 	}
-	return "Planificado", 0
+	return false
+}
+
+func isLuisApproved(raw string) bool { return normalizeText(raw) == "aprobado" }
+
+func publicFeatureStatus(raw string) (string, int, bool) {
+	switch normalizeText(raw) {
+	case "prototipado":
+		return "En prototipo", 20, true
+	case "desarrollo":
+		return "En desarrollo", 50, true
+	case "test":
+		return "En pruebas", 75, true
+	case "staging":
+		return "En validación", 90, true
+	case "deploy":
+		return "Liberado", 100, true
+	default:
+		return "", 0, false
+	}
+}
+
+func publicBugStatus(raw string, state githubv4.IssueState) (string, int) {
+	if state == githubv4.IssueStateClosed {
+		return "Resuelto", 100
+	}
+	switch normalizeText(raw) {
+	case "prototipado", "desarrollo", "test", "staging":
+		return "En atención", 50
+	case "deploy":
+		return "Resuelto", 100
+	default:
+		return "Reportado", 0
+	}
 }
 
 var progressRegex = regexp.MustCompile(`(?i)Progress:\s*(-?\d+)%`)
@@ -278,7 +232,6 @@ var checklistEmptyRegex = regexp.MustCompile(`(?i)-\s*\[\s*\]`)
 var checklistDoneRegex = regexp.MustCompile(`(?i)-\s*\[\s*[xX]\s*\]`)
 
 func calculatePercentage(body string, baseline int) int {
-	// Poka-yoke: directiva manual explícita sobreescribe todo.
 	if match := progressRegex.FindStringSubmatch(body); match != nil {
 		if p, err := strconv.Atoi(match[1]); err == nil {
 			if p < 0 {
@@ -290,17 +243,12 @@ func calculatePercentage(body string, baseline int) int {
 			return p
 		}
 	}
-
-	// Poka-yoke: si no hay directiva manual, calculamos en base a los checklists.
 	empty := len(checklistEmptyRegex.FindAllStringIndex(body, -1))
 	done := len(checklistDoneRegex.FindAllStringIndex(body, -1))
 	total := empty + done
-
 	if total > 0 {
 		return (done * 100) / total
 	}
-
-	// Si no hay checklists ni directiva, regresamos el porcentaje base del estado.
 	return baseline
 }
 
@@ -308,7 +256,7 @@ func buildDescription(body, title string) string {
 	cleaned := strings.ReplaceAll(body, "\r", "\n")
 	cleaned = strings.TrimSpace(cleaned)
 	if cleaned == "" {
-		return fmt.Sprintf("Seguimiento del issue \"%s\".", title)
+		return fmt.Sprintf("Seguimiento del issue %q.", title)
 	}
 	parts := strings.Split(cleaned, "\n\n")
 	candidate := strings.TrimSpace(parts[0])
@@ -319,10 +267,7 @@ func buildDescription(body, title string) string {
 	return truncateRunes(candidate, 280)
 }
 
-func collapseSpaces(s string) string {
-	fields := strings.Fields(s)
-	return strings.Join(fields, " ")
-}
+func collapseSpaces(s string) string { return strings.Join(strings.Fields(s), " ") }
 
 func truncateRunes(s string, max int) string {
 	if max <= 0 {
@@ -341,8 +286,7 @@ func truncateRunes(s string, max int) string {
 func buildOwner(nodes []assigneeNode) string {
 	owners := make([]string, 0, len(nodes))
 	for _, n := range nodes {
-		login := strings.TrimSpace(n.Login)
-		if login != "" {
+		if login := strings.TrimSpace(n.Login); login != "" {
 			owners = append(owners, login)
 		}
 	}
@@ -357,98 +301,21 @@ func buildLinks(url string) []LinkOut {
 	if url == "" {
 		return nil
 	}
-	return []LinkOut{{
-		Label: "GitHub",
-		URL:   url,
-	}}
+	return []LinkOut{{Label: "GitHub", URL: url}}
 }
 
 func labelNames(nodes []labelNode) []string {
-	if len(nodes) == 0 {
-		return nil
-	}
 	out := make([]string, 0, len(nodes))
 	for _, n := range nodes {
-		name := strings.TrimSpace(n.Name)
-		if name != "" {
+		if name := strings.TrimSpace(n.Name); name != "" {
 			out = append(out, name)
 		}
 	}
 	return out
 }
 
-func collectProjectProps(it Item) map[string]string {
-	props := make(map[string]string)
-	if v := projectValueToString(it.Tipo.Typename, string(it.Tipo.Single.Name), string(it.Tipo.Text.Text)); v != "" {
-		props["Tipo"] = v
-	}
-	if len(props) == 0 {
-		return nil
-	}
-	return props
-}
-
-func projectValueToString(typename githubv4.String, single string, text string) string {
-	switch string(typename) {
-	case "ProjectV2ItemFieldSingleSelectValue":
-		return strings.TrimSpace(single)
-	case "ProjectV2ItemFieldTextValue":
-		return strings.TrimSpace(text)
-	default:
-		return ""
-	}
-}
-
-func normalizeForType(raw string) string {
-	val := strings.TrimSpace(strings.ToLower(raw))
-	val = strings.TrimPrefix(val, "tipo:")
-	val = strings.TrimPrefix(val, "type:")
-	val = strings.TrimSpace(val)
-
-	// Remover corchetes solo si envuelven todo el valor
-	if strings.HasPrefix(val, "[") && strings.HasSuffix(val, "]") {
-		val = val[1 : len(val)-1]
-		val = strings.TrimSpace(val)
-	}
-	return val
-}
-
-func isStrictEpic(raw string) bool {
-	val := normalizeForType(raw)
-	return val == "epic" || val == "épica" || val == "epica"
-}
-
-func isStrictBug(raw string) bool {
-	val := normalizeForType(raw)
-	return val == "bug"
-}
-
-func detectTipo(title string, labels []string, projectFields map[string]string) string {
-	// 1. Las épicas SOLO deben detectarse desde el campo personalizado "Tipo".
-	if projectFields != nil {
-		if v, ok := projectFields["Tipo"]; ok {
-			if isStrictEpic(v) {
-				return "epic"
-			}
-		}
-	}
-
-	// 2. Si no es epic, los bugs deben detectarse desde labels.
-	for _, l := range labels {
-		if isStrictBug(l) {
-			return "bug"
-		}
-	}
-
-	// 3. El título del issue NO debe usarse para clasificar.
-	// 4. Si no hay coincidencia válida, devolver cadena vacía.
-	return ""
-}
-
-// ---------- Main ----------
 func main() {
 	log.SetFlags(0)
-
 	org := os.Getenv("ORG")
 	if org == "" {
 		org = "RON-DATADRIVEN"
@@ -465,18 +332,13 @@ func main() {
 	if outPath == "" {
 		outPath = "docs/modules.json"
 	}
-
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
 		log.Fatal("GITHUB_TOKEN no está definido")
 	}
 
-	httpClient := &http.Client{
-		Transport: roundTripperWithToken{token: token},
-		Timeout:   30 * time.Second,
-	}
+	httpClient := &http.Client{Transport: roundTripperWithToken{token: token}, Timeout: 30 * time.Second}
 	cli := githubv4.NewClient(httpClient)
-
 	first := githubv4.Int(100)
 	var after *githubv4.String
 	var all []ModuleOut
@@ -492,47 +354,52 @@ func main() {
 		if err := cli.Query(context.Background(), &q, vars); err != nil {
 			log.Fatalf("GraphQL: %v", err)
 		}
-
 		for _, it := range q.Org.Project.Items.Nodes {
 			iss := it.Content.Issue
 			if iss.Number == 0 {
 				continue
 			}
-			rawStatus := singleName(it.Status.Typename, it.Status.Single.Name)
-			estado, porcentaje := normalizeStatus(rawStatus)
-			// Poka-yoke: si GitHub marca el issue como cerrado imponemos "Hecho" para no depender de campos humanos.
-			if iss.State == githubv4.IssueStateClosed {
-				estado = "Hecho"
-				porcentaje = 100
-			}
-			
-			// Calcular porcentaje combinando el baseline y el contenido del issue
-			porcentaje = calculatePercentage(iss.Body, porcentaje)
-			
 			labels := labelNames(iss.Labels.Nodes)
-			projectProps := collectProjectProps(it)
-			m := ModuleOut{
+			projectTipo := projectValueToString(it.Tipo.Typename, string(it.Tipo.Single.Name), string(it.Tipo.Text.Text))
+			rawStatus := singleName(it.Status.Typename, it.Status.Single.Name)
+			checkLuis := singleName(it.CheckLuis.Typename, it.CheckLuis.Single.Name)
+
+			tipo := ""
+			estado := ""
+			porcentajeBase := 0
+			if isBug(labels, projectTipo) {
+				tipo = "bug"
+				estado, porcentajeBase = publicBugStatus(rawStatus, iss.State)
+			} else if isLuisApproved(checkLuis) {
+				if publicStatus, baseline, ok := publicFeatureStatus(rawStatus); ok {
+					tipo = "feature"
+					estado = publicStatus
+					porcentajeBase = baseline
+				}
+			}
+			if tipo == "" {
+				continue
+			}
+
+			all = append(all, ModuleOut{
 				ID:          strconv.Itoa(iss.Number),
 				Nombre:      iss.Title,
 				Descripcion: buildDescription(iss.Body, iss.Title),
 				Estado:      estado,
-				Porcentaje:  porcentaje,
+				Porcentaje:  calculatePercentage(iss.Body, porcentajeBase),
 				Propietario: buildOwner(iss.Assignees.Nodes),
 				Inicio:      toISO(it.Start.DateVal.Date),
 				ETA:         toISO(it.ETA.DateVal.Date),
 				Enlaces:     buildLinks(iss.URL.String()),
-				Tipo:        detectTipo(iss.Title, labels, projectProps),
-			}
-			all = append(all, m)
+				Tipo:        tipo,
+			})
 		}
-
 		if !q.Org.Project.Items.PageInfo.HasNextPage {
 			break
 		}
 		after = &q.Org.Project.Items.PageInfo.EndCursor
 	}
 
-	// Crear carpeta si no existe y escribir JSON
 	if err := os.MkdirAll(dirOf(outPath), 0o755); err != nil {
 		log.Fatalf("mkdir: %v", err)
 	}
@@ -546,10 +413,9 @@ func main() {
 	if err := enc.Encode(all); err != nil {
 		log.Fatalf("json: %v", err)
 	}
-	log.Printf("OK: escrito %s con %d elementos", outPath, len(all))
+	log.Printf("OK: escrito %s con %d elementos públicos", outPath, len(all))
 }
 
-// ---------- Utils ----------
 type roundTripperWithToken struct{ token string }
 
 func (rt roundTripperWithToken) RoundTrip(req *http.Request) (*http.Response, error) {
