@@ -1,18 +1,45 @@
 [
   {
-    "id": "148",
-    "nombre": "fix: Asignar tipo correcto a cada Issue creado automaticamente",
-    "descripcion": "### Resumen Se requiere que al crear un Issue, este tenga el tipo correcto en projects de GitHUb",
+    "id": "281",
+    "nombre": "test(approval): prueba técnica de flujo Odille Luis",
+    "descripcion": "## Objetivo",
+    "estado": "Hecho",
+    "porcentaje": 100,
+    "propietario": "Sin asignar",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/281"
+      }
+    ]
+  },
+  {
+    "id": "9",
+    "nombre": "Script de cálculo baseline",
+    "descripcion": "- Genera JSON + MD en cada commit",
     "estado": "Hecho",
     "porcentaje": 100,
     "propietario": "ArturoPlascenciaRodriguez",
     "enlaces": [
       {
         "label": "GitHub",
-        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/148"
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/9"
       }
-    ],
-    "tipo": "bug"
+    ]
+  },
+  {
+    "id": "11",
+    "nombre": "Plan de congelamiento controlado",
+    "descripcion": "- Definir qué operaciones se permiten - Procedimiento para reabrir",
+    "estado": "Planificado",
+    "porcentaje": 0,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/11"
+      }
+    ]
   },
   {
     "id": "15",
@@ -43,32 +70,19 @@
     ]
   },
   {
-    "id": "11",
-    "nombre": "Plan de congelamiento controlado",
-    "descripcion": "- Definir qué operaciones se permiten - Procedimiento para reabrir",
-    "estado": "Planificado",
-    "porcentaje": 0,
+    "id": "148",
+    "nombre": "fix: Asignar tipo correcto a cada Issue creado automaticamente",
+    "descripcion": "### Resumen Se requiere que al crear un Issue, este tenga el tipo correcto en projects de GitHUb",
+    "estado": "Hecho",
+    "porcentaje": 100,
     "propietario": "ArturoPlascenciaRodriguez",
     "enlaces": [
       {
         "label": "GitHub",
-        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/11"
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/148"
       }
-    ]
-  },
-  {
-    "id": "9",
-    "nombre": "Script de cálculo baseline",
-    "descripcion": "- Genera JSON + MD en cada commit",
-    "estado": "Planificado",
-    "porcentaje": 0,
-    "propietario": "ArturoPlascenciaRodriguez",
-    "enlaces": [
-      {
-        "label": "GitHub",
-        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/9"
-      }
-    ]
+    ],
+    "tipo": "bug"
   },
   {
     "id": "10",
@@ -102,20 +116,6 @@
     "tipo": "epic"
   },
   {
-    "id": "14",
-    "nombre": "ADR: Esquema canónico Cassandra",
-    "descripcion": "- docs/adr/0001-esquema-canonico-cassandra.md - Justificar particiones/PK/CK y tablas base.",
-    "estado": "Planificado",
-    "porcentaje": 0,
-    "propietario": "ArturoPlascenciaRodriguez",
-    "enlaces": [
-      {
-        "label": "GitHub",
-        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/14"
-      }
-    ]
-  },
-  {
     "id": "17",
     "nombre": "DDL: users_by_id",
     "descripcion": "- Tabla de usuarios por id (PK: user_id). - Índices secundarios si aplica.",
@@ -126,20 +126,6 @@
       {
         "label": "GitHub",
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/17"
-      }
-    ]
-  },
-  {
-    "id": "3",
-    "nombre": "Snapshot Droplet (DigitalOcean)",
-    "descripcion": "- Crear snapshot de la instancia EOS - Documentar ID, fecha, región",
-    "estado": "Planificado",
-    "porcentaje": 0,
-    "propietario": "ArturoPlascenciaRodriguez",
-    "enlaces": [
-      {
-        "label": "GitHub",
-        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/3"
       }
     ]
   },
@@ -168,20 +154,6 @@
       {
         "label": "GitHub",
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/7"
-      }
-    ]
-  },
-  {
-    "id": "6",
-    "nombre": "Exportar esquema (tablas, columnas, tipos)",
-    "descripcion": "- Query information_schema - Export JSON+MD",
-    "estado": "Planificado",
-    "porcentaje": 0,
-    "propietario": "ArturoPlascenciaRodriguez",
-    "enlaces": [
-      {
-        "label": "GitHub",
-        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/6"
       }
     ]
   },
@@ -1412,6 +1384,95 @@
     ]
   },
   {
+    "id": "277",
+    "nombre": "Migrar Cassandra staging desde servicio instalado en el host hacia Docker Compose",
+    "descripcion": "## Objetivo",
+    "estado": "En curso",
+    "porcentaje": 50,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/277"
+      }
+    ]
+  },
+  {
+    "id": "14",
+    "nombre": "ADR: Esquema canónico Cassandra",
+    "descripcion": "- docs/adr/0001-esquema-canonico-cassandra.md - Justificar particiones/PK/CK y tablas base.",
+    "estado": "En curso",
+    "porcentaje": 50,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/14"
+      }
+    ]
+  },
+  {
+    "id": "3",
+    "nombre": "Snapshot Droplet (DigitalOcean)",
+    "descripcion": "- Crear snapshot de la instancia EOS - Documentar ID, fecha, región",
+    "estado": "En curso",
+    "porcentaje": 50,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/3"
+      }
+    ]
+  },
+  {
+    "id": "6",
+    "nombre": "Exportar esquema (tablas, columnas, tipos)",
+    "descripcion": "- Query information_schema - Export JSON+MD",
+    "estado": "En curso",
+    "porcentaje": 50,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/6"
+      }
+    ]
+  },
+  {
+    "id": "236",
+    "nombre": "Crear .env.example real del backend",
+    "descripcion": "## Épica padre #194 Normalización de auditoría backend",
+    "estado": "En curso",
+    "porcentaje": 50,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "inicio": "2026-04-27",
+    "eta": "2026-05-10",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/236"
+      }
+    ]
+  },
+  {
+    "id": "238",
+    "nombre": "Corregir manejo real de CASSANDRA_PORT",
+    "descripcion": "## Épica padre #194 Normalización de auditoría backend",
+    "estado": "En curso",
+    "porcentaje": 50,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "inicio": "2026-04-27",
+    "eta": "2026-05-10",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/238"
+      }
+    ],
+    "tipo": "bug"
+  },
+  {
     "id": "205",
     "nombre": "Crear Environment dev en GitHub",
     "descripcion": "## Épica padre #191 Habilitación de entornos y secretos",
@@ -1844,22 +1905,6 @@
     ]
   },
   {
-    "id": "236",
-    "nombre": "Crear .env.example real del backend",
-    "descripcion": "## Épica padre #194 Normalización de auditoría backend",
-    "estado": "Planificado",
-    "porcentaje": 0,
-    "propietario": "ArturoPlascenciaRodriguez",
-    "inicio": "2026-04-27",
-    "eta": "2026-05-10",
-    "enlaces": [
-      {
-        "label": "GitHub",
-        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/236"
-      }
-    ]
-  },
-  {
     "id": "237",
     "nombre": "Normalizar variables de entorno backend",
     "descripcion": "## Épica padre #194 Normalización de auditoría backend",
@@ -1874,23 +1919,6 @@
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/237"
       }
     ]
-  },
-  {
-    "id": "238",
-    "nombre": "Corregir manejo real de CASSANDRA_PORT",
-    "descripcion": "## Épica padre #194 Normalización de auditoría backend",
-    "estado": "Planificado",
-    "porcentaje": 0,
-    "propietario": "ArturoPlascenciaRodriguez",
-    "inicio": "2026-04-27",
-    "eta": "2026-05-10",
-    "enlaces": [
-      {
-        "label": "GitHub",
-        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/238"
-      }
-    ],
-    "tipo": "bug"
   },
   {
     "id": "239",
@@ -2379,20 +2407,6 @@
       {
         "label": "GitHub",
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/267"
-      }
-    ]
-  },
-  {
-    "id": "277",
-    "nombre": "Migrar Cassandra staging desde servicio instalado en el host hacia Docker Compose",
-    "descripcion": "## Objetivo",
-    "estado": "Planificado",
-    "porcentaje": 0,
-    "propietario": "ArturoPlascenciaRodriguez",
-    "enlaces": [
-      {
-        "label": "GitHub",
-        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/277"
       }
     ]
   }
