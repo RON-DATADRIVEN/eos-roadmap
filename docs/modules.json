@@ -16,7 +16,9 @@
   },
   {
     "id": "162",
-    "descripcion": "Reporte roto. Ver detalles en el issue de GitHub.",
+    "nombre": "Reporte Roto",
+    "descripcion": "[Slack Message](https://emprendemostec.slack.com/archives/D09EUCP5QLW/p1761938488983449)",
+    "estado": "Reportado",
     "porcentaje": 0,
     "propietario": "ArturoPlascenciaRodriguez",
     "enlaces": [
@@ -28,7 +30,8 @@
     "tipo": "bug"
   },
   {
-    "nombre": "Login roto",
+    "id": "163",
+    "nombre": "Loguin roto",
     "descripcion": "Luis Antonio Palacios de la empresa Inmuebles Bamboo me dice que al entrar a la página web después de crear mi cuenta, me aparece en blanco.",
     "estado": "Resuelto",
     "porcentaje": 100,
