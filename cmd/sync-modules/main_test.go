@@ -107,6 +107,35 @@ func TestIsBug(t *testing.T) {
 	}
 }
 
+func TestIsFeature(t *testing.T) {
+	cases := []struct {
+		name        string
+		labels      []string
+		projectTipo string
+		want        bool
+	}{
+		{"Project Tipo feature", nil, "feature", true},
+		{"Project Tipo tipo:feature", nil, "tipo:feature", true},
+		{"Project Tipo Feature mayúscula", nil, "Feature", true},
+		{"Label feature", []string{"feature"}, "", true},
+		{"Label tipo feature", []string{"Tipo: Feature"}, "", true},
+		{"Change Request no cuenta", nil, "Change Request", false},
+		{"Blank Issue no cuenta", nil, "Blank Issue", false},
+		{"Epic no cuenta", nil, "epic", false},
+		{"Bug no cuenta", []string{"bug"}, "bug", false},
+		{"Vacío", nil, "", false},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := isFeature(tc.labels, tc.projectTipo)
+			if got != tc.want {
+				t.Errorf("isFeature(%v, %q) = %v; want %v", tc.labels, tc.projectTipo, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestIsLuisApproved(t *testing.T) {
 	cases := []struct {
 		name string

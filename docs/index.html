@@ -9,7 +9,7 @@
 </head>
 <body>
   <div class="header">
-    <div class="container">
+    <div class="container"><input id="search" type="search" placeholder="Buscar característica o bug..." />
       <div class="header-main">
         <div>
           <h1>EOS – Roadmap público</h1>
@@ -25,7 +25,7 @@
 
   <main class="container">
     <section class="controls">
-    <input id="search" type="search" placeholder="Buscar característica o bug..." />
+    <input id="search" type="search" placeholder="Buscar característica o bug..." aria-label="Buscar características o bugs" />
   </section>
 
 <section class="roadmap-section" aria-labelledby="featuresTitle">
@@ -816,8 +816,11 @@
         modules = await res.json();
         render();
       } catch (e) {
-        featureGrid.innerHTML = '<p>No se pudo cargar <code>modules.json</code>. Verifica GitHub Pages.</p>';
-        bugGrid.innerHTML = '';
+        featureCount.textContent = '0';
+        bugCount.textContent = '0';
+        const errorMessage = '<p>No se pudo cargar <code>modules.json</code>. Verifica GitHub Pages.</p>';
+        featureGrid.innerHTML = errorMessage;
+        bugGrid.innerHTML = errorMessage;
       }
       footer.textContent = `Última actualización: ${new Date().toLocaleString()}`;
     }

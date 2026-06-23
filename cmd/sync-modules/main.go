@@ -194,6 +194,18 @@ func isBug(labels []string, projectTipo string) bool {
 	return false
 }
 
+func isFeature(labels []string, projectTipo string) bool {
+	if normalizeForType(projectTipo) == "feature" {
+		return true
+	}
+	for _, label := range labels {
+		if normalizeForType(label) == "feature" {
+			return true
+		}
+	}
+	return false
+}
+
 func isLuisApproved(raw string) bool { return normalizeText(raw) == "aprobado" }
 
 func publicFeatureStatus(raw string) (string, int, bool) {
@@ -370,7 +382,7 @@ func main() {
 			if isBug(labels, projectTipo) {
 				tipo = "bug"
 				estado, porcentajeBase = publicBugStatus(rawStatus, iss.State)
-			} else if isLuisApproved(checkLuis) {
+			} else if isFeature(labels, projectTipo) && isLuisApproved(checkLuis) {
 				if publicStatus, baseline, ok := publicFeatureStatus(rawStatus); ok {
 					tipo = "feature"
 					estado = publicStatus

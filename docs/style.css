@@ -27,6 +27,9 @@ textarea:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
 .card h3 { margin: 0; font-size: 18px; }
 .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; border: 1px solid var(--border); }
+.badge.planificado { background: #272c3f; color: var(--muted); }
+.badge.encurso { background: #2a3a2f; color: var(--green); }
+.badge.hecho { background: #283345; color: var(--blue); }
 .badge.enprototipo { background: #272c3f; color: var(--muted); }
 .badge.endesarrollo { background: #2a3a2f; color: var(--green); }
 .badge.enpruebas { background: #3a3224; color: #f6c177; }

@@ -7,7 +7,6 @@ La vista pública debe mostrar:
 - Bugs conocidos
 - Características en desarrollo
 
-## Fuente de datos
 
 ## Operación del sync desde GitHub Projects
 
