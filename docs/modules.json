@@ -18,8 +18,8 @@
     "id": "162",
     "nombre": "Reporte Roto",
     "descripcion": "[Slack Message](https://emprendemostec.slack.com/archives/D09EUCP5QLW/p1761938488983449)",
-    "estado": "Reportado",
-    "porcentaje": 0,
+    "estado": "Resuelto",
+    "porcentaje": 100,
     "propietario": "ArturoPlascenciaRodriguez",
     "enlaces": [
       {
@@ -48,8 +48,8 @@
     "id": "164",
     "nombre": "Fallo Agendar",
     "descripcion": "Hola Plascencia! Cómo estás?? Ya tenía buen rato que no nos escribimos!! Oye, sabes que estamos batallando de nuevo con EOS, el mismo error de siempre que al agendar, la hora se marca como “consumida”, pero no continúa su flujo normal :disappointed: no le aparece al experto ni...",
-    "estado": "Reportado",
-    "porcentaje": 0,
+    "estado": "Resuelto",
+    "porcentaje": 100,
     "propietario": "ArturoPlascenciaRodriguez",
     "enlaces": [
       {
