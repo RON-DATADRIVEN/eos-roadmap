@@ -5,18 +5,33 @@
     "type": "object",
     "additionalProperties": false,
     "properties": {
-      "id":          { "type": "string" },
-      "nombre":      { "type": "string" },
+      "id": { "type": "string" },
+      "nombre": { "type": "string" },
       "descripcion": { "type": "string" },
-      "estado":      { "type": "string", "enum": ["Planificado", "En curso", "Hecho"] },
-      "porcentaje":  { "type": "integer", "minimum": 0, "maximum": 100 },
+      "estado": {
+        "type": "string",
+        "enum": [
+          "Planificado",
+          "En curso",
+          "Hecho",
+          "En prototipo",
+          "En desarrollo",
+          "En pruebas",
+          "En validación",
+          "Liberado",
+          "Reportado",
+          "En atención",
+          "Resuelto"
+        ]
+      },
+      "porcentaje": { "type": "integer", "minimum": 0, "maximum": 100 },
       "propietario": { "type": "string" },
-      "inicio":      { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
-      "eta":         { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+      "inicio": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+      "eta": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
       "tipo": {
         "type": "string",
-        "description": "Clasificación funcional del módulo",
-        "enum": ["epic", "bug"]
+        "description": "Clasificación pública o histórica del elemento del roadmap",
+        "enum": ["epic", "feature", "bug"]
       },
       "enlaces": {
         "type": "array",
@@ -25,7 +40,7 @@
           "additionalProperties": false,
           "properties": {
             "label": { "type": "string" },
-            "url":   { "type": "string", "format": "uri" }
+            "url": { "type": "string", "format": "uri" }
           },
           "required": ["label", "url"]
         }
