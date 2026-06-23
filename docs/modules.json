@@ -16,9 +16,7 @@
   },
   {
     "id": "162",
-    "nombre": "Reporte Roto",
-    "descripcion": "[Slack Message](https://emprendemostec.slack.com/archives/D09EUCP5QLW/p1761938488983449)",
-    "estado": "Reportado",
+    "descripcion": "Reporte roto. Ver detalles en el issue de GitHub.",
     "porcentaje": 0,
     "propietario": "ArturoPlascenciaRodriguez",
     "enlaces": [
