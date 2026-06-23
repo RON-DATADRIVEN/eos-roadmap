@@ -30,8 +30,7 @@
     "tipo": "bug"
   },
   {
-    "id": "163",
-    "nombre": "Loguin roto",
+    "nombre": "Login roto",
     "descripcion": "Luis Antonio Palacios de la empresa Inmuebles Bamboo me dice que al entrar a la página web después de crear mi cuenta, me aparece en blanco.",
     "estado": "Resuelto",
     "porcentaje": 100,
