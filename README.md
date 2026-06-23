@@ -9,7 +9,22 @@ La vista pública debe mostrar:
 
 ## Fuente de datos
 
-La página carga `docs/modules.json`. Ese archivo puede editarse manualmente o generarse desde GitHub Projects mediante el workflow `.github/workflows/sync-modules.yml`.
+## Operación del sync desde GitHub Projects
+
+El workflow `.github/workflows/sync-modules.yml` puede regenerar `docs/modules.json` desde GitHub Projects.
+
+Secretos requeridos:
+
+| Secret           | Uso                                                                        |
+| ---------------- | -------------------------------------------------------------------------- |
+| `PROJECTS_TOKEN` | Leer GitHub Projects v2, issues y campos del proyecto.                     |
+| `SYNC_PR_TOKEN`  | Crear o actualizar el PR automático con el `docs/modules.json` regenerado. |
+
+El JSON generado por el sync debe cumplir `docs/modules.schema.json`.
+
+La vista pública no debe exponer campos internos de aprobación, enlaces de Slack ni identificadores operativos del Project.
+
+
 
 ## Reglas públicas
 
