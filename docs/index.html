@@ -24,9 +24,35 @@
   </div>
 
   <main class="container">
-    <section class="controls">
-    <input id="search" type="search" placeholder="Buscar característica o bug..." aria-label="Buscar características o bugs" />
-  </section>
+    <section class="controls" aria-label="Filtros del roadmap">
+      <div class="search-control">
+        <label class="sr-only" for="search">Buscar características o bugs</label>
+        <input id="search" type="search" placeholder="Buscar característica o bug..." aria-label="Buscar características o bugs" />
+      </div>
+      <div class="filter-row">
+        <div class="filter-control">
+          <label for="phaseFilter">Filtrar por fase</label>
+          <select id="phaseFilter" aria-label="Filtrar por fase">
+            <option value="all">Todas las fases</option>
+            <option value="Prototipado">Prototipo</option>
+            <option value="Desarrollo">Desarrollo</option>
+            <option value="Test">Pruebas</option>
+            <option value="Staging">Validación</option>
+            <option value="Deploy">Publicado</option>
+            <option value="Archivado">Archivado</option>
+          </select>
+        </div>
+        <div class="filter-control">
+          <label for="typeFilter">Filtrar por tipo</label>
+          <select id="typeFilter" aria-label="Filtrar por tipo">
+            <option value="all">Todos los tipos</option>
+            <option value="bug">Bugs</option>
+            <option value="feature">Funcionalidades</option>
+          </select>
+        </div>
+      </div>
+      <p id="filterStatus" class="filter-status" aria-live="polite">Mostrando: todas las fases · todos los tipos</p>
+    </section>
 
 <section class="roadmap-section" aria-labelledby="featuresTitle">
   <div class="section-heading">
@@ -104,6 +130,9 @@
     const featureCount = document.getElementById('featureCount');
     const bugCount = document.getElementById('bugCount');
     const search = document.getElementById('search');
+    const phaseFilter = document.getElementById('phaseFilter');
+    const typeFilter = document.getElementById('typeFilter');
+    const filterStatus = document.getElementById('filterStatus');
     const footer = document.getElementById('footer');
     const openIssueModalBtn = document.getElementById('openIssueModal');
     const modalOverlay = document.getElementById('issueModalOverlay');
@@ -883,12 +912,43 @@ function renderGroup(target, items, emptyMessage) {
     : `<p class="empty-state">${emptyMessage}</p>`;
 }
 
+const phaseLabels = {
+  all: 'todas las fases',
+  Prototipado: 'Prototipo',
+  Desarrollo: 'Desarrollo',
+  Test: 'Pruebas',
+  Staging: 'Validación',
+  Deploy: 'Publicado',
+  Archivado: 'Archivado'
+};
+
+function matchesPhase(module, selectedPhase) {
+  if (selectedPhase === 'all') {
+    return true;
+  }
+  return module.fase === selectedPhase;
+}
+
+function typeFilterLabel(value) {
+  if (value === 'bug') {
+    return 'Bugs';
+  }
+  if (value === 'feature') {
+    return 'Funcionalidades';
+  }
+  return 'todos los tipos';
+}
+
 function render() {
   const term = search.value.trim().toLowerCase();
+  const selectedPhase = phaseFilter.value;
+  const selectedType = typeFilter.value;
 
   const filtered = modules.filter(m => {
     const text = `${m.nombre || ''} ${m.descripcion || ''}`.toLowerCase();
-    return !term || text.includes(term);
+    const matchesSearch = !term || text.includes(term);
+    const matchesType = selectedType === 'all' || (m.tipo || '').toLowerCase() === selectedType;
+    return matchesSearch && matchesType && matchesPhase(m, selectedPhase);
   });
 
   const features = filtered.filter(m => (m.tipo || '').toLowerCase() === 'feature');
@@ -899,9 +959,12 @@ function render() {
 
   renderGroup(featureGrid, features, 'No hay características públicas con ese filtro.');
   renderGroup(bugGrid, bugs, 'No hay bugs conocidos con ese filtro.');
+  filterStatus.textContent = `Mostrando: ${phaseLabels[selectedPhase]} · ${typeFilterLabel(selectedType)}`;
 }
 
     search.addEventListener('input', render);
+    phaseFilter.addEventListener('change', render);
+    typeFilter.addEventListener('change', render);
 
     load();
   </script>

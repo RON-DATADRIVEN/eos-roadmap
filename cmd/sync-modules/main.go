@@ -132,6 +132,7 @@ type ModuleOut struct {
 	ID          string    `json:"id"`
 	Nombre      string    `json:"nombre"`
 	Descripcion string    `json:"descripcion"`
+	Fase        string    `json:"fase"`
 	Estado      string    `json:"estado"`
 	Porcentaje  int       `json:"porcentaje"`
 	Propietario string    `json:"propietario,omitempty"`
@@ -208,31 +209,52 @@ func isFeature(labels []string, projectTipo string) bool {
 
 func isLuisApproved(raw string) bool { return normalizeText(raw) == "aprobado" }
 
-func publicFeatureStatus(raw string) (string, int, bool) {
+func publicPhase(raw string) (string, bool) {
 	switch normalizeText(raw) {
 	case "prototipado":
-		return "En prototipo", 20, true
+		return "Prototipado", true
 	case "desarrollo":
-		return "En desarrollo", 50, true
+		return "Desarrollo", true
 	case "test":
-		return "En pruebas", 75, true
+		return "Test", true
 	case "staging":
-		return "En validación", 90, true
+		return "Staging", true
 	case "deploy":
+		return "Deploy", true
+	case "archivado":
+		return "Archivado", true
+	default:
+		return "", false
+	}
+}
+
+func publicFeatureStatus(phase string) (string, int, bool) {
+	switch phase {
+	case "Prototipado":
+		return "En prototipo", 20, true
+	case "Desarrollo":
+		return "En desarrollo", 50, true
+	case "Test":
+		return "En pruebas", 75, true
+	case "Staging":
+		return "En validación", 90, true
+	case "Deploy":
 		return "Liberado", 100, true
+	case "Archivado":
+		return "Archivado", 100, true
 	default:
 		return "", 0, false
 	}
 }
 
-func publicBugStatus(raw string, state githubv4.IssueState) (string, int) {
+func publicBugStatus(phase string, state githubv4.IssueState) (string, int) {
 	if state == githubv4.IssueStateClosed {
 		return "Resuelto", 100
 	}
-	switch normalizeText(raw) {
-	case "prototipado", "desarrollo", "test", "staging":
+	switch phase {
+	case "Prototipado", "Desarrollo", "Test", "Staging":
 		return "En atención", 50
-	case "deploy":
+	case "Deploy", "Archivado":
 		return "Resuelto", 100
 	default:
 		return "Reportado", 0
@@ -375,15 +397,19 @@ func main() {
 			projectTipo := projectValueToString(it.Tipo.Typename, string(it.Tipo.Single.Name), string(it.Tipo.Text.Text))
 			rawStatus := singleName(it.Status.Typename, it.Status.Single.Name)
 			checkLuis := singleName(it.CheckLuis.Typename, it.CheckLuis.Single.Name)
+			phase, phaseOK := publicPhase(rawStatus)
+			if !phaseOK {
+				continue
+			}
 
 			tipo := ""
 			estado := ""
 			porcentajeBase := 0
 			if isBug(labels, projectTipo) {
 				tipo = "bug"
-				estado, porcentajeBase = publicBugStatus(rawStatus, iss.State)
+				estado, porcentajeBase = publicBugStatus(phase, iss.State)
 			} else if isFeature(labels, projectTipo) && isLuisApproved(checkLuis) {
-				if publicStatus, baseline, ok := publicFeatureStatus(rawStatus); ok {
+				if publicStatus, baseline, ok := publicFeatureStatus(phase); ok {
 					tipo = "feature"
 					estado = publicStatus
 					porcentajeBase = baseline
@@ -397,6 +423,7 @@ func main() {
 				ID:          strconv.Itoa(iss.Number),
 				Nombre:      iss.Title,
 				Descripcion: buildDescription(iss.Body, iss.Title),
+				Fase:        phase,
 				Estado:      estado,
 				Porcentaje:  calculatePercentage(iss.Body, porcentajeBase),
 				Propietario: buildOwner(iss.Assignees.Nodes),

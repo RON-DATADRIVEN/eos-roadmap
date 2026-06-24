@@ -3,6 +3,7 @@
     "id": "288",
     "nombre": "[FEAT] Prueba",
     "descripcion": "### Descripción",
+    "fase": "Prototipado",
     "estado": "En prototipo",
     "porcentaje": 20,
     "propietario": "ArturoPlascenciaRodriguez",
@@ -18,6 +19,7 @@
     "id": "148",
     "nombre": "fix: Asignar tipo correcto a cada Issue creado automaticamente",
     "descripcion": "### Resumen Se requiere que al crear un Issue, este tenga el tipo correcto en projects de GitHUb",
+    "fase": "Desarrollo",
     "estado": "Resuelto",
     "porcentaje": 100,
     "propietario": "ArturoPlascenciaRodriguez",
@@ -33,6 +35,7 @@
     "id": "162",
     "nombre": "Reporte Roto",
     "descripcion": "[Slack Message](https://emprendemostec.slack.com/archives/D09EUCP5QLW/p1761938488983449)",
+    "fase": "Archivado",
     "estado": "Resuelto",
     "porcentaje": 100,
     "propietario": "ArturoPlascenciaRodriguez",
@@ -48,6 +51,7 @@
     "id": "163",
     "nombre": "Loguin roto",
     "descripcion": "Luis Antonio Palacios de la empresa Inmuebles Bamboo me dice que al entrar a la página web después de crear mi cuenta, me aparece en blanco.",
+    "fase": "Deploy",
     "estado": "Resuelto",
     "porcentaje": 100,
     "propietario": "ArturoPlascenciaRodriguez",
@@ -63,6 +67,7 @@
     "id": "164",
     "nombre": "Fallo Agendar",
     "descripcion": "Hola Plascencia! Cómo estás?? Ya tenía buen rato que no nos escribimos!! Oye, sabes que estamos batallando de nuevo con EOS, el mismo error de siempre que al agendar, la hora se marca como “consumida”, pero no continúa su flujo normal :disappointed: no le aparece al experto ni...",
+    "fase": "Archivado",
     "estado": "Resuelto",
     "porcentaje": 100,
     "propietario": "ArturoPlascenciaRodriguez",
@@ -78,6 +83,7 @@
     "id": "238",
     "nombre": "Corregir manejo real de CASSANDRA_PORT",
     "descripcion": "## Épica padre #194 Normalización de auditoría backend",
+    "fase": "Desarrollo",
     "estado": "En atención",
     "porcentaje": 50,
     "propietario": "ArturoPlascenciaRodriguez",
@@ -87,74 +93,6 @@
       {
         "label": "GitHub",
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/238"
-      }
-    ],
-    "tipo": "bug"
-  },
-  {
-    "id": "240",
-    "nombre": "Revisar middleware de autenticación inconsistente entre módulos",
-    "descripcion": "## Épica padre #194 Normalización de auditoría backend",
-    "estado": "Reportado",
-    "porcentaje": 0,
-    "propietario": "ArturoPlascenciaRodriguez",
-    "inicio": "2026-04-27",
-    "eta": "2026-05-10",
-    "enlaces": [
-      {
-        "label": "GitHub",
-        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/240"
-      }
-    ],
-    "tipo": "bug"
-  },
-  {
-    "id": "241",
-    "nombre": "Revisar rutas con middleware comentado",
-    "descripcion": "## Épica padre #194 Normalización de auditoría backend",
-    "estado": "Reportado",
-    "porcentaje": 0,
-    "propietario": "ArturoPlascenciaRodriguez",
-    "inicio": "2026-04-27",
-    "eta": "2026-05-10",
-    "enlaces": [
-      {
-        "label": "GitHub",
-        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/241"
-      }
-    ],
-    "tipo": "bug"
-  },
-  {
-    "id": "250",
-    "nombre": "Revisar exposición de bearer_token en vistas",
-    "descripcion": "## Épica padre #193 Normalización de auditoría frontend",
-    "estado": "Reportado",
-    "porcentaje": 0,
-    "propietario": "ArturoPlascenciaRodriguez",
-    "inicio": "2026-04-27",
-    "eta": "2026-05-10",
-    "enlaces": [
-      {
-        "label": "GitHub",
-        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/250"
-      }
-    ],
-    "tipo": "bug"
-  },
-  {
-    "id": "251",
-    "nombre": "Revisar rutas públicas que dependen de token autenticado",
-    "descripcion": "## Épica padre #193 Normalización de auditoría frontend",
-    "estado": "Reportado",
-    "porcentaje": 0,
-    "propietario": "ArturoPlascenciaRodriguez",
-    "inicio": "2026-04-27",
-    "eta": "2026-05-10",
-    "enlaces": [
-      {
-        "label": "GitHub",
-        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/251"
       }
     ],
     "tipo": "bug"
