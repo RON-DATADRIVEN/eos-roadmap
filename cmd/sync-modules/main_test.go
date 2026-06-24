@@ -9,7 +9,7 @@ import (
 func TestPublicFeatureStatus(t *testing.T) {
 	cases := []struct {
 		name       string
-		raw        string
+		phase      string
 		wantStatus string
 		wantPct    int
 		wantOK     bool
@@ -19,18 +19,18 @@ func TestPublicFeatureStatus(t *testing.T) {
 		{"test", "Test", "En pruebas", 75, true},
 		{"staging", "Staging", "En validación", 90, true},
 		{"deploy", "Deploy", "Liberado", 100, true},
-		{"minúsculas", "desarrollo", "En desarrollo", 50, true},
+		{"archivado", "Archivado", "Archivado", 100, true},
 		{"desconocido", "Ideas", "", 0, false},
 		{"vacío", "", "", 0, false},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			gotStatus, gotPct, gotOK := publicFeatureStatus(tc.raw)
+			gotStatus, gotPct, gotOK := publicFeatureStatus(tc.phase)
 			if gotStatus != tc.wantStatus || gotPct != tc.wantPct || gotOK != tc.wantOK {
 				t.Errorf(
 					"publicFeatureStatus(%q) = (%q, %d, %v); want (%q, %d, %v)",
-					tc.raw,
+					tc.phase,
 					gotStatus,
 					gotPct,
 					gotOK,
@@ -43,10 +43,38 @@ func TestPublicFeatureStatus(t *testing.T) {
 	}
 }
 
+func TestPublicPhase(t *testing.T) {
+	cases := []struct {
+		name      string
+		raw       string
+		wantPhase string
+		wantOK    bool
+	}{
+		{"prototipado", "Prototipado", "Prototipado", true},
+		{"desarrollo minúsculas", "desarrollo", "Desarrollo", true},
+		{"test", "Test", "Test", true},
+		{"staging", "Staging", "Staging", true},
+		{"deploy", "Deploy", "Deploy", true},
+		{"archivado", "Archivado", "Archivado", true},
+		{"ideas no público", "Ideas", "", false},
+		{"planeacion no público", "En planeación", "", false},
+		{"vacío no público", "", "", false},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			gotPhase, gotOK := publicPhase(tc.raw)
+			if gotPhase != tc.wantPhase || gotOK != tc.wantOK {
+				t.Errorf("publicPhase(%q) = (%q, %v); want (%q, %v)", tc.raw, gotPhase, gotOK, tc.wantPhase, tc.wantOK)
+			}
+		})
+	}
+}
+
 func TestPublicBugStatus(t *testing.T) {
 	cases := []struct {
 		name       string
-		raw        string
+		phase      string
 		state      githubv4.IssueState
 		wantStatus string
 		wantPct    int
@@ -57,16 +85,17 @@ func TestPublicBugStatus(t *testing.T) {
 		{"abierto en test", "Test", githubv4.IssueState("OPEN"), "En atención", 50},
 		{"abierto en staging", "Staging", githubv4.IssueState("OPEN"), "En atención", 50},
 		{"deploy", "Deploy", githubv4.IssueState("OPEN"), "Resuelto", 100},
+		{"archivado", "Archivado", githubv4.IssueState("OPEN"), "Resuelto", 100},
 		{"cerrado", "Desarrollo", githubv4.IssueStateClosed, "Resuelto", 100},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			gotStatus, gotPct := publicBugStatus(tc.raw, tc.state)
+			gotStatus, gotPct := publicBugStatus(tc.phase, tc.state)
 			if gotStatus != tc.wantStatus || gotPct != tc.wantPct {
 				t.Errorf(
 					"publicBugStatus(%q, %q) = (%q, %d); want (%q, %d)",
-					tc.raw,
+					tc.phase,
 					tc.state,
 					gotStatus,
 					gotPct,

@@ -922,31 +922,11 @@ const phaseLabels = {
   Archivado: 'Archivado'
 };
 
-const phaseAliases = {
-  Prototipado: ['prototipado', 'prototipo', 'en prototipo'],
-  Desarrollo: ['desarrollo', 'en desarrollo', 'en atencion'],
-  Test: ['test', 'pruebas', 'en pruebas'],
-  Staging: ['staging', 'validacion', 'en validacion'],
-  Deploy: ['deploy', 'publicado', 'liberado', 'resuelto'],
-  Archivado: ['archivado']
-};
-
-function normalizeFilterText(value) {
-  return String(value || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-}
-
 function matchesPhase(module, selectedPhase) {
   if (selectedPhase === 'all') {
     return true;
   }
-  if (module.fase === selectedPhase) {
-    return true;
-  }
-  const estado = normalizeFilterText(module.estado);
-  return (phaseAliases[selectedPhase] || []).includes(estado);
+  return module.fase === selectedPhase;
 }
 
 function typeFilterLabel(value) {
