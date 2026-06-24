@@ -17,8 +17,15 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI
 .btn.primary:hover,
 .btn.primary:focus-visible { background: #6ab0ff; border-color: #6ab0ff; }
 .container { max-width: 1080px; margin: 0 auto; padding: 24px; }
-.controls { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.controls { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+.search-control input[type="search"] { width: min(100%, 460px); }
+.filter-row { display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; }
+.filter-control { display: flex; flex-direction: column; gap: 6px; min-width: 220px; }
+.filter-control label { color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+.filter-status { margin: 0; color: var(--muted); font-size: 13px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 select, input { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 8px; }
+select { min-height: 38px; min-width: 220px; cursor: pointer; }
 textarea { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 8px; font-family: inherit; }
 select:focus-visible,
 input:focus-visible,
@@ -119,6 +126,10 @@ textarea:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 
 @media (max-width: 600px) {
   .header-main { flex-direction: column; align-items: flex-start; }
+  .filter-row { flex-direction: column; align-items: stretch; }
+  .filter-control,
+  .filter-control select,
+  .search-control input[type="search"] { width: 100%; min-width: 0; }
   .modal { max-height: none; height: 100%; }
   .modal-overlay { padding: 16px; }
   .payload-preview { max-height: 160px; }
