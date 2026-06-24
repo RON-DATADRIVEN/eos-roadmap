@@ -3,9 +3,9 @@
     "id": "288",
     "nombre": "[FEAT] Prueba",
     "descripcion": "### Descripción",
-    "fase": "Prototipado",
-    "estado": "En prototipo",
-    "porcentaje": 20,
+    "fase": "Archivado",
+    "estado": "Archivado",
+    "porcentaje": 100,
     "propietario": "ArturoPlascenciaRodriguez",
     "enlaces": [
       {
@@ -14,6 +14,22 @@
       }
     ],
     "tipo": "feature"
+  },
+  {
+    "id": "164",
+    "nombre": "Fallo Agendar",
+    "descripcion": "Hola Plascencia! Cómo estás?? Ya tenía buen rato que no nos escribimos!! Oye, sabes que estamos batallando de nuevo con EOS, el mismo error de siempre que al agendar, la hora se marca como “consumida”, pero no continúa su flujo normal :disappointed: no le aparece al experto ni...",
+    "fase": "Deploy",
+    "estado": "Resuelto",
+    "porcentaje": 100,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/164"
+      }
+    ],
+    "tipo": "bug"
   },
   {
     "id": "148",
@@ -59,22 +75,6 @@
       {
         "label": "GitHub",
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/163"
-      }
-    ],
-    "tipo": "bug"
-  },
-  {
-    "id": "164",
-    "nombre": "Fallo Agendar",
-    "descripcion": "Hola Plascencia! Cómo estás?? Ya tenía buen rato que no nos escribimos!! Oye, sabes que estamos batallando de nuevo con EOS, el mismo error de siempre que al agendar, la hora se marca como “consumida”, pero no continúa su flujo normal :disappointed: no le aparece al experto ni...",
-    "fase": "Archivado",
-    "estado": "Resuelto",
-    "porcentaje": 100,
-    "propietario": "ArturoPlascenciaRodriguez",
-    "enlaces": [
-      {
-        "label": "GitHub",
-        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/164"
       }
     ],
     "tipo": "bug"
