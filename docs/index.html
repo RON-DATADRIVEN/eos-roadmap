@@ -865,9 +865,9 @@
         if (Number.isNaN(generatedAt.getTime())) {
           throw new Error('metadata generatedAt inválido');
         }
-        return `Última sincronización: ${generatedAt.toLocaleString()}`;
+        return `Última actualización de datos: ${generatedAt.toLocaleString()}`;
       } catch {
-        return 'Última sincronización: no disponible';
+        return 'Última actualización de datos: no disponible';
       }
     }
 

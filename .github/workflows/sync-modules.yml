@@ -130,4 +130,6 @@ jobs:
           git commit -m "ci(automation): update generated roadmap data"
           # El push usa las credenciales que actions/checkout configuró con el
           # token del checkout porque persist-credentials está habilitado.
+          git fetch origin main
+          git rebase origin/main
           git push origin HEAD:main
