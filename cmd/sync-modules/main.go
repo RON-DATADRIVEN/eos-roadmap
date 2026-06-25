@@ -455,8 +455,9 @@ func main() {
 		log.Fatalf("escribir %s: %v", outPath, err)
 	}
 
+	generatedAt := time.Now().UTC().Format(time.RFC3339)
 	metadata := MetadataOut{
-		GeneratedAt: time.Now().UTC().Format(time.RFC3339),
+		GeneratedAt: generatedAt,
 		Source:      defaultMetadataSource,
 		ItemCount:   len(all),
 	}

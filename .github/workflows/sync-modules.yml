@@ -109,6 +109,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+          allowed_paths_regex='^(docs/modules\.json|docs/modules-meta\.json)$'
+
+          git reset --mixed --quiet
           git add -- docs/modules.json docs/modules-meta.json
 
           staged_files="$(git diff --cached --name-only)"
@@ -117,7 +120,7 @@ jobs:
             exit 0
           fi
 
-          unexpected_files="$(printf '%s\n' "$staged_files" | grep -Ev '^(docs/modules\.json|docs/modules-meta\.json)$' || true)"
+          unexpected_files="$(printf '%s\n' "$staged_files" | grep -Ev "$allowed_paths_regex" || true)"
           if [ -n "$unexpected_files" ]; then
             echo "Unexpected staged files:"
             printf '%s\n' "$unexpected_files"
@@ -125,4 +128,6 @@ jobs:
           fi
 
           git commit -m "ci(automation): update generated roadmap data"
+          # El push usa las credenciales que actions/checkout configuró con el
+          # token del checkout porque persist-credentials está habilitado.
           git push origin HEAD:main
