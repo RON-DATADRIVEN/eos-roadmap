@@ -17,11 +17,14 @@ Secretos requeridos:
 | Secret           | Uso                                                                        |
 | ---------------- | -------------------------------------------------------------------------- |
 | `PROJECTS_TOKEN` | Leer GitHub Projects v2, issues y campos del proyecto.                     |
-| `SYNC_PR_TOKEN`  | Crear o actualizar el PR automático con el `docs/modules.json` regenerado. |
+| `SYNC_PR_TOKEN`  | Opcional. Token de bot dedicado para que el workflow publique datos generados directamente en `main`; si no existe, se usa `GITHUB_TOKEN`. |
 
 El JSON generado por el sync debe cumplir `docs/modules.schema.json`.
 
 La vista pública no debe exponer campos internos de aprobación, enlaces de Slack ni identificadores operativos del Project.
+
+El sync no abre PR automático para datos generados. Cuando cambian datos públicos, el workflow hace commit directo a `main` únicamente de `docs/modules.json` y `docs/modules-meta.json`.
+La protección de `main` debe permitir que el actor del token usado por `.github/workflows/sync-modules.yml` haga bypass controlado del requisito de PR review para este flujo. Si branch protection no permite ese bypass, el workflow fallará en `git push origin HEAD:main`. No debe usarse un token genérico sin control; usa un bot/token dedicado o la app `github-actions` con permisos explícitos de bypass.
 
 
 

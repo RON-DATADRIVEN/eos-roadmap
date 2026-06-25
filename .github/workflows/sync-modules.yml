@@ -100,9 +100,11 @@ jobs:
           set -euo pipefail
           ./sync-modules
 
-      # Branch protection debe permitir que el token de checkout
-      # (SYNC_PR_TOKEN si existe; si no, GITHUB_TOKEN) pueda hacer push directo a
-      # main para los archivos generados docs/modules.json y docs/modules-meta.json.
+      # Branch protection debe permitir bypass controlado del requisito de PR
+      # review para el actor del token de checkout (SYNC_PR_TOKEN dedicado o la
+      # app github-actions cuando se usa GITHUB_TOKEN). Si ese bypass no existe,
+      # el push directo a main fallará. No uses un token genérico: este paso solo
+      # stagea y valida docs/modules.json y docs/modules-meta.json.
       - name: Commit generated public data to main
         run: |
           set -euo pipefail
