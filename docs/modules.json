@@ -1,21 +1,5 @@
 [
   {
-    "id": "288",
-    "nombre": "[FEAT] Prueba",
-    "descripcion": "### Descripción",
-    "fase": "Archivado",
-    "estado": "Archivado",
-    "porcentaje": 100,
-    "propietario": "ArturoPlascenciaRodriguez",
-    "enlaces": [
-      {
-        "label": "GitHub",
-        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/288"
-      }
-    ],
-    "tipo": "feature"
-  },
-  {
     "id": "164",
     "nombre": "Fallo Agendar",
     "descripcion": "Hola Plascencia! Cómo estás?? Ya tenía buen rato que no nos escribimos!! Oye, sabes que estamos batallando de nuevo con EOS, el mismo error de siempre que al agendar, la hora se marca como “consumida”, pero no continúa su flujo normal :disappointed: no le aparece al experto ni...",
@@ -96,5 +80,21 @@
       }
     ],
     "tipo": "bug"
+  },
+  {
+    "id": "181",
+    "nombre": "Orden en lista de programas iniciando en el ultimo creado por defecto.",
+    "descripcion": "### Descripción Como gestor de programas de emprendimiento quiero ver el utlimo programa creado al inicio de la lista por defecto.",
+    "fase": "Prototipado",
+    "estado": "En prototipo",
+    "porcentaje": 20,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/181"
+      }
+    ],
+    "tipo": "feature"
   }
 ]

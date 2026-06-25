@@ -142,10 +142,18 @@ type ModuleOut struct {
 	Tipo        string    `json:"tipo"`
 }
 
+type MetadataOut struct {
+	GeneratedAt string `json:"generatedAt"`
+	Source      string `json:"source"`
+	ItemCount   int    `json:"itemCount"`
+}
+
 type LinkOut struct {
 	Label string `json:"label"`
 	URL   string `json:"url"`
 }
+
+const defaultMetadataSource = "GitHub Project EOS 2.0"
 
 func singleName(typename githubv4.String, name githubv4.String) string {
 	if typename == "ProjectV2ItemFieldSingleSelectValue" {
@@ -366,6 +374,10 @@ func main() {
 	if outPath == "" {
 		outPath = "docs/modules.json"
 	}
+	metaOutPath := os.Getenv("META_OUTPUT")
+	if metaOutPath == "" {
+		metaOutPath = "docs/modules-meta.json"
+	}
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
 		log.Fatal("GITHUB_TOKEN no está definido")
@@ -439,20 +451,19 @@ func main() {
 		after = &q.Org.Project.Items.PageInfo.EndCursor
 	}
 
-	if err := os.MkdirAll(dirOf(outPath), 0o755); err != nil {
-		log.Fatalf("mkdir: %v", err)
+	if err := writeJSON(outPath, all); err != nil {
+		log.Fatalf("escribir %s: %v", outPath, err)
 	}
-	f, err := os.Create(outPath)
-	if err != nil {
-		log.Fatalf("crear %s: %v", outPath, err)
+
+	metadata := MetadataOut{
+		GeneratedAt: time.Now().UTC().Format(time.RFC3339),
+		Source:      defaultMetadataSource,
+		ItemCount:   len(all),
 	}
-	defer f.Close()
-	enc := json.NewEncoder(f)
-	enc.SetIndent("", "  ")
-	if err := enc.Encode(all); err != nil {
-		log.Fatalf("json: %v", err)
+	if err := writeJSON(metaOutPath, metadata); err != nil {
+		log.Fatalf("escribir %s: %v", metaOutPath, err)
 	}
-	log.Printf("OK: escrito %s con %d elementos públicos", outPath, len(all))
+	log.Printf("OK: escrito %s y %s con %d elementos públicos", outPath, metaOutPath, len(all))
 }
 
 type roundTripperWithToken struct{ token string }
@@ -470,4 +481,21 @@ func dirOf(p string) string {
 		}
 	}
 	return "."
+}
+
+func writeJSON(path string, value any) error {
+	if err := os.MkdirAll(dirOf(path), 0o755); err != nil {
+		return fmt.Errorf("mkdir: %w", err)
+	}
+	f, err := os.Create(path)
+	if err != nil {
+		return fmt.Errorf("crear: %w", err)
+	}
+	defer f.Close()
+	enc := json.NewEncoder(f)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(value); err != nil {
+		return fmt.Errorf("json: %w", err)
+	}
+	return nil
 }

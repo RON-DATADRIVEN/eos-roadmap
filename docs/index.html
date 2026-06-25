@@ -851,7 +851,24 @@
         featureGrid.innerHTML = errorMessage;
         bugGrid.innerHTML = errorMessage;
       }
-      footer.textContent = `Última actualización: ${new Date().toLocaleString()}`;
+      footer.textContent = await syncFooterText();
+    }
+
+    async function syncFooterText() {
+      try {
+        const res = await fetch('modules-meta.json', { cache: 'no-store' });
+        if (!res.ok) {
+          throw new Error(`metadata ${res.status}`);
+        }
+        const metadata = await res.json();
+        const generatedAt = new Date(metadata.generatedAt);
+        if (Number.isNaN(generatedAt.getTime())) {
+          throw new Error('metadata generatedAt inválido');
+        }
+        return `Última sincronización: ${generatedAt.toLocaleString()}`;
+      } catch {
+        return 'Última sincronización: no disponible';
+      }
     }
 
     function escapeHTML(value) {

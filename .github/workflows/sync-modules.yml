@@ -8,7 +8,6 @@ on:
 permissions:
   contents: write
   issues: read
-  pull-requests: write
 
 concurrency:
   group: sync-modules-json
@@ -21,6 +20,7 @@ jobs:
       ORG: RON-DATADRIVEN
       PROJECT_NUMBER: "3"
       OUTPUT: docs/modules.json
+      META_OUTPUT: docs/modules-meta.json
 
     steps:
       - name: Checkout @ branch main
@@ -29,6 +29,7 @@ jobs:
           ref: main              # evita detached HEAD
           fetch-depth: 0
           persist-credentials: true
+          token: ${{ secrets.SYNC_PR_TOKEN || github.token }}
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -94,21 +95,34 @@ jobs:
           ORG: ${{ env.ORG }}
           PROJECT_NUMBER: ${{ env.PROJECT_NUMBER }}
           OUTPUT: ${{ env.OUTPUT }}
+          META_OUTPUT: ${{ env.META_OUTPUT }}
         run: |
           set -euo pipefail
           ./sync-modules
 
-      - name: Open PR if modules.json changed
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.SYNC_PR_TOKEN }}
-          add-paths: ${{ env.OUTPUT }}
-          commit-message: "ci(automation): update modules json"
-          branch: ci/sync-modules-update
-          delete-branch: true
-          title: "ci(automation): update modules json"
-          body: |
-            Actualización automática de `docs/modules.json` generada por el workflow `sync-modules`.
+      # Branch protection debe permitir que el token de checkout
+      # (SYNC_PR_TOKEN si existe; si no, GITHUB_TOKEN) pueda hacer push directo a
+      # main para los archivos generados docs/modules.json y docs/modules-meta.json.
+      - name: Commit generated public data to main
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-            Este PR fue creado automáticamente. Si no hay cambios en el archivo, este PR no se abre.
-          labels: automated
+          git add -- docs/modules.json docs/modules-meta.json
+
+          staged_files="$(git diff --cached --name-only)"
+          if [ -z "$staged_files" ]; then
+            echo "No generated public data changed."
+            exit 0
+          fi
+
+          unexpected_files="$(printf '%s\n' "$staged_files" | grep -Ev '^(docs/modules\.json|docs/modules-meta\.json)$' || true)"
+          if [ -n "$unexpected_files" ]; then
+            echo "Unexpected staged files:"
+            printf '%s\n' "$unexpected_files"
+            exit 1
+          fi
+
+          git commit -m "ci(automation): update generated roadmap data"
+          git push origin HEAD:main
