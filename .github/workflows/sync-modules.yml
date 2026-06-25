@@ -23,13 +23,23 @@ jobs:
       META_OUTPUT: docs/modules-meta.json
 
     steps:
+      - name: Require direct publish token
+        env:
+          SYNC_PR_TOKEN: ${{ secrets.SYNC_PR_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SYNC_PR_TOKEN:-}" ]; then
+            echo "SYNC_PR_TOKEN is required for direct publish to main" >&2
+            exit 1
+          fi
+
       - name: Checkout @ branch main
         uses: actions/checkout@v4
         with:
           ref: main              # evita detached HEAD
           fetch-depth: 0
           persist-credentials: true
-          token: ${{ secrets.SYNC_PR_TOKEN || github.token }}
+          token: ${{ secrets.SYNC_PR_TOKEN }}
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -39,6 +49,14 @@ jobs:
           cache-dependency-path: |
             go.sum
             **/go.sum
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install JSON schema validator
+        run: npm i -g ajv-cli@5 ajv-formats
 
       - name: Sanity repo (HEAD/replace/vendor)
         run: |
@@ -100,11 +118,26 @@ jobs:
           set -euo pipefail
           ./sync-modules
 
+      - name: Validate generated public data before publish
+        run: |
+          set -euo pipefail
+          go test ./...
+          if [ ! -f docs/modules.json ]; then
+            echo "No existe docs/modules.json; se omite validación."
+            exit 0
+          fi
+          ajv validate \
+            -s docs/modules.schema.json \
+            -d docs/modules.json \
+            --spec=draft2020 \
+            -c ajv-formats \
+            --strict=false
+
       # Branch protection debe permitir bypass controlado del requisito de PR
-      # review para el actor del token de checkout (SYNC_PR_TOKEN dedicado o la
-      # app github-actions cuando se usa GITHUB_TOKEN). Si ese bypass no existe,
-      # el push directo a main fallará. No uses un token genérico: este paso solo
-      # stagea y valida docs/modules.json y docs/modules-meta.json.
+      # review para el actor de SYNC_PR_TOKEN. Este token es obligatorio para el
+      # publish directo a main; no hay fallback a GITHUB_TOKEN. Si ese bypass no
+      # existe, el push directo a main fallará. No uses un token genérico: este
+      # paso solo stagea y valida docs/modules.json y docs/modules-meta.json.
       - name: Commit generated public data to main
         run: |
           set -euo pipefail
