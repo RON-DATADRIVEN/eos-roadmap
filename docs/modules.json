@@ -1,21 +1,5 @@
 [
   {
-    "id": "288",
-    "nombre": "[FEAT] Prueba",
-    "descripcion": "### Descripción",
-    "fase": "Archivado",
-    "estado": "Archivado",
-    "porcentaje": 100,
-    "propietario": "ArturoPlascenciaRodriguez",
-    "enlaces": [
-      {
-        "label": "GitHub",
-        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/288"
-      }
-    ],
-    "tipo": "feature"
-  },
-  {
     "id": "164",
     "nombre": "Fallo Agendar",
     "descripcion": "Hola Plascencia! Cómo estás?? Ya tenía buen rato que no nos escribimos!! Oye, sabes que estamos batallando de nuevo con EOS, el mismo error de siempre que al agendar, la hora se marca como “consumida”, pero no continúa su flujo normal :disappointed: no le aparece al experto ni...",
