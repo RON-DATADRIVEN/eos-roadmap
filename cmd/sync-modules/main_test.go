@@ -61,7 +61,7 @@ func TestPublicPhase(t *testing.T) {
 		{"deploy", "Deploy", "Deploy", true},
 		{"archivado", "Archivado", "Archivado", true},
 		{"ideas no público", "Ideas", "", false},
-		{"planeacion no público", "En planeación", "", false},
+		{"planeacion reportado", "En planeación", "Reportados", true},
 		{"vacío no público", "", "", false},
 	}
 
