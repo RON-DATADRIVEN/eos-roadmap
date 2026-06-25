@@ -80,5 +80,21 @@
       }
     ],
     "tipo": "bug"
+  },
+  {
+    "id": "181",
+    "nombre": "Orden en lista de programas iniciando en el ultimo creado por defecto.",
+    "descripcion": "### Descripción Como gestor de programas de emprendimiento quiero ver el utlimo programa creado al inicio de la lista por defecto.",
+    "fase": "Prototipado",
+    "estado": "En prototipo",
+    "porcentaje": 20,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/181"
+      }
+    ],
+    "tipo": "feature"
   }
 ]
