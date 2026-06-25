@@ -220,6 +220,8 @@ func isLuisApproved(raw string) bool { return normalizeText(raw) == "aprobado" }
 
 func publicPhase(raw string) (string, bool) {
 	switch normalizeText(raw) {
+	case "en planeacion":
+		return "Reportados", true
 	case "prototipado":
 		return "Prototipado", true
 	case "desarrollo":
@@ -261,6 +263,8 @@ func publicBugStatus(phase string, state githubv4.IssueState) (string, int) {
 		return "Resuelto", 100
 	}
 	switch phase {
+	case "Reportados":
+		return "Reportado", 0
 	case "Prototipado", "Desarrollo", "Test", "Staging":
 		return "En atención", 50
 	case "Deploy", "Archivado":

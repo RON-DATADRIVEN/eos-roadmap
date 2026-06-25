@@ -367,3 +367,30 @@ func TestWriteOutputsIfModulesChangedWritesMetadataWhenModulesChange(t *testing.
 		t.Fatalf("ItemCount = %d; want %d", gotMeta.ItemCount, len(modules))
 	}
 }
+
+func TestPublicPhaseMapsPlanningToReported(t *testing.T) {
+	phase, ok := publicPhase("En planeación")
+	if !ok {
+		t.Fatal("expected En planeación to be public")
+	}
+	if phase != "Reportados" {
+		t.Fatalf("expected Reportados, got %q", phase)
+	}
+}
+
+func TestPublicBugStatusForReported(t *testing.T) {
+	status, baseline := publicBugStatus("Reportados", githubv4.IssueStateOpen)
+	if status != "Reportado" {
+		t.Fatalf("expected Reportado, got %q", status)
+	}
+	if baseline != 0 {
+		t.Fatalf("expected baseline 0, got %d", baseline)
+	}
+}
+
+func TestPublicPhaseStillExcludesIdeas(t *testing.T) {
+	phase, ok := publicPhase("Ideas")
+	if ok {
+		t.Fatalf("expected Ideas to be private, got phase %q", phase)
+	}
+}
