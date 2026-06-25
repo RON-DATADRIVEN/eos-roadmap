@@ -82,6 +82,22 @@
     "tipo": "bug"
   },
   {
+    "id": "292",
+    "nombre": "fix(frontend): respetar PORT desde variables de entorno",
+    "descripcion": "## Origen Pendiente detectado tras el cierre técnico de frontend staging.",
+    "fase": "Reportados",
+    "estado": "Reportado",
+    "porcentaje": 0,
+    "propietario": "Sin asignar",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/292"
+      }
+    ],
+    "tipo": "bug"
+  },
+  {
     "id": "181",
     "nombre": "Orden en lista de programas iniciando en el ultimo creado por defecto.",
     "descripcion": "### Descripción Como gestor de programas de emprendimiento quiero ver el utlimo programa creado al inicio de la lista por defecto.",
@@ -96,5 +112,117 @@
       }
     ],
     "tipo": "feature"
+  },
+  {
+    "id": "296",
+    "nombre": "fix(backend): hacer obligatorio PUBLIC_FILES_BASE_URL fuera de local/dev",
+    "descripcion": "## Origen Pendiente detectado tras el cierre de backend staging.",
+    "fase": "Reportados",
+    "estado": "Reportado",
+    "porcentaje": 0,
+    "propietario": "Sin asignar",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/296"
+      }
+    ],
+    "tipo": "bug"
+  },
+  {
+    "id": "306",
+    "nombre": "fix(backend): corregir inconsistencia entre programas activos y consultarAll",
+    "descripcion": "﻿## Contexto",
+    "fase": "Reportados",
+    "estado": "Reportado",
+    "porcentaje": 0,
+    "propietario": "Sin asignar",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/306"
+      }
+    ],
+    "tipo": "bug"
+  },
+  {
+    "id": "305",
+    "nombre": "data(staging): corregir programas con imagen/logo undefined",
+    "descripcion": "## Contexto",
+    "fase": "Reportados",
+    "estado": "Reportado",
+    "porcentaje": 0,
+    "propietario": "Sin asignar",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/305"
+      }
+    ],
+    "tipo": "bug"
+  },
+  {
+    "id": "299",
+    "nombre": "fix(backend): configurar remitente SMTP en staging para invitaciones",
+    "descripcion": "## Contexto",
+    "fase": "Reportados",
+    "estado": "Reportado",
+    "porcentaje": 0,
+    "propietario": "Sin asignar",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/299"
+      }
+    ],
+    "tipo": "bug"
+  },
+  {
+    "id": "300",
+    "nombre": "fix(backend): normalizar respuestas vacías como arrays en staging",
+    "descripcion": "## Contexto",
+    "fase": "Reportados",
+    "estado": "Reportado",
+    "porcentaje": 0,
+    "propietario": "Sin asignar",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/300"
+      }
+    ],
+    "tipo": "bug"
+  },
+  {
+    "id": "301",
+    "nombre": "fix(frontend): robustecer vista de programa PM ante respuestas vacías o 404",
+    "descripcion": "## Contexto",
+    "fase": "Reportados",
+    "estado": "Reportado",
+    "porcentaje": 0,
+    "propietario": "Sin asignar",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/301"
+      }
+    ],
+    "tipo": "bug"
+  },
+  {
+    "id": "302",
+    "nombre": "fix(rbac): revisar si Program Manager debe poder agregar batches",
+    "descripcion": "## Contexto",
+    "fase": "Reportados",
+    "estado": "Reportado",
+    "porcentaje": 0,
+    "propietario": "Sin asignar",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/302"
+      }
+    ],
+    "tipo": "bug"
   }
 ]
