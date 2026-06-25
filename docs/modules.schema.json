@@ -11,6 +11,7 @@
       "fase": {
         "type": "string",
         "enum": [
+          "Reportados",
           "Prototipado",
           "Desarrollo",
           "Test",
@@ -61,3 +62,4 @@
     "required": ["id", "nombre", "fase", "estado", "porcentaje", "tipo"]
   }
 }
+
