@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -451,20 +452,47 @@ func main() {
 		after = &q.Org.Project.Items.PageInfo.EndCursor
 	}
 
-	if err := writeJSON(outPath, all); err != nil {
-		log.Fatalf("escribir %s: %v", outPath, err)
+	changed, err := writeOutputsIfModulesChanged(outPath, metaOutPath, all, time.Now)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if !changed {
+		log.Printf("OK: %s sin cambios; no se actualiza %s", outPath, metaOutPath)
+		return
+	}
+	log.Printf("OK: escrito %s y %s con %d elementos públicos", outPath, metaOutPath, len(all))
+}
+
+func writeOutputsIfModulesChanged(outPath string, metaOutPath string, modules []ModuleOut, now func() time.Time) (bool, error) {
+	modulesJSON, err := marshalJSON(modules)
+	if err != nil {
+		return false, fmt.Errorf("preparar %s: %w", outPath, err)
+	}
+	changed, err := fileContentChanged(outPath, modulesJSON)
+	if err != nil {
+		return false, fmt.Errorf("comparar %s: %w", outPath, err)
+	}
+	if !changed {
+		return false, nil
+	}
+	if err := writeFile(outPath, modulesJSON); err != nil {
+		return false, fmt.Errorf("escribir %s: %w", outPath, err)
 	}
 
-	generatedAt := time.Now().UTC().Format(time.RFC3339)
+	generatedAt := now().UTC().Format(time.RFC3339)
 	metadata := MetadataOut{
 		GeneratedAt: generatedAt,
 		Source:      defaultMetadataSource,
-		ItemCount:   len(all),
+		ItemCount:   len(modules),
 	}
-	if err := writeJSON(metaOutPath, metadata); err != nil {
-		log.Fatalf("escribir %s: %v", metaOutPath, err)
+	metadataJSON, err := marshalJSON(metadata)
+	if err != nil {
+		return false, fmt.Errorf("preparar %s: %w", metaOutPath, err)
 	}
-	log.Printf("OK: escrito %s y %s con %d elementos públicos", outPath, metaOutPath, len(all))
+	if err := writeFile(metaOutPath, metadataJSON); err != nil {
+		return false, fmt.Errorf("escribir %s: %w", metaOutPath, err)
+	}
+	return true, nil
 }
 
 type roundTripperWithToken struct{ token string }
@@ -484,19 +512,33 @@ func dirOf(p string) string {
 	return "."
 }
 
-func writeJSON(path string, value any) error {
+func marshalJSON(value any) ([]byte, error) {
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(value); err != nil {
+		return nil, fmt.Errorf("json: %w", err)
+	}
+	return buf.Bytes(), nil
+}
+
+func fileContentChanged(path string, content []byte) (bool, error) {
+	current, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return true, nil
+		}
+		return false, err
+	}
+	return !bytes.Equal(current, content), nil
+}
+
+func writeFile(path string, content []byte) error {
 	if err := os.MkdirAll(dirOf(path), 0o755); err != nil {
 		return fmt.Errorf("mkdir: %w", err)
 	}
-	f, err := os.Create(path)
-	if err != nil {
-		return fmt.Errorf("crear: %w", err)
-	}
-	defer f.Close()
-	enc := json.NewEncoder(f)
-	enc.SetIndent("", "  ")
-	if err := enc.Encode(value); err != nil {
-		return fmt.Errorf("json: %w", err)
+	if err := os.WriteFile(path, content, 0o644); err != nil {
+		return fmt.Errorf("escribir: %w", err)
 	}
 	return nil
 }
