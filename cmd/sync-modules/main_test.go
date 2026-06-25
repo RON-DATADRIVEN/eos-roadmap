@@ -1,7 +1,11 @@
 package main
 
 import (
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/shurcooL/githubv4"
 )
@@ -215,5 +219,151 @@ func TestCalculatePercentage(t *testing.T) {
 				t.Errorf("calculatePercentage(%q, %d) = %d; want %d", tc.body, tc.baseline, got, tc.want)
 			}
 		})
+	}
+}
+
+func TestFileContentChanged(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "modules.json")
+	content := []byte("[\n  {\n    \"id\": \"1\"\n  }\n]\n")
+
+	changed, err := fileContentChanged(path, content)
+	if err != nil {
+		t.Fatalf("fileContentChanged missing file returned error: %v", err)
+	}
+	if !changed {
+		t.Fatal("fileContentChanged missing file = false; want true")
+	}
+
+	if err := os.WriteFile(path, content, 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	changed, err = fileContentChanged(path, content)
+	if err != nil {
+		t.Fatalf("fileContentChanged same content returned error: %v", err)
+	}
+	if changed {
+		t.Fatal("fileContentChanged same content = true; want false")
+	}
+
+	changed, err = fileContentChanged(path, []byte("[\n]\n"))
+	if err != nil {
+		t.Fatalf("fileContentChanged different content returned error: %v", err)
+	}
+	if !changed {
+		t.Fatal("fileContentChanged different content = false; want true")
+	}
+}
+
+func TestMarshalJSONMatchesGeneratorFormat(t *testing.T) {
+	got, err := marshalJSON([]ModuleOut{{ID: "1", Nombre: "Test", Fase: "Test", Estado: "En atención", Porcentaje: 50, Tipo: "bug"}})
+	if err != nil {
+		t.Fatalf("marshalJSON returned error: %v", err)
+	}
+	want := "[\n  {\n    \"id\": \"1\",\n    \"nombre\": \"Test\",\n    \"descripcion\": \"\",\n    \"fase\": \"Test\",\n    \"estado\": \"En atención\",\n    \"porcentaje\": 50,\n    \"tipo\": \"bug\"\n  }\n]\n"
+	if string(got) != want {
+		t.Fatalf("marshalJSON mismatch:\ngot:\n%s\nwant:\n%s", got, want)
+	}
+}
+
+func TestWriteOutputsIfModulesChangedSkipsMetadataWhenModulesUnchanged(t *testing.T) {
+	dir := t.TempDir()
+	modulesPath := filepath.Join(dir, "modules.json")
+	metaPath := filepath.Join(dir, "modules-meta.json")
+	modules := []ModuleOut{{ID: "1", Nombre: "Test", Fase: "Test", Estado: "En atención", Porcentaje: 50, Tipo: "bug"}}
+	modulesJSON, err := marshalJSON(modules)
+	if err != nil {
+		t.Fatalf("marshalJSON modules: %v", err)
+	}
+	if err := os.WriteFile(modulesPath, modulesJSON, 0o644); err != nil {
+		t.Fatalf("WriteFile modules: %v", err)
+	}
+
+	originalMeta := []byte("{\n  \"generatedAt\": \"2026-01-01T00:00:00Z\",\n  \"source\": \"GitHub Project EOS 2.0\",\n  \"itemCount\": 1\n}\n")
+	if err := os.WriteFile(metaPath, originalMeta, 0o644); err != nil {
+		t.Fatalf("WriteFile metadata: %v", err)
+	}
+	originalTime := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	if err := os.Chtimes(metaPath, originalTime, originalTime); err != nil {
+		t.Fatalf("Chtimes metadata: %v", err)
+	}
+
+	changed, err := writeOutputsIfModulesChanged(modulesPath, metaPath, modules, func() time.Time {
+		return time.Date(2026, 6, 25, 12, 0, 0, 0, time.UTC)
+	})
+	if err != nil {
+		t.Fatalf("writeOutputsIfModulesChanged returned error: %v", err)
+	}
+	if changed {
+		t.Fatal("writeOutputsIfModulesChanged changed = true; want false")
+	}
+
+	gotMeta, err := os.ReadFile(metaPath)
+	if err != nil {
+		t.Fatalf("ReadFile metadata: %v", err)
+	}
+	if string(gotMeta) != string(originalMeta) {
+		t.Fatalf("metadata changed on no-op run:\ngot:\n%s\nwant:\n%s", gotMeta, originalMeta)
+	}
+	gotInfo, err := os.Stat(metaPath)
+	if err != nil {
+		t.Fatalf("Stat metadata: %v", err)
+	}
+	if !gotInfo.ModTime().Equal(originalTime) {
+		t.Fatalf("metadata mtime changed on no-op run: got %s want %s", gotInfo.ModTime(), originalTime)
+	}
+}
+
+func TestWriteOutputsIfModulesChangedWritesMetadataWhenModulesChange(t *testing.T) {
+	dir := t.TempDir()
+	modulesPath := filepath.Join(dir, "modules.json")
+	metaPath := filepath.Join(dir, "modules-meta.json")
+	if err := os.WriteFile(modulesPath, []byte("[]\n"), 0o644); err != nil {
+		t.Fatalf("WriteFile modules: %v", err)
+	}
+	if err := os.WriteFile(metaPath, []byte("{\"generatedAt\":\"old\"}\n"), 0o644); err != nil {
+		t.Fatalf("WriteFile metadata: %v", err)
+	}
+
+	modules := []ModuleOut{{ID: "1", Nombre: "Test", Fase: "Test", Estado: "En atención", Porcentaje: 50, Tipo: "bug"}}
+	fixedTime := time.Date(2026, 6, 25, 12, 34, 56, 0, time.UTC)
+	changed, err := writeOutputsIfModulesChanged(modulesPath, metaPath, modules, func() time.Time {
+		return fixedTime
+	})
+	if err != nil {
+		t.Fatalf("writeOutputsIfModulesChanged returned error: %v", err)
+	}
+	if !changed {
+		t.Fatal("writeOutputsIfModulesChanged changed = false; want true")
+	}
+
+	wantModules, err := marshalJSON(modules)
+	if err != nil {
+		t.Fatalf("marshalJSON modules: %v", err)
+	}
+	gotModules, err := os.ReadFile(modulesPath)
+	if err != nil {
+		t.Fatalf("ReadFile modules: %v", err)
+	}
+	if string(gotModules) != string(wantModules) {
+		t.Fatalf("modules output mismatch:\ngot:\n%s\nwant:\n%s", gotModules, wantModules)
+	}
+
+	var gotMeta MetadataOut
+	gotMetaBytes, err := os.ReadFile(metaPath)
+	if err != nil {
+		t.Fatalf("ReadFile metadata: %v", err)
+	}
+	if err := json.Unmarshal(gotMetaBytes, &gotMeta); err != nil {
+		t.Fatalf("Unmarshal metadata: %v", err)
+	}
+	if gotMeta.GeneratedAt != fixedTime.Format(time.RFC3339) {
+		t.Fatalf("GeneratedAt = %q; want %q", gotMeta.GeneratedAt, fixedTime.Format(time.RFC3339))
+	}
+	if gotMeta.Source != defaultMetadataSource {
+		t.Fatalf("Source = %q; want %q", gotMeta.Source, defaultMetadataSource)
+	}
+	if gotMeta.ItemCount != len(modules) {
+		t.Fatalf("ItemCount = %d; want %d", gotMeta.ItemCount, len(modules))
 	}
 }

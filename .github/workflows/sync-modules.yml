@@ -8,7 +8,6 @@ on:
 permissions:
   contents: write
   issues: read
-  pull-requests: write
 
 concurrency:
   group: sync-modules-json
@@ -21,14 +20,26 @@ jobs:
       ORG: RON-DATADRIVEN
       PROJECT_NUMBER: "3"
       OUTPUT: docs/modules.json
+      META_OUTPUT: docs/modules-meta.json
 
     steps:
+      - name: Require direct publish token
+        env:
+          SYNC_PR_TOKEN: ${{ secrets.SYNC_PR_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SYNC_PR_TOKEN:-}" ]; then
+            echo "SYNC_PR_TOKEN is required for direct publish to main" >&2
+            exit 1
+          fi
+
       - name: Checkout @ branch main
         uses: actions/checkout@v4
         with:
           ref: main              # evita detached HEAD
           fetch-depth: 0
           persist-credentials: true
+          token: ${{ secrets.SYNC_PR_TOKEN }}
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -38,6 +49,14 @@ jobs:
           cache-dependency-path: |
             go.sum
             **/go.sum
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install JSON schema validator
+        run: npm i -g ajv-cli@5 ajv-formats
 
       - name: Sanity repo (HEAD/replace/vendor)
         run: |
@@ -94,21 +113,57 @@ jobs:
           ORG: ${{ env.ORG }}
           PROJECT_NUMBER: ${{ env.PROJECT_NUMBER }}
           OUTPUT: ${{ env.OUTPUT }}
+          META_OUTPUT: ${{ env.META_OUTPUT }}
         run: |
           set -euo pipefail
           ./sync-modules
 
-      - name: Open PR if modules.json changed
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.SYNC_PR_TOKEN }}
-          add-paths: ${{ env.OUTPUT }}
-          commit-message: "ci(automation): update modules json"
-          branch: ci/sync-modules-update
-          delete-branch: true
-          title: "ci(automation): update modules json"
-          body: |
-            Actualización automática de `docs/modules.json` generada por el workflow `sync-modules`.
+      - name: Validate generated public data before publish
+        run: |
+          set -euo pipefail
+          go test ./...
+          if [ ! -f docs/modules.json ]; then
+            echo "No existe docs/modules.json; se omite validación."
+            exit 0
+          fi
+          ajv validate \
+            -s docs/modules.schema.json \
+            -d docs/modules.json \
+            --spec=draft2020 \
+            -c ajv-formats \
+            --strict=false
 
-            Este PR fue creado automáticamente. Si no hay cambios en el archivo, este PR no se abre.
-          labels: automated
+      # eos-roadmap opera en modelo solo-dev: branch protection no exige PR
+      # reviews ni required status checks para main. Este paso valida antes de
+      # publicar, no usa force push y solo puede commitear los datos generados
+      # docs/modules.json y docs/modules-meta.json.
+      - name: Commit generated public data to main
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          allowed_paths_regex='^(docs/modules\.json|docs/modules-meta\.json)$'
+
+          git reset --mixed --quiet
+          git add -- docs/modules.json docs/modules-meta.json
+
+          staged_files="$(git diff --cached --name-only)"
+          if [ -z "$staged_files" ]; then
+            echo "No generated public data changed."
+            exit 0
+          fi
+
+          unexpected_files="$(printf '%s\n' "$staged_files" | grep -Ev "$allowed_paths_regex" || true)"
+          if [ -n "$unexpected_files" ]; then
+            echo "Unexpected staged files:"
+            printf '%s\n' "$unexpected_files"
+            exit 1
+          fi
+
+          git commit -m "ci(automation): update generated roadmap data"
+          # El push usa las credenciales que actions/checkout configuró con el
+          # token del checkout porque persist-credentials está habilitado.
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -142,10 +143,18 @@ type ModuleOut struct {
 	Tipo        string    `json:"tipo"`
 }
 
+type MetadataOut struct {
+	GeneratedAt string `json:"generatedAt"`
+	Source      string `json:"source"`
+	ItemCount   int    `json:"itemCount"`
+}
+
 type LinkOut struct {
 	Label string `json:"label"`
 	URL   string `json:"url"`
 }
+
+const defaultMetadataSource = "GitHub Project EOS 2.0"
 
 func singleName(typename githubv4.String, name githubv4.String) string {
 	if typename == "ProjectV2ItemFieldSingleSelectValue" {
@@ -366,6 +375,10 @@ func main() {
 	if outPath == "" {
 		outPath = "docs/modules.json"
 	}
+	metaOutPath := os.Getenv("META_OUTPUT")
+	if metaOutPath == "" {
+		metaOutPath = "docs/modules-meta.json"
+	}
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
 		log.Fatal("GITHUB_TOKEN no está definido")
@@ -439,20 +452,47 @@ func main() {
 		after = &q.Org.Project.Items.PageInfo.EndCursor
 	}
 
-	if err := os.MkdirAll(dirOf(outPath), 0o755); err != nil {
-		log.Fatalf("mkdir: %v", err)
-	}
-	f, err := os.Create(outPath)
+	changed, err := writeOutputsIfModulesChanged(outPath, metaOutPath, all, time.Now)
 	if err != nil {
-		log.Fatalf("crear %s: %v", outPath, err)
+		log.Fatal(err)
 	}
-	defer f.Close()
-	enc := json.NewEncoder(f)
-	enc.SetIndent("", "  ")
-	if err := enc.Encode(all); err != nil {
-		log.Fatalf("json: %v", err)
+	if !changed {
+		log.Printf("OK: %s sin cambios; no se actualiza %s", outPath, metaOutPath)
+		return
 	}
-	log.Printf("OK: escrito %s con %d elementos públicos", outPath, len(all))
+	log.Printf("OK: escrito %s y %s con %d elementos públicos", outPath, metaOutPath, len(all))
+}
+
+func writeOutputsIfModulesChanged(outPath string, metaOutPath string, modules []ModuleOut, now func() time.Time) (bool, error) {
+	modulesJSON, err := marshalJSON(modules)
+	if err != nil {
+		return false, fmt.Errorf("preparar %s: %w", outPath, err)
+	}
+	changed, err := fileContentChanged(outPath, modulesJSON)
+	if err != nil {
+		return false, fmt.Errorf("comparar %s: %w", outPath, err)
+	}
+	if !changed {
+		return false, nil
+	}
+	if err := writeFile(outPath, modulesJSON); err != nil {
+		return false, fmt.Errorf("escribir %s: %w", outPath, err)
+	}
+
+	generatedAt := now().UTC().Format(time.RFC3339)
+	metadata := MetadataOut{
+		GeneratedAt: generatedAt,
+		Source:      defaultMetadataSource,
+		ItemCount:   len(modules),
+	}
+	metadataJSON, err := marshalJSON(metadata)
+	if err != nil {
+		return false, fmt.Errorf("preparar %s: %w", metaOutPath, err)
+	}
+	if err := writeFile(metaOutPath, metadataJSON); err != nil {
+		return false, fmt.Errorf("escribir %s: %w", metaOutPath, err)
+	}
+	return true, nil
 }
 
 type roundTripperWithToken struct{ token string }
@@ -470,4 +510,35 @@ func dirOf(p string) string {
 		}
 	}
 	return "."
+}
+
+func marshalJSON(value any) ([]byte, error) {
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(value); err != nil {
+		return nil, fmt.Errorf("json: %w", err)
+	}
+	return buf.Bytes(), nil
+}
+
+func fileContentChanged(path string, content []byte) (bool, error) {
+	current, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return true, nil
+		}
+		return false, err
+	}
+	return !bytes.Equal(current, content), nil
+}
+
+func writeFile(path string, content []byte) error {
+	if err := os.MkdirAll(dirOf(path), 0o755); err != nil {
+		return fmt.Errorf("mkdir: %w", err)
+	}
+	if err := os.WriteFile(path, content, 0o644); err != nil {
+		return fmt.Errorf("escribir: %w", err)
+	}
+	return nil
 }
