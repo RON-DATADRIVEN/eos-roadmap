@@ -133,11 +133,10 @@ jobs:
             -c ajv-formats \
             --strict=false
 
-      # Branch protection debe permitir bypass controlado del requisito de PR
-      # review para el actor de SYNC_PR_TOKEN. Este token es obligatorio para el
-      # publish directo a main; no hay fallback a GITHUB_TOKEN. Si ese bypass no
-      # existe, el push directo a main fallará. No uses un token genérico: este
-      # paso solo stagea y valida docs/modules.json y docs/modules-meta.json.
+      # eos-roadmap opera en modelo solo-dev: branch protection no exige PR
+      # reviews ni required status checks para main. Este paso valida antes de
+      # publicar, no usa force push y solo puede commitear los datos generados
+      # docs/modules.json y docs/modules-meta.json.
       - name: Commit generated public data to main
         run: |
           set -euo pipefail
