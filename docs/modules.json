@@ -64,24 +64,6 @@
     "tipo": "bug"
   },
   {
-    "id": "238",
-    "nombre": "Corregir manejo real de CASSANDRA_PORT",
-    "descripcion": "## Épica padre #194 Normalización de auditoría backend",
-    "fase": "Desarrollo",
-    "estado": "En atención",
-    "porcentaje": 50,
-    "propietario": "ArturoPlascenciaRodriguez",
-    "inicio": "2026-04-27",
-    "eta": "2026-05-10",
-    "enlaces": [
-      {
-        "label": "GitHub",
-        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/238"
-      }
-    ],
-    "tipo": "bug"
-  },
-  {
     "id": "292",
     "nombre": "fix(frontend): respetar PORT desde variables de entorno",
     "descripcion": "## Origen Pendiente detectado tras el cierre técnico de frontend staging.",
