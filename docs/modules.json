@@ -1,9 +1,27 @@
 [
   {
+    "id": "305",
+    "nombre": "data(staging): corregir programas con imagen/logo undefined",
+    "descripcion": "## Contexto",
+    "fase": "Staging",
+    "estado": "Resuelto",
+    "porcentaje": 100,
+    "propietario": "Sin asignar",
+    "inicio": "2026-06-30",
+    "eta": "2026-07-06",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/305"
+      }
+    ],
+    "tipo": "bug"
+  },
+  {
     "id": "300",
     "nombre": "fix(backend): normalizar respuestas vacías como arrays en staging",
     "descripcion": "## Contexto",
-    "fase": "Deploy",
+    "fase": "Staging",
     "estado": "Resuelto",
     "porcentaje": 100,
     "propietario": "ArturoPlascenciaRodriguez",
@@ -21,7 +39,7 @@
     "id": "299",
     "nombre": "fix(backend): configurar remitente SMTP en staging para invitaciones",
     "descripcion": "## Contexto",
-    "fase": "Deploy",
+    "fase": "Staging",
     "estado": "Resuelto",
     "porcentaje": 100,
     "propietario": "ArturoPlascenciaRodriguez",
@@ -31,24 +49,6 @@
       {
         "label": "GitHub",
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/299"
-      }
-    ],
-    "tipo": "bug"
-  },
-  {
-    "id": "305",
-    "nombre": "data(staging): corregir programas con imagen/logo undefined",
-    "descripcion": "## Contexto",
-    "fase": "Desarrollo",
-    "estado": "En atención",
-    "porcentaje": 50,
-    "propietario": "Sin asignar",
-    "inicio": "2026-06-30",
-    "eta": "2026-07-06",
-    "enlaces": [
-      {
-        "label": "GitHub",
-        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/305"
       }
     ],
     "tipo": "bug"
