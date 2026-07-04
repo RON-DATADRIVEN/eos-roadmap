@@ -1,5 +1,23 @@
 [
   {
+    "id": "306",
+    "nombre": "fix(backend): corregir inconsistencia entre programas activos y consultarAll",
+    "descripcion": "﻿## Contexto",
+    "fase": "Archivado",
+    "estado": "Resuelto",
+    "porcentaje": 100,
+    "propietario": "Sin asignar",
+    "inicio": "2026-06-30",
+    "eta": "2026-07-06",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/306"
+      }
+    ],
+    "tipo": "bug"
+  },
+  {
     "id": "305",
     "nombre": "data(staging): corregir programas con imagen/logo undefined",
     "descripcion": "## Contexto",
@@ -49,24 +67,6 @@
       {
         "label": "GitHub",
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/299"
-      }
-    ],
-    "tipo": "bug"
-  },
-  {
-    "id": "306",
-    "nombre": "fix(backend): corregir inconsistencia entre programas activos y consultarAll",
-    "descripcion": "﻿## Contexto",
-    "fase": "Prototipado",
-    "estado": "Resuelto",
-    "porcentaje": 100,
-    "propietario": "Sin asignar",
-    "inicio": "2026-06-30",
-    "eta": "2026-07-06",
-    "enlaces": [
-      {
-        "label": "GitHub",
-        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/306"
       }
     ],
     "tipo": "bug"
