@@ -1,5 +1,23 @@
 [
   {
+    "id": "307",
+    "nombre": "test(e2e): validar flujo de claves de hitos en creación de asesoría",
+    "descripcion": "﻿## Contexto",
+    "fase": "Test",
+    "estado": "Resuelto",
+    "porcentaje": 100,
+    "propietario": "Sin asignar",
+    "inicio": "2026-07-07",
+    "eta": "2026-07-10",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/307"
+      }
+    ],
+    "tipo": "bug"
+  },
+  {
     "id": "306",
     "nombre": "fix(backend): corregir inconsistencia entre programas activos y consultarAll",
     "descripcion": "﻿## Contexto",
@@ -165,24 +183,6 @@
       {
         "label": "GitHub",
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/163"
-      }
-    ],
-    "tipo": "bug"
-  },
-  {
-    "id": "307",
-    "nombre": "test(e2e): validar flujo de claves de hitos en creación de asesoría",
-    "descripcion": "﻿## Contexto",
-    "fase": "Desarrollo",
-    "estado": "En atención",
-    "porcentaje": 50,
-    "propietario": "Sin asignar",
-    "inicio": "2026-07-07",
-    "eta": "2026-07-10",
-    "enlaces": [
-      {
-        "label": "GitHub",
-        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/307"
       }
     ],
     "tipo": "bug"
