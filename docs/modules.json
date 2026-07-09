@@ -1,5 +1,53 @@
 [
   {
+    "id": "322",
+    "nombre": "bug(frontend/backend/data): dashboard PM renderiza imágenes de batch con identificadores no servibles",
+    "descripcion": "## Origen",
+    "fase": "Prototipado",
+    "estado": "En atención",
+    "porcentaje": 50,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/322"
+      }
+    ],
+    "tipo": "bug"
+  },
+  {
+    "id": "321",
+    "nombre": "bug(frontend/backend): dashboard PM renderiza avatar con URL incompleta /archivos",
+    "descripcion": "## Origen",
+    "fase": "Prototipado",
+    "estado": "En atención",
+    "porcentaje": 50,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/321"
+      }
+    ],
+    "tipo": "bug"
+  },
+  {
+    "id": "320",
+    "nombre": "bug(frontend): dashboard PM falla con empty state de hitosProgramaRealizados",
+    "descripcion": "## Origen",
+    "fase": "Prototipado",
+    "estado": "En atención",
+    "porcentaje": 50,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/320"
+      }
+    ],
+    "tipo": "bug"
+  },
+  {
     "id": "307",
     "nombre": "test(e2e): validar flujo de claves de hitos en creación de asesoría",
     "descripcion": "﻿## Contexto",
