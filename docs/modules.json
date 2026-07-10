@@ -1,5 +1,21 @@
 [
   {
+    "id": "323",
+    "nombre": "bug(frontend/backend): imágenes de Program Manager apuntan a recursos inexistentes en /archivos/programManager",
+    "descripcion": "## Origen",
+    "fase": "Prototipado",
+    "estado": "En atención",
+    "porcentaje": 50,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/323"
+      }
+    ],
+    "tipo": "bug"
+  },
+  {
     "id": "322",
     "nombre": "bug(frontend/backend/data): dashboard PM renderiza imágenes de batch con identificadores no servibles",
     "descripcion": "## Origen",
@@ -249,6 +265,22 @@
       {
         "label": "GitHub",
         "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/302"
+      }
+    ],
+    "tipo": "bug"
+  },
+  {
+    "id": "324",
+    "nombre": "bug(frontend): detalle de programa muestra placeholders Hito #n cuando no hay hitos seleccionados",
+    "descripcion": "Derivado de `#317`.",
+    "fase": "Prototipado",
+    "estado": "En atención",
+    "porcentaje": 50,
+    "propietario": "ArturoPlascenciaRodriguez",
+    "enlaces": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/RON-DATADRIVEN/eos-roadmap/issues/324"
       }
     ],
     "tipo": "bug"
